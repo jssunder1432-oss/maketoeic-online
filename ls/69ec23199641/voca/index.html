@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>VOCA 단어 암기장 · MAKE TOEIC</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--navy:#1F3864;--deep:#14264A;--orange:#F0562A;--ink:#101828;--text:#2A3345;--mute:#6B7486;--soft:#F3F5F9;--line:#E3E7EF;--hl:#FFE3D6;--ok:#12A150;
+  --font:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--soft);color:var(--text);font:400 16px/1.6 var(--font);-webkit-font-smoothing:antialiased;word-break:keep-all}
+button{font-family:inherit;cursor:pointer}
+.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+.top .row{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.back{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;font-weight:700;font-size:14px;color:var(--ink)}
+.top h1{font-size:17px;font-weight:800;color:var(--ink);margin:0;letter-spacing:-.02em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top h1 small{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--orange)}
+main{max-width:760px;margin:0 auto;padding:16px 16px 120px}
+.hero{background:linear-gradient(135deg,var(--deep),var(--navy));color:#fff;border-radius:20px;padding:22px 20px;margin-bottom:16px}
+.hero .eb{font-size:12px;font-weight:800;letter-spacing:.12em;color:#FF8A63}
+.hero h2{margin:6px 0 6px;font-size:23px;line-height:1.3;letter-spacing:-.03em}
+.hero p{margin:0;font-size:14px;opacity:.85}
+.days{display:grid;gap:10px}
+.day{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.day .no{flex:none;background:var(--orange);color:#fff;font-weight:800;font-size:12px;border-radius:999px;padding:4px 10px}
+.day .t{flex:1;min-width:0}
+.day b{display:block;color:var(--ink);font-size:16px}
+.day span{display:block;font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{flex:none;width:60px;height:6px;background:var(--soft);border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--orange)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}
+.big{width:100%;border:0;border-radius:14px;background:var(--orange);color:#fff;font-weight:800;font-size:16px;padding:14px}
+.big.stop{background:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.two button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px;font-weight:800;color:var(--ink);font-size:14px}
+.two button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.set{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:12px;font-size:13px;color:var(--mute)}
+.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:2px}
+.seg button{border:0;background:none;font-weight:700;font-size:12px;color:var(--text);padding:5px 9px;border-radius:999px}
+.seg button.on{background:var(--navy);color:#fff}
+.hint{margin:10px 2px 0;font-size:12.5px;color:var(--mute)}
+.w{background:#fff;border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.w.playing{border-color:var(--orange);box-shadow:0 0 0 3px var(--hl)}
+.w.done{opacity:.55}
+.wr{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px}
+.num{flex:none;width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;font-weight:800;font-size:12px;display:grid;place-items:center}
+.wm{flex:1;min-width:0}
+.word{border:0;background:none;padding:0;font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.01em;text-align:left}
+.word:active,.tap:active{color:var(--orange)}
+.pr{font-size:13px;color:var(--mute);margin-left:4px}
+.pos{display:inline-block;font-size:11px;font-weight:800;background:var(--navy);color:#fff;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:3px}
+.mean{display:block;border:0;background:none;padding:0;text-align:left;font-size:15px;color:var(--text);margin-top:2px}
+.ic{flex:none;height:36px;min-width:36px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:800;font-size:12px;color:var(--navy);display:grid;place-items:center;padding:0 7px}
+.ic.ck.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.ic.rep.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.det{display:none;border-top:1px dashed var(--line);padding:10px 14px 14px;background:#FCFCFE}
+.w.open .det{display:block}
+.lab{display:inline-block;font-size:12px;font-weight:800;color:var(--orange);margin:8px 0 4px}
+.it{display:flex;gap:8px;align-items:baseline;padding:5px 0;flex-wrap:wrap}
+.tap{border:0;background:none;padding:2px 0;font-size:15.5px;font-weight:700;color:var(--navy);text-align:left;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px}
+.tap.on{color:var(--orange)}
+.it small{font-size:13px;color:var(--mute)}
+.it .ko{font-size:14px;color:var(--text)}
+.note{font-size:13px;color:#8A4B00;background:#FFF4E5;border-radius:8px;padding:4px 8px;margin:2px 0}
+.ex{padding:6px 0}
+.ex .ko{display:block;font-size:13.5px;color:var(--mute);margin-top:1px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 20px;cursor:pointer;user-select:none}
+.card .cw{font-size:34px;font-weight:800;color:var(--ink);letter-spacing:-.02em}
+.card .cp{color:var(--mute);margin-top:4px}
+.card .cm{margin-top:18px;font-size:20px;font-weight:700;color:var(--orange);min-height:30px}
+.card .tip{margin-top:14px;font-size:12.5px;color:var(--mute)}
+.nav3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.nav3 button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px;font-weight:800;color:var(--ink)}
+.nav3 button.pri{background:var(--ok);border-color:var(--ok);color:#fff}
+.cnt{text-align:center;font-size:13px;color:var(--mute);margin:10px 0}
+.q{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px 18px;text-align:center}
+.opts{display:grid;gap:8px;margin-top:16px}
+.opts button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:13px;font-size:15px;font-weight:600;color:var(--ink);text-align:left}
+.opts button.right{background:#E7F7EE;border-color:var(--ok);color:#0B6B35}
+.opts button.wrong{background:#FDECEC;border-color:#E5484D;color:#A1161B}
+.score{font-size:40px;font-weight:800;color:var(--orange)}
+.empty{text-align:center;color:var(--mute);padding:30px}
+</style>
+</head>
+<body>
+<header class="top"><div class="row">
+  <button class="back" id="back" hidden>‹ 뒤로</button>
+  <h1 id="ttl"><small>MAKE TOEIC · VOCA</small>토익 필수 단어 암기장</h1>
+</div></header>
+<main id="app"><p class="empty">불러오는 중…</p></main>
+<script>
+const SEASON = (new URLSearchParams(location.search).get('s')||'').replace(/\D/g,'');
+const ST = { get(k,d){ try{ const v=localStorage.getItem('mtv_'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+             set(k,v){ try{ localStorage.setItem('mtv_'+k,JSON.stringify(v)); }catch(e){} } };
+let DATA=null, memo=ST.get('memo',{}), opt=Object.assign({rep:2,gap:1.5,mean:1,hide:0},ST.get('opt',{}));
+const app=document.getElementById('app'), ttl=document.getElementById('ttl'), back=document.getElementById('back');
+const pad=n=>String(n).padStart(2,'0');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- 오디오 ---------- */
+const au=new Audio(); au.preload='auto'; let tok=0; const synth=window.speechSynthesis;
+function stop(){ tok++; au.pause(); if(synth) synth.cancel(); document.querySelectorAll('.tap.on,.w.playing,.ic.rep.on').forEach(e=>e.classList.remove('on','playing')); }
+function playUrl(url, my){ return new Promise(res=>{ if(my!==tok) return res(false);
+  au.src=url; au.currentTime=0; const end=()=>{au.onended=au.onerror=null; res(my===tok);}; au.onended=end; au.onerror=()=>{au.onended=au.onerror=null; res('err');};
+  au.play().catch(()=>{au.onended=au.onerror=null; res('err');}); }); }
+function tts(text,my){ return new Promise(res=>{ if(!synth||my!==tok) return res(false); const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=.9; u.onend=u.onerror=()=>res(my===tok); synth.speak(u); }); }
+const wait=(s,my)=>new Promise(r=>setTimeout(()=>r(my===tok),s*1000));
+async function say(url, fallback, my){ const r=await playUrl(url,my); if(r==='err' && fallback) return tts(fallback,my); return r; }
+const wURL=f=>'w/'+f+'.mp3', mURL=f=>'m/'+f+'.mp3', dURL=a=>'d/'+a+'.mp3', xURL=a=>'ex/'+a+'.mp3';
+async function one(el, url, text){ stop(); const my=tok; el&&el.classList.add('on'); await say(url,text,my); if(my===tok) el&&el.classList.remove('on'); }
+
+/* ---------- 라우팅 ---------- */
+function route(){ stop(); const h=location.hash.replace(/^#\/?/,'').split('/'); window.scrollTo(0,0);
+  if(h[0]==='d' && DATA){ const d=DATA.days.find(x=>x.day==+h[1]); if(d){ if(h[2]==='card') return card(d); if(h[2]==='test') return test(d); return day(d);} }
+  home(); }
+back.onclick=()=>{ const h=location.hash.split('/'); location.hash = h.length>3 ? h.slice(0,3).join('/') : '#/'; };
+window.addEventListener('hashchange',route);
+function head(t,sub,showBack){ ttl.innerHTML='<small>MAKE TOEIC · VOCA'+(SEASON?' · SEASON '+SEASON:'')+'</small>'+esc(t); back.hidden=!showBack; }
+const known=d=>d.words.filter(w=>memo[d.day+'_'+w.n]).length;
+
+function home(){ head('토익 필수 단어 암기장',0,false);
+  app.innerHTML='<section class="hero"><div class="eb">MAKE TOEIC · VOCA</div><h2>DAY 01~30 · 단어 815개</h2><p>단어를 누르면 성우 원어민 발음, 뜻을 누르면 메이크토익 뜻 설명이 나옵니다. 🔁는 한 단어를 10번 연속으로 들려줘요.</p></section><div class="days">'+
+  DATA.days.map(d=>{ const k=known(d), n=d.words.length; return '<button class="day" data-d="'+d.day+'"><span class="no">DAY '+pad(d.day)+'</span><span class="t"><b>'+esc(d.ko)+'</b><span>'+esc(d.words.slice(0,4).map(w=>w.w).join(', '))+' … · 외운 단어 '+k+'/'+n+'</span></span><span class="bar"><i style="width:'+Math.round(k/n*100)+'%"></i></span></button>'; }).join('')+'</div>';
+  app.querySelectorAll('.day').forEach(b=>b.onclick=()=>location.hash='#/d/'+b.dataset.d);
+}
+
+/* ---------- DAY 화면 ---------- */
+function day(d){ head('DAY '+pad(d.day)+' · '+d.ko,0,true);
+  const segs=(k,vals,lab)=>'<span class="seg" data-k="'+k+'">'+vals.map((v,i)=>'<button data-v="'+v+'" class="'+(opt[k]==v?'on':'')+'">'+lab[i]+'</button>').join('')+'</span>';
+  app.innerHTML='<div class="panel"><button class="big" id="cont">▶ 연속 듣기 (반복 청취)</button>'+
+   '<div class="two"><button id="toCard">플래시카드</button><button id="toTest">뜻 테스트</button></div>'+
+   '<div class="set">반복 '+segs('rep',[1,2,3],['1회','2회','3회'])+' 간격 '+segs('gap',[1,1.5,2.5],['1초','1.5초','2.5초'])+' 뜻 '+segs('mean',[1,0],['듣기','끄기'])+' '+segs('hide',[0,1],['전체','외운 단어 숨김'])+'</div>'+
+   '<p class="hint">단어 = 원어민 성우 발음 · 뜻 = 메이크토익 설명 · ▾ = 파생어·동의어·기출표현·예문 (누르면 성우 발음)</p></div><div id="list"></div>';
+  app.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>{ opt[s.dataset.k]=+b.dataset.v; ST.set('opt',opt); s.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); if(s.dataset.k==='hide') list(d); }));
+  document.getElementById('toCard').onclick=()=>location.hash='#/d/'+d.day+'/card';
+  document.getElementById('toTest').onclick=()=>location.hash='#/d/'+d.day+'/test';
+  const cont=document.getElementById('cont');
+  cont.onclick=async()=>{ if(cont.classList.contains('stop')){ stop(); cont.classList.remove('stop'); cont.textContent='▶ 연속 듣기 (반복 청취)'; return; }
+    stop(); const my=tok; cont.classList.add('stop'); cont.textContent='■ 멈추기';
+    const rows=[...document.querySelectorAll('#list .w')];
+    for(const r of rows){ if(my!==tok) break; const w=d.words.find(x=>x.n==r.dataset.n); r.classList.add('playing'); r.scrollIntoView({block:'center',behavior:'smooth'});
+      for(let i=0;i<opt.rep && my===tok;i++){ await say(wURL(w.f),w.w,my); await wait(i<opt.rep-1?opt.gap:0.4,my); }
+      if(opt.mean && my===tok){ await say(mURL(w.f),null,my); }
+      await wait(opt.gap,my); r.classList.remove('playing'); }
+    if(my===tok){ cont.classList.remove('stop'); cont.textContent='▶ 연속 듣기 (반복 청취)'; } };
+  list(d);
+}
+function list(d){ const L=document.getElementById('list');
+  const ws=d.words.filter(w=>!(opt.hide && memo[d.day+'_'+w.n]));
+  L.innerHTML = ws.length? ws.map(w=>{ const key=d.day+'_'+w.n, k=memo[key];
+    const det=w.d.map(g=>'<div class="lab">'+esc(g.l)+'</div>'+g.i.map(it=> it.en ? '<div class="it"><button class="tap" data-a="'+(it.a||'')+'" data-t="'+esc(it.en)+'">'+esc(it.en)+'</button>'+(it.pron?'<small>['+esc(it.pron)+']</small>':'')+(it.ko?'<span class="ko">'+esc(it.ko)+'</span>':'')+'</div>'+(it.note?'<div class="note">'+esc(it.note)+'</div>':'') : (it.note?'<div class="note">'+esc(it.note)+'</div>':'')).join('')).join('')+
+      (w.x.length?'<div class="lab">예문</div>'+w.x.map(x=>'<div class="ex"><button class="tap" data-x="'+x.a+'" data-t="'+esc(x.en)+'">'+esc(x.en)+'</button><span class="ko">'+esc(x.ko)+'</span></div>').join(''):'');
+    return '<div class="w'+(k?' done':'')+'" data-n="'+w.n+'"><div class="wr"><span class="num">'+pad(w.n)+'</span><div class="wm"><button class="word tap0">'+esc(w.w)+'</button><span class="pr">['+esc(w.p)+']</span>'+(w.pos?'<span class="pos">'+esc(w.pos)+'</span>':'')+'<button class="mean">'+esc(w.m)+'</button></div>'+
+      '<button class="ic rep" title="10번 듣기">🔁10</button><button class="ic ck'+(k?' on':'')+'" title="외웠어요">✓</button>'+(det?'<button class="ic tg" title="파생어·예문">▾</button>':'')+'</div>'+(det?'<div class="det">'+det+'</div>':'')+'</div>'; }).join('') : '<p class="empty">모두 외웠어요! 🎉 ‘전체’를 누르면 다시 볼 수 있어요.</p>';
+  L.querySelectorAll('.w').forEach(r=>{ const w=d.words.find(x=>x.n==r.dataset.n), key=d.day+'_'+w.n;
+    r.querySelector('.word').onclick=e=>one(e.currentTarget,wURL(w.f),w.w);
+    r.querySelector('.mean').onclick=e=>one(e.currentTarget,mURL(w.f),null);
+    const rep=r.querySelector('.rep'); rep.onclick=async()=>{ if(rep.classList.contains('on')){ stop(); return; } stop(); const my=tok; rep.classList.add('on');
+      for(let i=0;i<10 && my===tok;i++){ rep.textContent='🔁'+(10-i); await say(wURL(w.f),w.w,my); await wait(1,my); } rep.textContent='🔁10'; if(my===tok) rep.classList.remove('on'); };
+    r.querySelector('.ck').onclick=e=>{ memo[key]=!memo[key]; if(!memo[key]) delete memo[key]; ST.set('memo',memo); e.currentTarget.classList.toggle('on',!!memo[key]); r.classList.toggle('done',!!memo[key]); if(opt.hide&&memo[key]) setTimeout(()=>list(d),250); };
+    const tg=r.querySelector('.tg'); if(tg) tg.onclick=()=>{ r.classList.toggle('open'); tg.textContent=r.classList.contains('open')?'▴':'▾'; };
+    r.querySelectorAll('.det .tap').forEach(b=>b.onclick=()=>one(b, b.dataset.x?xURL(b.dataset.x):(b.dataset.a?dURL(b.dataset.a):''), b.dataset.t));
+  });
+}
+
+/* ---------- 플래시카드 ---------- */
+function card(d){ head('DAY '+pad(d.day)+' · 플래시카드',0,true);
+  let ws=d.words.filter(w=>!memo[d.day+'_'+w.n]); if(!ws.length) ws=d.words.slice(); let i=0, flip=false;
+  const draw=()=>{ const w=ws[i]; flip=false;
+    app.innerHTML='<div class="cnt">'+(i+1)+' / '+ws.length+' · 외운 단어는 빼고 보여줘요</div><div class="card" id="cd"><div class="cw">'+esc(w.w)+'</div><div class="cp">['+esc(w.p)+'] '+esc(w.pos)+'</div><div class="cm" id="cm"></div><div class="tip">카드를 누르면 뜻이 보여요 · 단어는 자동으로 발음</div></div>'+
+     '<div class="nav3"><button id="pv">‹ 이전</button><button class="pri" id="ok">외웠어요 ✓</button><button id="nx">다음 ›</button></div>';
+    one(null,wURL(w.f),w.w);
+    document.getElementById('cd').onclick=()=>{ flip=!flip; document.getElementById('cm').textContent=flip?w.m:''; if(flip) one(null,mURL(w.f),null); else one(null,wURL(w.f),w.w); };
+    document.getElementById('pv').onclick=()=>{ i=(i-1+ws.length)%ws.length; draw(); };
+    document.getElementById('nx').onclick=()=>{ i=(i+1)%ws.length; draw(); };
+    document.getElementById('ok').onclick=()=>{ memo[d.day+'_'+w.n]=true; ST.set('memo',memo); ws.splice(i,1); if(!ws.length){ app.innerHTML='<div class="q"><div class="score">🎉</div><p>DAY '+pad(d.day)+' 단어를 모두 외웠어요!</p><button class="big" onclick="location.hash=\'#/d/'+d.day+'/test\'">뜻 테스트 하러 가기</button></div>'; return; } i%=ws.length; draw(); };
+  }; draw();
+}
+
+/* ---------- 뜻 테스트 ---------- */
+function test(d){ head('DAY '+pad(d.day)+' · 뜻 테스트',0,true);
+  const qs=d.words.slice().sort(()=>Math.random()-.5); let i=0, sc=0, wrong=[];
+  const draw=()=>{ if(i>=qs.length){ app.innerHTML='<div class="q"><div class="score">'+sc+' / '+qs.length+'</div><p>'+(wrong.length?'틀린 단어를 다시 보세요':'완벽해요! 🎉')+'</p>'+wrong.map(w=>'<div class="it" style="justify-content:center"><button class="tap" data-f="'+w.f+'" data-t="'+esc(w.w)+'">'+esc(w.w)+'</button><span class="ko">'+esc(w.m)+'</span></div>').join('')+'<div class="two"><button onclick="location.reload()">다시 하기</button><button onclick="location.hash=\'#/d/'+d.day+'\'">단어 목록</button></div></div>';
+      app.querySelectorAll('.tap').forEach(b=>b.onclick=()=>one(b,wURL(b.dataset.f),b.dataset.t)); return; }
+    const w=qs[i]; const others=d.words.filter(x=>x!==w && x.m!==w.m).sort(()=>Math.random()-.5).slice(0,3); const op=[w,...others].sort(()=>Math.random()-.5);
+    app.innerHTML='<div class="cnt">'+(i+1)+' / '+qs.length+' · 맞힌 개수 '+sc+'</div><div class="q"><button class="word tap0" id="qw" style="font-size:32px">'+esc(w.w)+'</button><div class="cp" style="color:var(--mute)">['+esc(w.p)+'] · 누르면 다시 듣기</div><div class="opts">'+op.map(o=>'<button data-n="'+o.n+'">'+esc(o.m)+'</button>').join('')+'</div></div>';
+    one(null,wURL(w.f),w.w); document.getElementById('qw').onclick=()=>one(null,wURL(w.f),w.w);
+    app.querySelectorAll('.opts button').forEach(b=>b.onclick=()=>{ if(app.querySelector('.opts .right')) return; const ok=+b.dataset.n===w.n;
+      app.querySelectorAll('.opts button').forEach(x=>{ if(+x.dataset.n===w.n) x.classList.add('right'); }); if(!ok){ b.classList.add('wrong'); wrong.push(w);} else sc++;
+      setTimeout(()=>{ i++; draw(); }, ok?700:1500); });
+  }; draw();
+}
+
+fetch('data.json').then(r=>r.json()).then(j=>{ DATA=j; route(); }).catch(()=>{ app.innerHTML='<p class="empty">단어 데이터를 불러오지 못했어요. 새로고침해 주세요.</p>'; });
+</script>
+</body>
+</html>
