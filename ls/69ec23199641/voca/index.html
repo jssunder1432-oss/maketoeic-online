@@ -118,7 +118,7 @@ function route(){ stop(); const h=location.hash.replace(/^#\/?/,'').split('/'); 
   home(); }
 back.onclick=()=>{ const h=location.hash.split('/'); location.hash = h.length>3 ? h.slice(0,3).join('/') : '#/'; };
 window.addEventListener('hashchange',route);
-function head(t,sub,showBack){ ttl.innerHTML='<small>MAKE TOEIC · VOCA'+(SEASON?' · SEASON '+SEASON:'')+'</small>'+esc(t); back.hidden=!showBack; }
+function head(t,sub,showBack){ ttl.innerHTML='<small>MAKE TOEIC · VOCA'+'</small>'+esc(t); back.hidden=!showBack; }
 const known=d=>d.words.filter(w=>memo[d.day+'_'+w.n]).length;
 
 function home(){ head('토익 필수 단어 암기장',0,false);
