@@ -140,6 +140,15 @@ section{padding:72px 0}
 .shot i{display:block;height:7px;border-radius:4px;background:#E3E7EF}
 .shot i:nth-child(3){width:70%}.shot i.hl{background:#FFD3C4;width:85%}
 
+.qform{display:grid;gap:12px;max-width:460px}
+.qform label{display:grid;gap:6px;font-size:14px;font-weight:700;color:#fff}
+.qform label span{font-weight:500;color:#C9D3E6}
+.qform input,.qform textarea{font:500 16px/1.5 var(--font);color:var(--ink);background:#fff;border:0;border-radius:12px;padding:13px 14px;width:100%}
+.qform textarea{resize:vertical}
+.qform .qnote{margin:4px 0 6px;font-size:14px}
+.qform .qnote b{color:#fff}
+.qform .btn{width:100%}
+.qform .qdone{margin:0;color:var(--kakao);font-weight:700;font-size:14px}
 /* FAQ */
 .faq details{border-bottom:1px solid var(--line)}
 .faq summary{list-style:none;cursor:pointer;padding:22px 40px 22px 0;font-weight:700;font-size:17px;color:var(--ink);position:relative}
@@ -279,18 +288,20 @@ footer .logo{display:inline-block;margin-bottom:10px}
     <div class="ask">
       <div>
         <h2>모르는 문제는<br>사진 찍어 보내세요</h2>
-        <p>메이크토익이 직접 해결해 드립니다. 질문은 실명으로 보내 주세요.</p>
-        <ol class="steps">
-          <li><b>1</b><span>문제 화면을 스크린샷이나 사진으로 찍기</span></li>
-          <li><b>2</b><span>아래 버튼으로 메이크토익 질문방(카카오톡 1:1) 열기</span></li>
-          <li><b>3</b><span>채팅창 + 버튼에서 사진 첨부, 문제 번호와 함께 보내기</span></li>
-        </ol>
-        <a href="https://open.kakao.com/o/su9VbJTi" class="btn btn-kakao" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.2 4.7 6.6l-1 3.6c-.1.3.3.6.6.4l4.2-2.8c.5.1 1 .1 1.5.1 5.5 0 10-3.5 10-7.9S17.5 3 12 3z"/></svg>메이크토익 질문방 열기</a>
+        <p>아래 칸을 채우면 질문이 정리돼서 메이크토익 질문방으로 연결됩니다. 메이크토익이 직접 해결해 드립니다.</p>
+        <form class="qform" id="qform" autocomplete="off">
+          <label>이름 <span>(실명)</span><input name="name" required placeholder="홍길동"></label>
+          <label>어떤 문제인가요?<input name="where" required placeholder="예: Season 2 · LC 모의고사 3회 · 128번"></label>
+          <label>질문 내용<textarea name="q" rows="3" required placeholder="예: 왜 (B)가 답인지 모르겠어요"></textarea></label>
+          <p class="qnote">버튼을 누르면 질문이 복사되고 질문방이 열립니다. 채팅창에 <b>붙여넣기</b> 한 뒤, <b>+ 버튼으로 문제 사진</b>을 첨부해 보내세요.</p>
+          <button class="btn btn-kakao" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.2 4.7 6.6l-1 3.6c-.1.3.3.6.6.4l4.2-2.8c.5.1 1 .1 1.5.1 5.5 0 10-3.5 10-7.9S17.5 3 12 3z"/></svg>질문 복사하고 질문방 열기</button>
+          <p class="qdone" id="qdone" hidden>질문이 복사됐어요. 질문방에 붙여넣고 사진을 첨부해 주세요.</p>
+        </form>
       </div>
       <div class="chat" aria-hidden="true">
+        <div class="bubble me"><b>[메이크토익 질문]</b><br>■ 이름: 홍길동<br>■ 문제: Season 2 · 3회 · 128번<br>■ 질문: 왜 (B)가 답인가요?</div>
         <div class="shot"><i></i><i></i><i></i><i class="hl"></i><i></i></div>
-        <div class="bubble me">홍길동입니다. 128번 왜 being이 답인가요?</div>
-        <div class="bubble you">빈칸 뒤에 목적어가 없죠? 그래서 수동형이에요. 자세히 설명드릴게요!</div>
+        <div class="bubble you">사진 확인했어요. 바로 설명드릴게요!</div>
       </div>
     </div>
   </div>
@@ -328,6 +339,21 @@ footer .logo{display:inline-block;margin-bottom:10px}
 
 <a href="https://open.kakao.com/o/su9VbJTi" class="btn btn-kakao float" target="_blank" rel="noopener" aria-label="메이크토익 질문방 열기"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.2 4.7 6.6l-1 3.6c-.1.3.3.6.6.4l4.2-2.8c.5.1 1 .1 1.5.1 5.5 0 10-3.5 10-7.9S17.5 3 12 3z"/></svg>질문방</a>
 
+<script>
+(function () {
+  var f = document.getElementById('qform');
+  if (!f) return;
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var t = '[메이크토익 질문]\n■ 이름: ' + f.name.value.trim() + '\n■ 문제: ' + f.where.value.trim() + '\n■ 질문: ' + f.q.value.trim() + '\n■ 사진: 아래에 첨부';
+    var url = 'https://open.kakao.com/o/su9VbJTi';
+    var done = function () { document.getElementById('qdone').hidden = false; window.open(url, '_blank', 'noopener'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, function () { window.prompt('아래 내용을 복사해 질문방에 붙여넣으세요', t); window.open(url, '_blank', 'noopener'); });
+    } else { window.prompt('아래 내용을 복사해 질문방에 붙여넣으세요', t); window.open(url, '_blank', 'noopener'); }
+  });
+})();
+</script>
 <script>
 document.querySelectorAll('[data-link]').forEach(function (a) {
   if (a.getAttribute('href') === '#') a.addEventListener('click', function (e) { e.preventDefault(); alert('곧 오픈합니다.'); });
