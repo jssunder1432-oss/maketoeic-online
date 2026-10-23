@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>메이크토익 학습실 · MAKE TOEIC</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+html,body{margin:0;background:#F5F7FA}
+.mk-top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #E7EAF0;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",sans-serif}
+.mk-top div{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.mk-top a{color:#172844;text-decoration:none;font-weight:800;letter-spacing:-.02em}
+.mk-top a small{display:block;font-size:11px;letter-spacing:.1em;color:#FF581F}
+.mk-top .q{font-size:13px;font-weight:700;border:1px solid #E7EAF0;border-radius:999px;padding:6px 12px;background:#fff}
+#mk-load{max-width:760px;margin:60px auto;text-align:center;color:#5B6573;font-family:"Pretendard Variable",Pretendard,sans-serif}
+</style>
+</head>
+<body>
+<header class="mk-top"><div><a href="/"><small>MAKE TOEIC ONLINE</small>메이크토익 학습실</a><a class="q" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">질문방</a></div></header>
+<div id="mk-host"><p id="mk-load">학습실을 불러오는 중…</p></div>
+<script>
+(function(){
+  var U="https://hrlldteviatcatxyzrrz.supabase.co", K="sb_publishable_YT1A99HvH7VoMz76xq7Tvg__Imr0_qy";
+  window.MKST_CONFIG={url:U,key:K};
+  var host=document.getElementById('mk-host');
+  var H={apikey:K,'Content-Type':'application/json'};
+  fetch(U+'/rest/v1/rpc/get_app',{method:'POST',headers:H,body:JSON.stringify({p_name:'app'})})
+    .then(function(r){return r.json()})
+    .then(function(code){var s=document.createElement('script');s.textContent=code;document.head.appendChild(s);window.MKST_MOUNT(host);})
+    .catch(function(){host.innerHTML='<p id="mk-load">학습실을 불러오지 못했어요. 새로고침해 주세요.</p>'});
+})();
+</script>
+</body>
+</html>
