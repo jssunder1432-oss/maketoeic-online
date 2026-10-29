@@ -18,6 +18,7 @@ html,body{margin:0;background:#F5F7FA}
 </head>
 <body>
 <header class="mk-top"><div><a href="/"><small>MAKE TOEIC ONLINE</small>메이크토익 학습실</a><a class="q" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">질문방</a></div></header>
+<script src="lc-splay.js?v=20261029"></script>
 <div id="mk-host"><p id="mk-load">학습실을 불러오는 중…</p></div>
 <script>
 (function(){
@@ -27,7 +28,7 @@ html,body{margin:0;background:#F5F7FA}
   var H={apikey:K,'Content-Type':'application/json'};
   fetch(U+'/rest/v1/rpc/get_app',{method:'POST',headers:H,body:JSON.stringify({p_name:'app'})})
     .then(function(r){return r.json()})
-    .then(function(code){var s=document.createElement('script');s.textContent=code;document.head.appendChild(s);window.MKST_MOUNT(host);})
+    .then(function(code){var P=window.MKST_PATCHES||[],c=code,ok=true;for(var i=0;i<P.length&&ok;i++){if(c.split(P[i][0]).length!==2)ok=false;else c=c.split(P[i][0]).join(P[i][1]);}if(ok)code=c;var s=document.createElement('script');s.textContent=code;document.head.appendChild(s);window.MKST_MOUNT(host);})
     .catch(function(){host.innerHTML='<p id="mk-load">학습실을 불러오지 못했어요. 새로고침해 주세요.</p>'});
 })();
 </script>
