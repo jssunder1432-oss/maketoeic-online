@@ -5,8 +5,8 @@
    - "◀ 이전 페이지" : 지금 화면의 처음 → 한 번 더 누르면 앞 화면 */
 (function () {
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
-["    `<p id=\"lcv-now\" style=\"margin:0 2px 10px;color:#33404F;font-size:14px\">",
- "    `<div id=\"lcv-pg\" style=\"display:grid;grid-template-columns:1fr 1.4fr;gap:8px;margin:0 0 10px\"><button class=\"btn ghost\" id=\"lcv-prev\" style=\"margin:0\">◀ 이전 페이지</button><button class=\"btn navy\" id=\"lcv-next\" style=\"margin:0\">다음 페이지 ▶</button></div>` +\n    `<p id=\"lcv-now\" style=\"margin:0 2px 10px;color:#33404F;font-size:14px\">"],
+["id=\"lcv-v\" controls playsinline preload=\"none\" style=\"display:block;width:100%;aspect-ratio:16/9;background:#000\"></video></div>`",
+ "id=\"lcv-v\" controls playsinline preload=\"none\" style=\"display:block;width:100%;aspect-ratio:16/9;background:#000\"></video><div id=\"lcv-pg\" style=\"display:grid;grid-template-columns:1fr 1.4fr;gap:6px;padding:6px;background:#14233E\"><button id=\"lcv-prev\" style=\"border:0;border-radius:10px;padding:11px 8px;font:inherit;font-size:15px;font-weight:800;background:#fff;color:#172844\">◀ 이전 페이지</button><button id=\"lcv-next\" style=\"border:0;border-radius:10px;padding:11px 8px;font:inherit;font-size:15px;font-weight:800;background:#F26B1D;color:#fff\">다음 페이지 ▶</button></div></div>`"],
 ["v.src = B + L2[i].f + \".mp4\";", "v.src = B + L2[i].f + \".mp4\"; v.dataset.pg = V.d + \"/\" + L2[i].f;"],
 ["  v.addEventListener(\"ended\", function () { if (cur >= 0) now.innerHTML = `✓ <b>PART ${L2[cur].part}",
  "  function pgList() { var P = (window.MKST_LCPG || {})[v.dataset.pg]; if (P && P.length) return P; var o = [], d = v.duration || (L2[cur] || {}).d || 0; for (var t = 10; t < d - 1; t += 10) o.push(t); return o; }\n" +
