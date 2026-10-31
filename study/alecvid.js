@@ -25,6 +25,7 @@ function viewALec(ser, n, part) {
     [5, 6, 7].filter(function (p) { return R[p] && R[p].length; }).map(function (p) {
       return `<div class="grp">PART ${p}</div>` + L2.map(function (l, i) {
         if (l.p !== p) return "";
+        if (!l.d) return `<div class="row" style="cursor:default"><span class="pill n">${l.k}부</span><span class="t"><b>PART ${p} 해설 ${l.k}부</b><small>영상 다시 만드는 중 — 곧 열려요</small></span></div>`;
         return `<button class="row" data-al="${i}"><span class="pill n">${l.k}부</span><span class="t"><b>PART ${p} 해설 ${l.k}부${l.n > 1 ? " / " + l.n + "부" : ""}</b><small>${Math.floor(l.d / 60)}분 ${Math.round(l.d % 60)}초</small></span>›</button>`;
       }).join("");
     }).join("") +
@@ -38,11 +39,11 @@ function viewALec(ser, n, part) {
     v.src = B + l.p + "_" + l.k + ".mp4";
     if (play) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () { }); }
   }
-  v.addEventListener("ended", function () { if (cur >= 0 && cur + 1 < L2.length) { pick(cur + 1, true); } else if (cur >= 0) now.innerHTML = "✓ 이 회차 강의를 다 봤어요."; });
+  v.addEventListener("ended", function () { var nx = cur + 1; while (nx < L2.length && !L2[nx].d) nx++; if (cur >= 0 && nx < L2.length) { pick(nx, true); } else if (cur >= 0) now.innerHTML = "✓ 이 회차 강의를 다 봤어요."; });
   v.addEventListener("play", function () { if (cur >= 0) now.innerHTML = `▶ <b>PART ${L2[cur].p} · ${L2[cur].k}부</b> 재생 중`; });
   v.addEventListener("error", function () { if (cur >= 0) now.innerHTML = "영상을 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요."; });
   app.querySelectorAll("[data-al]").forEach(function (b) { b.onclick = function () { pick(+b.dataset.al, true); window.scrollTo({ top: 0, behavior: "smooth" }); }; });
-  var first = part ? L2.findIndex(function (l) { return l.p === part; }) : 0;
+  var first = L2.findIndex(function (l) { return l.d && (!part || l.p === part); });
   if (first >= 0) pick(first, false);
 }
 function viewLectures(id) {
