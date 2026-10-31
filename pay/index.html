@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>학습실 이용권 결제 · 메이크토익</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://js.tosspayments.com/v1/payment-widget"></script>
+<style>
+:root{--navy:#1F3864;--orange:#F0562A;--ink:#101828;--text:#1F2937;--soft:#F3F5F9;--line:#E3E7EF}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--soft);color:var(--text);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",sans-serif;-webkit-text-size-adjust:100%}
+.top{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px}
+.top a{color:var(--navy);text-decoration:none;font-weight:800}.top small{display:block;font-size:11px;letter-spacing:.1em;color:var(--orange)}
+main{max-width:560px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
+.hero{background:linear-gradient(125deg,#14264A,#1F3864);color:#fff;border:0}
+.hero h1{margin:6px 0 6px;font-size:22px;letter-spacing:-.02em}.hero p{margin:0;font-size:14.5px;line-height:1.6;color:#fff}
+.kicker{font-size:12px;font-weight:800;letter-spacing:.08em;color:#FFB08F}
+.price{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:700;color:var(--ink)}
+.price b{font-size:22px;color:var(--orange)}
+ul{margin:10px 0 0;padding-left:18px;font-size:14.5px;line-height:1.7;color:var(--ink)}
+label{display:block;font-size:14px;font-weight:700;color:var(--ink);margin:12px 0 6px}
+input{width:100%;font:inherit;font-size:17px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;color:var(--ink)}
+input:focus{outline:none;border-color:var(--navy)}
+.note{font-size:13.5px;line-height:1.6;color:var(--ink);margin:10px 0 0}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:16px;font:inherit;font-size:17px;font-weight:800;background:var(--orange);color:#fff;text-align:center;text-decoration:none;cursor:pointer}
+.btn.navy{background:var(--navy)}.btn:disabled{opacity:.6}
+.msg{border-radius:12px;padding:12px 14px;font-size:14.5px;font-weight:600;margin-top:10px}
+.err{background:#FDECEC;color:#B42318}.ok{background:#E9F7EF;color:#05603A}
+.terms{font-size:13px;line-height:1.7;color:var(--ink)}
+.terms h3{font-size:14px;margin:12px 0 4px}
+footer{max-width:560px;margin:0 auto;padding:8px 16px 40px;font-size:12.5px;line-height:1.7;color:#344054}
+</style>
+</head>
+<body>
+<header class="top"><a href="/"><small>MAKE TOEIC ONLINE</small>메이크토익 학습실</a></header>
+<main id="app"></main>
+<footer>상호 메이크토익 | 대표 김정수 | 사업자등록번호 366-68-00555<br>주소 충청북도 청주시 청원구 대성로288번길 30, 2층<br>통신판매업 신고 제2021-충북청주-0930호 | 연락처 010-4845-1432</footer>
+<script>
+(function () {
+var SUPA = "https://hrlldteviatcatxyzrrz.supabase.co", KEY = "sb_publishable_YT1A99HvH7VoMz76xq7Tvg__Imr0_qy";
+var CLIENT_KEY = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; // 토스페이먼츠 클라이언트 키 (실제 키로 바꾸면 실결제)
+var PRICE = 150000, NAME = "학습실 이용권 (1개월)";
+var app = document.getElementById("app"), q = new URLSearchParams(location.search);
+function rpc(fn, a) { return fetch(SUPA + "/rest/v1/rpc/" + fn, { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify(a) }).then(function (r) { return r.json(); }); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+var TERMS = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
+  '<h3>상품</h3>메이크토익 온라인 학습실(maketoeic.kr/study) 이용권. 결제 승인 즉시 이용 가능하며, 결제일부터 1개월간 이용할 수 있습니다. 이용 기간이 남아 있으면 남은 기간 뒤에 1개월이 더해집니다.' +
+  '<h3>이용 범위</h3>LC 학습실: 이용 기간에 해당하는 Series 전체(실전 모의고사·해설강의). RC 학습실: 기출문제(해설·단어 뜻). A급 과제(문제·해설강의)와 VOCA 단어 암기장은 라이브클래스 수강 상품으로 포함되지 않습니다.' +
+  '<h3>환불</h3>디지털 콘텐츠 특성상 결제 후 이용권이 바로 열리므로 결제 후 환불되지 않습니다(전자상거래법 제17조 제2항 제5호). 결제 오류·중복 결제는 확인 후 전액 환불해 드립니다.' +
+  '<h3>문의</h3>카카오톡 메이크토익 질문방 또는 010-4845-1432</div>';
+function form(msg) {
+  app.innerHTML =
+    '<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 이용권</span><h1>결제하면 바로 학습실이 열려요</h1><p>오프라인 수강생은 수업하는 달에 무료예요. 수업이 끝난 다음 달부터, 또는 온라인으로만 공부할 때 이용권을 결제하세요.</p></div>' +
+    '<div class="card"><div class="price"><span>' + NAME + '</span><b>' + PRICE.toLocaleString() + '원</b></div>' +
+    '<ul><li>LC 학습실 · 그 달 Series 전체 (실전 모의고사 · 해설강의)</li><li>RC 학습실 · 기출문제 (해설 · 단어 뜻)</li></ul>' +
+    '<p class="note">A급 과제 · VOCA 단어 암기장은 <a href="https://maketoeic.liveklass.com" target="_blank" rel="noopener">라이브클래스</a> 수강 상품이에요.</p></div>' +
+    '<div class="card"><b style="color:var(--ink)">학습실 로그인 정보</b>' +
+    '<label for="nm">이름</label><input id="nm" autocomplete="name" placeholder="홍길동" value="' + esc(q.get("name") || "") + '">' +
+    '<label for="ph">휴대폰 번호</label><input id="ph" inputmode="numeric" autocomplete="tel" placeholder="010-1234-5678">' +
+    '<p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b>. 이미 학습실을 쓰고 있다면 등록된 번호를 그대로 적어 주세요.</p>' + (msg || "") + '</div>' +
+    '<div class="card"><div id="pm"></div><div id="ag"></div></div>' +
+    '<button class="btn" id="go">' + PRICE.toLocaleString() + '원 결제하기</button>' +
+    '<p class="note" style="text-align:center">결제 후 환불되지 않아요. 아래 환불 규정을 확인해 주세요.</p>' + TERMS;
+  var w;
+  try {
+    w = PaymentWidget(CLIENT_KEY, PaymentWidget.ANONYMOUS);
+    w.renderPaymentMethods("#pm", { value: PRICE });
+    w.renderAgreement("#ag");
+  } catch (e) { document.getElementById("pm").innerHTML = '<div class="msg err">결제창을 불러오지 못했어요. 새로고침해 주세요.</div>'; }
+  var b = document.getElementById("go");
+  b.onclick = function () {
+    var nm = document.getElementById("nm").value.trim(), ph = document.getElementById("ph").value.replace(/\D/g, "");
+    if (!nm) return form('<div class="msg err">이름을 적어 주세요.</div>');
+    if (!/^01\d{8,9}$/.test(ph)) return form('<div class="msg err">휴대폰 번호를 정확히 적어 주세요.</div>');
+    b.disabled = true; b.textContent = "결제창 여는 중…";
+    rpc("pay_order", { p_name: nm, p_phone: ph }).then(function (o) {
+      if (o.status !== "ok") throw new Error(o.status);
+      try { sessionStorage.setItem("mkpay", JSON.stringify({ name: nm, last4: ph.slice(-4) })); } catch (e) { }
+      return w.requestPayment({ orderId: o.order_id, orderName: o.order_name, customerName: nm, customerMobilePhone: ph,
+        successUrl: location.origin + "/pay/?ok=1", failUrl: location.origin + "/pay/?fail=1" });
+    }).catch(function (e) {
+      b.disabled = false; b.textContent = PRICE.toLocaleString() + "원 결제하기";
+      if (e && e.code === "USER_CANCEL") return;
+      var m = document.createElement("div"); m.className = "msg err"; m.textContent = (e && e.message && e.message.length > 6) ? e.message : "결제를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.";
+      b.parentNode.insertBefore(m, b.nextSibling);
+    });
+  };
+}
+function done() {
+  app.innerHTML = '<div class="card"><b>결제를 확인하는 중이에요…</b><p class="note">창을 닫지 말고 잠시만 기다려 주세요.</p></div>';
+  rpc("pay_confirm", { p_order_id: q.get("orderId"), p_payment_key: q.get("paymentKey"), p_amount: +q.get("amount") }).then(function (r) {
+    if (r.status !== "ok") throw new Error(r.message || "결제를 확인하지 못했어요.");
+    var info = {}; try { info = JSON.parse(sessionStorage.getItem("mkpay") || "{}"); } catch (e) { }
+    app.innerHTML = '<div class="card hero"><span class="kicker">결제 완료</span><h1>' + esc(r.name) + '님, 학습실이 열렸어요</h1><p>이용 기간: ' + esc(r.end_date) + '까지</p></div>' +
+      '<div class="card"><p style="margin:0;font-size:15px;line-height:1.7;color:var(--ink)">학습실 입장: 이름 <b>' + esc(r.name) + '</b> + 휴대폰 뒤 4자리' + (info.last4 ? ' <b>' + esc(info.last4) + '</b>' : '') + '</p></div>' +
+      '<a class="btn navy" href="/study/">학습실 입장하기</a>';
+    history.replaceState(null, "", "/pay/?done=1");
+  }).catch(function (e) {
+    app.innerHTML = '<div class="card"><div class="msg err">' + esc(e.message) + '</div><p class="note">결제 금액이 빠져나갔는데 이 화면이 나오면 메이크토익 질문방이나 010-4845-1432로 알려 주세요.</p></div><a class="btn" href="/pay/">다시 결제하기</a>';
+  });
+}
+if (q.get("ok") && q.get("paymentKey")) done();
+else if (q.get("fail")) form('<div class="msg err">' + esc(q.get("message") || "결제가 취소됐어요.") + '</div>');
+else form();
+})();
+</script>
+</body>
+</html>
