@@ -6,7 +6,7 @@
 (function () {
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
 var FN = T(function () {/*// 학습실 이용권 — study/pay.js
-var PAY_URL = window.MKST_PAY_URL || "https://maketoeic.com/shop/", LK_URL = "https://maketoeic.liveklass.com";
+var PAY_URL = window.MKST_PAY_URL || "https://maketoeic.com/shop/item.php?it_id=1793454468", LK_URL = "https://maketoeic.liveklass.com";
 function payFull() { var p = S.profile || {}; return p.full !== false; }
 function secIsA(id) { var c = S.catalog && S.catalog.sections || []; for (var i = 0; i < c.length; i++) if (c[i].id === id) return c[i].group === "A급 과제"; return false; }
 function payLocked(h) {
