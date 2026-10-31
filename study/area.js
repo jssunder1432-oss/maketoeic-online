@@ -45,8 +45,7 @@ function viewHome() {
       (reelList().length ? roomRow("#/reels", "REELS", "🎬 기출 릴스 · PART 3·4", "원본 음원 + 단어 자막 + 정답 공개 · " + reelList().length + "편", "linear-gradient(125deg,#172844,#3A2A6B)") : "")
     : roomRow("#/learn", "문제", "📝 문제 풀기", "기본 문제 연습 · PART 5~7", "linear-gradient(125deg,#E95721,#FF8A3D)") +
       roomRow("#/a", "A급", "A급 과제 · Series " + ser, "1~15회 · PART 5·6·7 과제 · 해설", "") +
-      `<a class="row" href="https://maketoeic.kr/ls/69ec23199641/voca/?s=${ser}" style="background:linear-gradient(125deg,#14233E,#233C5C);color:#fff;border:0;text-decoration:none"><span class="pill" style="background:#fff;color:#172844">VOCA</span><span class="t"><b style="color:#fff">VOCA 단어 암기장 · Series ${ser}</b><small style="color:#fff">DAY 01~30 · 815단어 · 단어·파생어·예문 누르면 성우 발음</small></span>›</a>` +
-      roomRow("#/v", "VOCA", "단어 암기장", "New 암기장 · 분야별 30 DAY · 품사 · 한 단어 10번 듣기 · 플래시카드", "") +
+      roomRow("#/v", "VOCA", "VOCA 단어 암기장", "DAY 01~30 · 단어 누르면 발음 · 한 단어 10번 듣기 · 플래시카드 · 뜻 테스트", "linear-gradient(125deg,#14233E,#233C5C)") +
       roomRow("#/game", "GAME", "🎮 단어 점프 게임", "뜻을 보고 철자가 맞는 단어 블록을 점프로 치기", "") +
       roomRow("#/race", "GAME", "🚗 빈칸 레이서", "파트5 빈칸에 맞는 차선으로 운전 · 시간 순위", "");
   render(`<div class="card hero"><img class="logo" src="${LOGO}" alt="MAKE TOEIC" onerror="this.style.display='none'">
