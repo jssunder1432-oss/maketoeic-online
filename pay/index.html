@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>학습실 이용권 결제 · 메이크토익</title>
+<title>결제 · 메이크토익 학습실</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <script src="https://js.tosspayments.com/v1/payment-widget"></script>
 <style>
@@ -43,7 +43,7 @@ footer{max-width:560px;margin:0 auto;padding:8px 16px 40px;font-size:12.5px;line
 var SUPA = "https://hrlldteviatcatxyzrrz.supabase.co", KEY = "sb_publishable_YT1A99HvH7VoMz76xq7Tvg__Imr0_qy";
 var CLIENT_KEY = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; // 토스페이먼츠 클라이언트 키 (실제 키로 바꾸면 실결제)
 var PRICE = 150000, NAME = "학습실 이용권 (1개월)";
-var app = document.getElementById("app"), q = new URLSearchParams(location.search);
+var app = document.getElementById("app"), q = new URLSearchParams(location.search), LC = q.get("p") === "lc";
 function rpc(fn, a) { return fetch(SUPA + "/rest/v1/rpc/" + fn, { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify(a) }).then(function (r) { return r.json(); }); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 var TERMS = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
@@ -51,19 +51,26 @@ var TERMS = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
   '<h3>이용 범위</h3>LC 학습실: 이용 기간에 해당하는 Series 전체(실전 모의고사·해설강의). RC 학습실: 기출문제(해설·단어 뜻). A급 과제(문제·해설강의)와 VOCA 단어 암기장은 라이브클래스 수강 상품으로 포함되지 않습니다.' +
   '<h3>환불</h3>디지털 콘텐츠 특성상 결제 후 이용권이 바로 열리므로 결제 후 환불되지 않습니다(전자상거래법 제17조 제2항 제5호). 결제 오류·중복 결제는 확인 후 전액 환불해 드립니다.' +
   '<h3>문의</h3>카카오톡 메이크토익 질문방 또는 010-4845-1432</div>';
+var TERMS_LC = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
+  '<h3>상품</h3>메이크토익 비회원 학습실 LC 실전 모의고사 30일 수강권. 결제 승인 즉시 이용 가능하며, 결제일부터 30일간 이용할 수 있습니다. 이용 기간이 남아 있으면 남은 기간 뒤에 30일이 더해집니다.' +
+  '<h3>이용 범위</h3>이용 기간에 해당하는 달의 LC 실전 모의고사(회차 전체 풀기 · PART별 풀기 · 스크립트 · 해설강의). RC · VOCA · A급 과제는 포함되지 않습니다.' +
+  '<h3>환불</h3>디지털 콘텐츠 특성상 결제 후 이용권이 바로 열리므로 결제 후 환불되지 않습니다(전자상거래법 제17조 제2항 제5호). 결제 오류·중복 결제는 확인 후 전액 환불해 드립니다.' +
+  '<h3>문의</h3>카카오톡 메이크토익 질문방 또는 010-4845-1432</div>';
 function form(msg) {
   app.innerHTML =
-    '<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 이용권</span><h1>결제하면 바로 학습실이 열려요</h1><p>오프라인 수강생은 수업하는 달에 무료예요. 수업이 끝난 다음 달부터, 또는 온라인으로만 공부할 때 이용권을 결제하세요.</p></div>' +
+    (LC ? '<div class="card hero"><span class="kicker">MAKE TOEIC · 비회원 학습실</span><h1>LC 실전 모의고사 30일 수강권</h1><p>이번 달 LC 실전 모의고사를 원본 음성 · 스크립트 · 해설강의로 훈련해요. 결제하면 바로 열려요.</p></div>'
+        : '<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 이용권</span><h1>결제하면 바로 학습실이 열려요</h1><p>오프라인 수강생은 수업하는 달에 무료예요. 수업이 끝난 다음 달부터, 또는 온라인으로만 공부할 때 이용권을 결제하세요.</p></div>') +
     '<div class="card"><div class="price"><span>' + NAME + '</span><b>' + PRICE.toLocaleString() + '원</b></div>' +
-    '<ul><li>LC 학습실 · 그 달 Series 전체 (실전 모의고사 · 해설강의)</li><li>RC 학습실 · 기출문제 (해설 · 단어 뜻)</li></ul>' +
-    '<p class="note">A급 과제 · VOCA 단어 암기장은 <a href="https://maketoeic.liveklass.com" target="_blank" rel="noopener">라이브클래스</a> 수강 상품이에요.</p></div>' +
+    (LC ? '<ul><li>이번 달 LC 실전 모의고사 10회 (회차 전체 풀기 · PART별 풀기)</li><li>원본 음성 · 스크립트 · 해석 · 문제별 해설강의</li><li>결제일부터 30일</li></ul><p class="note">RC · VOCA · A급 과제는 포함되지 않아요. <a href="/lc/">자세히 보기</a></p></div>'
+        : '<ul><li>LC 학습실 · 그 달 Series 전체 (실전 모의고사 · 해설강의)</li><li>RC 학습실 · 기출문제 (해설 · 단어 뜻)</li></ul>' +
+    '<p class="note">A급 과제 · VOCA 단어 암기장은 <a href="https://maketoeic.liveklass.com" target="_blank" rel="noopener">라이브클래스</a> 수강 상품이에요.</p></div>') +
     '<div class="card"><b style="color:var(--ink)">학습실 로그인 정보</b>' +
     '<label for="nm">이름</label><input id="nm" autocomplete="name" placeholder="홍길동" value="' + esc(q.get("name") || "") + '">' +
     '<label for="ph">휴대폰 번호</label><input id="ph" inputmode="numeric" autocomplete="tel" placeholder="010-1234-5678">' +
     '<p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b>. 이미 학습실을 쓰고 있다면 등록된 번호를 그대로 적어 주세요.</p>' + (msg || "") + '</div>' +
     '<div class="card"><div id="pm"></div><div id="ag"></div></div>' +
     '<button class="btn" id="go">' + PRICE.toLocaleString() + '원 결제하기</button>' +
-    '<p class="note" style="text-align:center">결제 후 환불되지 않아요. 아래 환불 규정을 확인해 주세요.</p>' + TERMS;
+    '<p class="note" style="text-align:center">결제 후 환불되지 않아요. 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
   var w;
   try {
     w = PaymentWidget(CLIENT_KEY, PaymentWidget.ANONYMOUS);
@@ -76,7 +83,7 @@ function form(msg) {
     if (!nm) return form('<div class="msg err">이름을 적어 주세요.</div>');
     if (!/^01\d{8,9}$/.test(ph)) return form('<div class="msg err">휴대폰 번호를 정확히 적어 주세요.</div>');
     b.disabled = true; b.textContent = "결제창 여는 중…";
-    rpc("pay_order", { p_name: nm, p_phone: ph }).then(function (o) {
+    rpc("pay_order", { p_name: nm, p_phone: ph, p_kind: LC ? "lc" : "pass" }).then(function (o) {
       if (o.status !== "ok") throw new Error(o.status);
       try { sessionStorage.setItem("mkpay", JSON.stringify({ name: nm, last4: ph.slice(-4) })); } catch (e) { }
       return w.requestPayment({ orderId: o.order_id, orderName: o.order_name, customerName: nm, customerMobilePhone: ph,
@@ -108,7 +115,8 @@ function start() {
   else form();
 }
 // 결제 키·가격은 서버(Supabase shop_cfg)에서 받아 온다 — 키를 바꿀 때 이 파일은 그대로
-rpc("pay_cfg", {}).then(function (c) { if (c && c.ck) { CLIENT_KEY = c.ck; PRICE = c.price || PRICE; NAME = c.name || NAME; } }).catch(function () { }).then(start);
+if (LC) { PRICE = 15000; NAME = "LC 모의고사 30일 수강권"; }
+rpc("pay_cfg", {}).then(function (c) { if (c && c.ck) { CLIENT_KEY = c.ck; if (LC) { PRICE = c.lc_price || PRICE; NAME = c.lc_name || NAME; } else { PRICE = c.price || PRICE; NAME = c.name || NAME; } } }).catch(function () { }).then(start);
 })();
 </script>
 </body>

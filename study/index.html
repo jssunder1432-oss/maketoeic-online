@@ -25,7 +25,7 @@ html,body{margin:0;background:#F5F7FA}
 window.MKST_PATCH_READY=Promise.all(F.map(function(f){return fetch(f+"?t="+t,{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).catch(function(){return ""})})).then(function(ts){ts.forEach(function(x){try{(0,eval)(x)}catch(e){}})});
 window.addEventListener("pageshow",function(e){if(e.persisted)location.reload();});
 /* 새 버전이 올라가면(ver.txt) 열려 있던 화면도 자동으로 새로 받기 */
-var BUILD="20261031m";function chk(){fetch("ver.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=(v||"").trim();if(!v||v===BUILD)return;try{if(sessionStorage.getItem("mkst:rl")===v)return;sessionStorage.setItem("mkst:rl",v)}catch(e){}location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
+var BUILD="20261101a";function chk(){fetch("ver.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=(v||"").trim();if(!v||v===BUILD)return;try{if(sessionStorage.getItem("mkst:rl")===v)return;sessionStorage.setItem("mkst:rl",v)}catch(e){}location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()});window.addEventListener("hashchange",chk);})();
 </script>
 <div id="mk-host"><p id="mk-load">학습실을 불러오는 중…</p></div>
