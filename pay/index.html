@@ -102,9 +102,13 @@ function done() {
     app.innerHTML = '<div class="card"><div class="msg err">' + esc(e.message) + '</div><p class="note">결제 금액이 빠져나갔는데 이 화면이 나오면 메이크토익 질문방이나 010-4845-1432로 알려 주세요.</p></div><a class="btn" href="/pay/">다시 결제하기</a>';
   });
 }
-if (q.get("ok") && q.get("paymentKey")) done();
-else if (q.get("fail")) form('<div class="msg err">' + esc(q.get("message") || "결제가 취소됐어요.") + '</div>');
-else form();
+function start() {
+  if (q.get("ok") && q.get("paymentKey")) done();
+  else if (q.get("fail")) form('<div class="msg err">' + esc(q.get("message") || "결제가 취소됐어요.") + '</div>');
+  else form();
+}
+// 결제 키·가격은 서버(Supabase shop_cfg)에서 받아 온다 — 키를 바꿀 때 이 파일은 그대로
+rpc("pay_cfg", {}).then(function (c) { if (c && c.ck) { CLIENT_KEY = c.ck; PRICE = c.price || PRICE; NAME = c.name || NAME; } }).catch(function () { }).then(start);
 })();
 </script>
 </body>
