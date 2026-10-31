@@ -7,6 +7,7 @@
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
 var FN = T(function () {/*// 학습실 이용권 — study/pay.js
 var PAY_URL = window.MKST_PAY_URL || "https://maketoeic.com/shop/item.php?it_id=1793454468", LK_URL = "https://maketoeic.liveklass.com";
+function paySync() { return fetch("https://maketoeic.com/kr_sync.php?t=" + Date.now(), { mode: "no-cors", cache: "no-store" }).catch(function () { }).then(function () { return new Promise(function (r) { setTimeout(r, 1500); }); }); }
 function payFull() { var p = S.profile || {}; return p.full !== false; }
 function secIsA(id) { var c = S.catalog && S.catalog.sections || []; for (var i = 0; i < c.length; i++) if (c[i].id === id) return c[i].group === "A급 과제"; return false; }
 function payLocked(h) {
@@ -35,7 +36,7 @@ function bindPayCheck(after) {
   var b = document.getElementById("pay-chk"); if (!b) return;
   b.onclick = function () {
     var m = document.getElementById("pay-msg"); b.disabled = true; b.textContent = "결제 확인 중…";
-    api("shop_check", { p_token: S.token || null }).catch(function () { }).then(function () { return after(); }).then(function (ok) {
+    paySync().then(function () { return after(); }).then(function (ok) {
       b.disabled = false; b.textContent = "결제했어요 · 바로 열기";
       if (!ok) m.textContent = "아직 결제가 확인되지 않았어요. 주문자 이름·번호가 로그인 정보와 같은지 확인하고 1~2분 뒤 다시 눌러 주세요.";
     });
@@ -72,6 +73,6 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 로그인 화면: 처음 온 사람도 이용권 결제
 ["<b>처음이신가요?</b><p style=\"margin:6px 0 12px;font-size:14px\">학습실은 메이크토익 수강생 전용입니다. 등록·기간 연장 문의는 카카오톡으로 해 주세요.</p>", "<b>처음이신가요?</b><p style=\"margin:6px 0 12px;font-size:14px\">메이크토익 오프라인 수강생은 수업하는 달에 무료로 이용해요. 그 밖에는 이용권(LC Series 전체 + RC 기출문제)을 결제하면 바로 이용할 수 있어요. 결제할 때 적은 이름·휴대폰 뒤 4자리로 입장하세요.</p><a class=\"btn\" href=\"${PAY_URL}\" target=\"_blank\" rel=\"noopener\" style=\"margin-bottom:8px\">💳 이용권 결제하기</a>"],
 // 결제 직후 로그인: 아직 학습실에 안 넘어왔으면 한 번 당겨 오고 다시 로그인
-["      if (r.status === \"notfound\") return viewLogin(", "      if (r.status === \"notfound\" && !submit.retried) { submit.retried = true; return api(\"shop_check\", { p_token: null }).catch(function () { }).then(function () { b.disabled = false; submit(); }); }\n      if (r.status === \"notfound\") return viewLogin("]
+["      if (r.status === \"notfound\") return viewLogin(", "      if (r.status === \"notfound\" && !submit.retried) { submit.retried = true; return paySync().then(function () { b.disabled = false; submit(); }); }\n      if (r.status === \"notfound\") return viewLogin("]
 ]);
 })();
