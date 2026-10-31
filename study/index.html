@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="robots" content="noindex,nofollow">
 <title>메이크토익 학습실 · MAKE TOEIC</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -18,12 +19,12 @@ html,body{margin:0;background:#F5F7FA}
 </head>
 <body>
 <header class="mk-top"><div><a href="/"><small>MAKE TOEIC ONLINE</small>메이크토익 학습실</a><a class="q" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">질문방</a></div></header>
-<script src="lc-splay.js?v=20261029b"></script>
-<script src="p2cut.js?v=20261029b"></script>
-<script src="lcvid-data.js?v=20261030a"></script>
-<script src="lcvid.js?v=20261030a"></script>
-<script src="area.js?v=20261031c"></script>
-<script src="vocafix.js?v=20261031a"></script>
+<script>
+/* 패치 파일은 폰 브라우저 캐시를 타지 않게 매번 새로 받는다 (순서대로 실행) */
+(function(){var F=["lc-splay.js","p2cut.js","lcvid-data.js","lcvid.js","area.js","vocafix.js"],t=Date.now();
+window.MKST_PATCH_READY=Promise.all(F.map(function(f){return fetch(f+"?t="+t,{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).catch(function(){return ""})})).then(function(ts){ts.forEach(function(x){try{(0,eval)(x)}catch(e){}})});
+window.addEventListener("pageshow",function(e){if(e.persisted)location.reload();});})();
+</script>
 <div id="mk-host"><p id="mk-load">학습실을 불러오는 중…</p></div>
 <script>
 (function(){
@@ -33,6 +34,7 @@ html,body{margin:0;background:#F5F7FA}
   var H={apikey:K,'Content-Type':'application/json'};
   fetch(U+'/rest/v1/rpc/get_app',{method:'POST',headers:H,body:JSON.stringify({p_name:'app'})})
     .then(function(r){return r.json()})
+    .then(function(code){return window.MKST_PATCH_READY.then(function(){return code},function(){return code})})
     .then(function(code){var P=window.MKST_PATCHES||[],c=code,ok=true;for(var i=0;i<P.length&&ok;i++){if(c.split(P[i][0]).length!==2)ok=false;else c=c.split(P[i][0]).join(P[i][1]);}if(ok)code=c;var s=document.createElement('script');s.textContent=code;document.head.appendChild(s);window.MKST_MOUNT(host);})
     .catch(function(){host.innerHTML='<p id="mk-load">학습실을 불러오지 못했어요. 새로고침해 주세요.</p>'});
 })();
