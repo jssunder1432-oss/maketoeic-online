@@ -64,7 +64,7 @@ function hasCat(k) { var c = myCats(); return !c || c.indexOf(k) >= 0; }
 function payPart() { var p = S.profile || {}; return p.full === false && (p.plan === "lc" || p.plan === "rc" || p.plan === "lcrc"); }
 function payLc() { return !!myCats(); }
 function planLC() { return hasCat("lcmock") || hasCat("lcp2"); }
-function planRC() { return hasCat("rcbook") || hasCat("agrade"); }
+function planRC() { return hasCat("rcbook") || hasCat("agrade") || hasCat("voca"); }
 function planName() { var p = (S.profile || {}).plan; if (!payPart()) return "학습실"; return p === "lcrc" ? "LC+RC 30일 수강권" : p === "rc" ? "RC 30일 수강권" : "LC 30일 수강권"; }
 function secCat(s) { return s.area === "LC" ? (/LC 실전 모의고사/.test(s.group || "") ? "lcmock" : "lcp2") : s.group === "A급 과제" ? "agrade" : "rcbook"; }
 function planSec(s) {
