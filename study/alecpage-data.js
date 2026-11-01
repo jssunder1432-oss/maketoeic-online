@@ -1,0 +1,1 @@
+window.MKST_ALPG={};
