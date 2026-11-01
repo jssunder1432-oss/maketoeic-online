@@ -16,6 +16,7 @@ function viewRoom() {
     ${allowedSeries().length ? serBar() : ""}
     <button class="row" data-room="LC" style="padding:26px 20px;background:linear-gradient(125deg,#14233E,#233C5C);color:#fff;border:0"><span class="pill" style="background:#fff;color:#172844;font-size:15px;padding:6px 14px">LC</span><span class="t"><b style="color:#fff;font-size:21px">🎧 LC 학습실</b><small style="color:#fff">듣기 · PART 1~4 · 실전 모의고사 · 해설강의</small></span>›</button>
     <button class="row" data-room="RC" style="padding:26px 20px;background:linear-gradient(125deg,#E95721,#FF8A3D);color:#fff;border:0"><span class="pill" style="background:#fff;color:#E95721;font-size:15px;padding:6px 14px">RC</span><span class="t"><b style="color:#fff;font-size:21px">📖 RC 학습실</b><small style="color:#fff">읽기 · PART 5~7 · A급 과제 · VOCA 단어 암기장</small></span>›</button>
+    ${recBox()}
     <div class="foot"><button class="btn ghost sm" id="mkst-logout">로그아웃</button><br><br><a href="/">메인페이지로 돌아가기</a></div>`);
   bindCommon();
   app.querySelectorAll("[data-room]").forEach(function (b) {
@@ -30,6 +31,29 @@ function viewRoom() {
 }
 function inSea(s) { return s.group === "A급 과제" ? serOf(s) === curSer() : (!seasonOf([s]) || seasonOf([s]) === curSer()); }
 function bmSea() { return bmList().filter(function (k) { var id = k.split(":")[0]; return S.catalog.sections.some(function (s) { return s.id === id && s.area === S.area && inSea(s); }); }); }
+// ---------- 당일 수업 녹화 (유튜브) — 목록 = content "videos".rec = [{t:제목, d:"2026-11-03", u:유튜브 주소, s:시즌(없으면 모든 시즌)}] ----------
+function recList() { var R = (S.videos && S.videos.rec) || []; return R.filter(function (r) { return r && r.u && (!r.s || +r.s === curSer()); }).sort(function (a, b) { return String(b.d || "").localeCompare(String(a.d || "")); }); }
+function ytKey(u) { var m = String(u || "").match(/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)([\w-]{11})/); return m ? m[1] : null; }
+function recBox() {
+  var L = recList();
+  return `<div style="border:2px solid #E0313A;border-radius:18px;padding:12px 12px 2px;margin:14px 0;background:#fff"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:2px 4px 10px"><b style="font-size:17px;color:#172844">🎥 당일 수업 녹화</b><small style="color:#33404F;font-size:13px">Season ${curSer()} · 수업 다시 보기</small></div>` +
+    (L.length ? L.slice(0, 5).map(function (r, i) { return `<button class="row" data-go="#/rec/${i}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(r.t || "수업 녹화")}</b><small>${esc(r.d || "")}</small></span>›</button>`; }).join("") +
+      (L.length > 5 ? `<button class="row" data-go="#/rec"><span class="t"><b>지난 수업 녹화 전체 보기</b><small>${L.length}개</small></span>›</button>` : "")
+      : `<div style="font-size:14.5px;color:#172844;padding:4px 4px 12px">오늘 수업 녹화가 올라오면 여기서 바로 볼 수 있어요.</div>`) + `</div>`;
+}
+function viewRec(i) {
+  var L = recList();
+  if (i == null || !L[i]) {
+    render(topbar("당일 수업 녹화") + (L.length ? L.map(function (r, k) { return `<button class="row" data-go="#/rec/${k}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(r.t || "수업 녹화")}</b><small>${esc(r.d || "")}</small></span>›</button>`; }).join("") : '<div class="empty">아직 올라온 수업 녹화가 없어요.</div>'));
+    bindCommon(); return;
+  }
+  var r = L[i], k = ytKey(r.u);
+  render(topbar("당일 수업 녹화") +
+    `<div style="border-radius:14px;overflow:hidden;background:#000;margin-bottom:10px">${k ? `<iframe src="https://www.youtube-nocookie.com/embed/${k}?rel=0&modestbranding=1&playsinline=1" style="display:block;width:100%;aspect-ratio:16/9;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : '<div class="empty" style="color:#fff">영상 주소를 확인해 주세요.</div>'}</div>` +
+    `<div class="card"><b style="font-size:17px">${esc(r.t || "수업 녹화")}</b><p style="margin:6px 0 0;color:#172844">${esc(r.d || "")}</p></div>` +
+    (L.length > 1 ? `<div class="grp">다른 수업 녹화</div>` + L.map(function (x, n) { return n === +i ? "" : `<button class="row" data-go="#/rec/${n}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(x.t || "수업 녹화")}</b><small>${esc(x.d || "")}</small></span>›</button>`; }).join("") : ""));
+  bindCommon();
+}
 function roomRow(go2, pill, title, sub, bg) {
   return `<button class="row" data-go="${go2}" style="${bg ? "background:" + bg + ";color:#fff;border:0" : ""}"><span class="pill ${bg ? "" : "o"}" style="${bg ? "background:#fff;color:#172844" : ""}">${pill}</span><span class="t"><b style="${bg ? "color:#fff" : ""}">${title}</b><small style="${bg ? "color:#fff" : ""}">${sub}</small></span>›</button>`;
 }
@@ -218,6 +242,8 @@ function viewLearn() {
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 1) 학습실 선택·메뉴·전체 풀기 추가, 예전 홈은 "문제 풀기"(viewLearn)로
 ["function viewHome() {\n", NEW_HOME + "\n"],
+// 당일 수업 녹화 화면 주소
+["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"rec\") return viewRec(h[1]);\n"],
 // 실전 테스트·약점 맞춤·실력 분석 문제는 지금 보는 Season 문제에서만 (교재 + 그 Season A급 과제, LC는 기본 유형도)
 ["if (s.area !== area) return; (s.keys", "if (s.area !== area || !inSea(s)) return; (s.keys"],
 // A급 과제 목록도 지금 Season 것만 (다른 Season 탭 없음)
