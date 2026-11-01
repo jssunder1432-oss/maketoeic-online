@@ -36,15 +36,12 @@ function recList() { var R = (S.videos && S.videos.rec) || []; return R.filter(f
 function ytKey(u) { var m = String(u || "").match(/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)([\w-]{11})/); return m ? m[1] : null; }
 function recBox() {
   var L = recList();
-  return `<div style="border:2px solid #E0313A;border-radius:18px;padding:12px 12px 2px;margin:14px 0;background:#fff"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:2px 4px 10px"><b style="font-size:17px;color:#172844">🎥 당일 수업 녹화</b><small style="color:#33404F;font-size:13px">Season ${curSer()} · 수업 다시 보기</small></div>` +
-    (L.length ? L.slice(0, 5).map(function (r, i) { return `<button class="row" data-go="#/rec/${i}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(r.t || "수업 녹화")}</b><small>${esc(r.d || "")}</small></span>›</button>`; }).join("") +
-      (L.length > 5 ? `<button class="row" data-go="#/rec"><span class="t"><b>지난 수업 녹화 전체 보기</b><small>${L.length}개</small></span>›</button>` : "")
-      : `<div style="font-size:14.5px;color:#172844;padding:4px 4px 12px">오늘 수업 녹화가 올라오면 여기서 바로 볼 수 있어요.</div>`) + `</div>`;
+  return `<button class="row" data-go="#/rec" style="padding:26px 20px;background:linear-gradient(125deg,#C8202B,#F0414A);color:#fff;border:0"><span class="pill" style="background:#fff;color:#C8202B;font-size:15px;padding:6px 14px">LIVE</span><span class="t"><b style="color:#fff;font-size:21px">🎥 당일 수업 녹화</b><small style="color:#fff">수업 다시 보기 · ${L.length ? "최근 " + esc(L[0].t || "") + " · " + L.length + "개" : "녹화가 올라오면 여기서 바로 봐요"}</small></span>›</button>`;
 }
 function viewRec(i) {
   var L = recList();
   if (i == null || !L[i]) {
-    render(topbar("당일 수업 녹화") + (L.length ? L.map(function (r, k) { return `<button class="row" data-go="#/rec/${k}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(r.t || "수업 녹화")}</b><small>${esc(r.d || "")}</small></span>›</button>`; }).join("") : '<div class="empty">아직 올라온 수업 녹화가 없어요.</div>'));
+    render(topbar("당일 수업 녹화") + `<div class="card hero"><span class="kicker">MAKE TOEIC · 당일 수업 녹화</span><h1>🎥 수업 다시 보기</h1><p>Season ${curSer()} · 최신 수업이 맨 위에 있어요.</p></div>` + (L.length ? L.map(function (r, k) { return `<button class="row" data-go="#/rec/${k}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(r.t || "수업 녹화")}</b><small>${esc(r.d || "")}</small></span>›</button>`; }).join("") : '<div class="empty">아직 올라온 수업 녹화가 없어요.</div>'));
     bindCommon(); return;
   }
   var r = L[i], k = ytKey(r.u);
