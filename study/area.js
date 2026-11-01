@@ -216,6 +216,9 @@ function viewLearn() {
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 1) 학습실 선택·메뉴·전체 풀기 추가, 예전 홈은 "문제 풀기"(viewLearn)로
 ["function viewHome() {\n", NEW_HOME + "\n"],
+// 실전 테스트·약점 맞춤·실력 분석 문제는 지금 보는 Season 문제에서만 (교재 + 그 Season A급 과제, LC는 기본 유형도)
+["if (s.area !== area) return; (s.keys", "if (s.area !== area) return; if (s.group === \"A급 과제\" ? serOf(s) !== curSer() : (seasonOf([s]) && seasonOf([s]) !== curSer())) return; (s.keys"],
+["공개된 전체 문제에서 무작위로 출제돼요.", "지금 보는 Season ${curSer()} 문제(교재 · A급 과제)에서 무작위로 출제돼요."],
 // RC 유형별 기본 문제(시즌 표시 없는 RC)는 Series 3 — Series 1·2 는 교재1·교재2 문제
 ["  if (s.season) return +s.season;\n  if (s.area === \"LC\" && /^LC 실전 모의고사/.test(s.group || \"\")) return 3;", "  if (s.season) return +s.season;\n  if (s.area === \"LC\" && /^LC 실전 모의고사/.test(s.group || \"\")) return 3;\n  if (s.area === \"RC\" && s.group !== \"A급 과제\") return 3;"],
 // 2) 문제 풀기 화면: 위쪽 큰 카드·오늘의 학습은 숨기고 뒤로 버튼
