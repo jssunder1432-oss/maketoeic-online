@@ -60,14 +60,12 @@ function viewHome() {
   ${serBar()}
   ${todayCard()}
   ${top}
-  <div class="tiles" style="margin:0 0 14px">
-    <button class="tile" data-go="#/mock"><span class="pill o">실전 테스트</span><b>${lc ? "파트2 25문제" : "파트5 30문제"}</b><small>${lc ? "실전처럼 자동 넘김" : "제한 시간 10분 · 랜덤 출제"}</small></button>
-    <button class="tile" data-go="#/weak"><span class="pill o">약점 맞춤</span><b>약점 유형 20문제</b><small>틀린·안 푼 문제 위주</small></button>
-    <button class="tile" data-go="#/wrong"><span class="pill n">오답노트</span><b>틀린 문제 ${wrongN}개</b><small>다시 풀고 졸업하기</small></button>
-    <button class="tile" data-go="#/bm"><span class="pill n">저장한 문제</span><b>☆ ${bmList().length}문제</b><small>다시 볼 문제 모음</small></button>
-    <button class="tile" data-go="#/stats"><span class="pill n">실력 분석</span><b>유형별 정답률</b><small>약점 유형 · 맞춤 문제 추천</small></button>
-    <button class="tile" data-go="#/room"><span class="pill o">학습실</span><b>${lc ? "📖 RC 학습실로" : "🎧 LC 학습실로"}</b><small>학습실 바꾸기</small></button>
-  </div>
+  ${box("📊 실전 테스트 · 복습", "", "#33404F",
+    roomRow("#/mock", "실전", lc ? "실전 테스트 · 파트2 25문제" : "실전 테스트 · 파트5 30문제", lc ? "실전처럼 자동 넘김" : "제한 시간 10분 · 랜덤 출제", "") +
+    roomRow("#/weak", "약점", "약점 유형 20문제", "틀린·안 푼 문제 위주로 맞춤 출제", "") +
+    roomRow("#/wrong", "오답", "오답노트 · 틀린 문제 " + wrongN + "개", "다시 풀고 졸업하기", "") +
+    roomRow("#/bm", "저장", "저장한 문제 · ☆ " + bmList().length + "문제", "다시 볼 문제 모음", "") +
+    roomRow("#/stats", "분석", "실력 분석 · 유형별 정답률", "약점 유형 · 맞춤 문제 추천", ""))}
   ${bottom}
   <div class="foot"><button class="btn ghost sm" id="mkst-logout">로그아웃</button><br><br><a href="/">메인페이지로 돌아가기</a></div>`);
   bindCommon();
