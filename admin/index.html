@@ -296,10 +296,35 @@ function viewRecs() {
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
 }
 
+/* ---------- 비밀번호 새로 정하기 (일회용 링크: /admin/#reset=코드) ---------- */
+function viewReset(code) {
+  render(`<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>새 비밀번호 정하기</h1></div>
+  <div class="card" style="max-width:460px">
+    <p class="note" style="margin-top:0">관리자 계정(js1432@naver.com)의 새 비밀번호를 정하세요. 이 링크는 한 번만 쓸 수 있어요.</p>
+    <label>새 비밀번호 (8자 이상)</label><input class="in" id="r1" type="password" autocomplete="new-password">
+    <label>새 비밀번호 한 번 더</label><input class="in" id="r2" type="password" autocomplete="new-password">
+    <div id="rmsg"></div>
+    <button class="btn" id="rgo" style="width:100%;margin-top:14px;padding:14px">비밀번호 저장</button></div>`);
+  document.getElementById("rgo").onclick = function () {
+    var a = document.getElementById("r1").value, b = document.getElementById("r2").value, msg = document.getElementById("rmsg");
+    if (a.length < 8) { msg.innerHTML = '<div class="msg err">8자 이상으로 정해 주세요.</div>'; return; }
+    if (a !== b) { msg.innerHTML = '<div class="msg err">두 칸이 서로 달라요.</div>'; return; }
+    rpc("admin_reset_password", { p_token: code, p_pw: a }).then(function (r) {
+      if (r === "ok") {
+        history.replaceState(null, "", location.pathname);
+        viewLogin('<div class="msg ok">새 비밀번호로 바꿨어요. 이제 로그인하세요.</div>');
+        document.getElementById("ad-email").value = "js1432@naver.com";
+      } else msg.innerHTML = '<div class="msg err">' + (r === "short" ? "8자 이상으로 정해 주세요." : "이 링크는 이미 썼거나 시간이 지났어요. 새 링크를 받아 주세요.") + "</div>";
+    }).catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
+  };
+}
+
 /* ---------- 시작 ---------- */
 try {
   sb = window.supabase.createClient(U, K);
-  sb.auth.getSession().then(function (r) { if (r.data.session) afterLogin(); else viewLogin(); });
+  var rs = location.hash.match(/reset=([0-9a-f-]{36})/);
+  if (rs) viewReset(rs[1]);
+  else sb.auth.getSession().then(function (r) { if (r.data.session) afterLogin(); else viewLogin(); });
 } catch (e) { render('<div class="card">관리 도구를 불러오지 못했어요. 새로고침해 주세요.</div>'); }
 })();
 </script>
