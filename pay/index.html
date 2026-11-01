@@ -50,6 +50,8 @@ var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : "pass", 
 var PRODS = { lc: { name: "LC 30일 수강권", price: 15000, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의"] },
   rc: { name: "RC 30일 수강권", price: 0, items: ["고른 Season의 RC 문제 (Part 5 문법 · 어휘 · Part 7 독해)", "문제별 해설 · 단어 누르면 뜻 · 품사"] },
   lcrc: { name: "LC+RC 30일 수강권", price: 0, items: ["고른 Season의 LC 실전 모의고사 10회 + 해설강의", "고른 Season의 RC 문제 + 해설 · 단어 뜻"] } };
+var MEM = false;
+function priceOf(k) { var m = PRODS[k].priceM; return MEM && m > 0 ? m : PRODS[k].price; }
 function avail() { return ["lc", "rc", "lcrc"].filter(function (k) { return PRODS[k].price > 0; }); }
 function rpc(fn, a) { return fetch(SUPA + "/rest/v1/rpc/" + fn, { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify(a) }).then(function (r) { return r.json(); }); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -66,7 +68,7 @@ var TERMS_LC = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
 function form(msg) {
   app.innerHTML =
     (LC ? '<div class="card hero"><span class="kicker">MAKE TOEIC · 비회원 학습실</span><h1>30일 수강권</h1><p>원하는 Season의 메이크토익 학습실 문제로 훈련해요. 결제하면 바로 열려요.</p></div>' +
-        (avail().length > 1 ? '<div class="card"><b style="color:var(--ink)">상품 고르기</b><div class="pick">' + avail().map(function (k) { return '<button type="button" class="pk' + (k === KIND ? ' on' : '') + '" data-k="' + k + '"><b>' + PRODS[k].name + '</b><span>' + PRODS[k].price.toLocaleString() + '원</span></button>'; }).join("") + '</div></div>' : '') +
+        (avail().length > 1 ? '<div class="card"><b style="color:var(--ink)">상품 고르기</b><div class="pick">' + avail().map(function (k) { return '<button type="button" class="pk' + (k === KIND ? ' on' : '') + '" data-k="' + k + '"><b>' + PRODS[k].name + '</b><span>' + (PRODS[k].priceM > 0 && PRODS[k].priceM !== PRODS[k].price ? (MEM ? '<s style="font-weight:600;margin-right:6px">' + PRODS[k].price.toLocaleString() + '</s>' + PRODS[k].priceM.toLocaleString() + '원' : PRODS[k].price.toLocaleString() + '원<br><small style="font-weight:700">수강생 ' + PRODS[k].priceM.toLocaleString() + '원</small>') : PRODS[k].price.toLocaleString() + '원') + '</span></button>'; }).join("") + '</div></div>' : '') +
         '<div class="card"><b style="color:var(--ink)">Season 고르기</b><p class="note" style="margin:4px 0 0">Season마다 문제가 달라요. 처음이면 이번 달 Season을 추천해요.</p><div class="pick s3">' + [1, 2, 3].map(function (n) { return '<button type="button" class="pk' + (n === SEA ? ' on' : '') + '" data-s="' + n + '"><b>Season ' + n + '</b><span>' + (n === CFG.cur ? '이번 달' : '') + '</span></button>'; }).join("") + '</div></div>'
         : '<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 이용권</span><h1>결제하면 바로 학습실이 열려요</h1><p>오프라인 수강생은 수업하는 달에 무료예요. 수업이 끝난 다음 달부터, 또는 온라인으로만 공부할 때 이용권을 결제하세요.</p></div>') +
     '<div class="card"><div class="price"><span>' + NAME + '</span><b>' + PRICE.toLocaleString() + '원</b></div>' +
@@ -76,18 +78,27 @@ function form(msg) {
     '<div class="card"><b style="color:var(--ink)">학습실 로그인 정보</b>' +
     '<label for="nm">이름</label><input id="nm" autocomplete="name" placeholder="홍길동" value="' + esc(q.get("name") || "") + '">' +
     '<label for="ph">휴대폰 번호</label><input id="ph" inputmode="numeric" autocomplete="tel" placeholder="010-1234-5678">' +
-    '<p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b>. 이미 학습실을 쓰고 있다면 등록된 번호를 그대로 적어 주세요.</p>' + (msg || "") + '</div>' +
+    '' + (LC && avail().some(function (k) { return PRODS[k].priceM > 0 && PRODS[k].priceM !== PRODS[k].price; }) ? '<div class="msg ' + (MEM ? 'ok' : '') + '" id="memmsg" style="' + (MEM ? '' : 'background:#F3F5F9;color:#101828') + '">' + (MEM ? '✓ 메이크토익 수강생 확인 — 수강생 가격이 적용됐어요.' : '메이크토익에서 수업을 들은 학생은 등록된 이름 · 휴대폰 번호를 적으면 수강생 가격이 적용돼요.') + '</div>' : '') + '<p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b>. 이미 학습실을 쓰고 있다면 등록된 번호를 그대로 적어 주세요.</p>' + (msg || "") + '</div>' +
     '<div class="card"><div id="pm"></div><div id="ag"></div></div>' +
     '<button class="btn" id="go">' + PRICE.toLocaleString() + '원 결제하기</button>' +
     '<p class="note" style="text-align:center">결제 후 환불되지 않아요. 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
   var w;
   try {
     w = PaymentWidget(CLIENT_KEY, PaymentWidget.ANONYMOUS);
-    w.renderPaymentMethods("#pm", { value: PRICE });
+    var pmw = w.renderPaymentMethods("#pm", { value: PRICE });
     w.renderAgreement("#ag");
   } catch (e) { document.getElementById("pm").innerHTML = '<div class="msg err">결제창을 불러오지 못했어요. 새로고침해 주세요.</div>'; }
+  var qt; function quote() {
+    clearTimeout(qt); qt = setTimeout(function () {
+      var nm = document.getElementById("nm").value.trim(), ph = document.getElementById("ph").value.replace(/\D/g, "");
+      if (!LC || !nm || !/^01\d{8,9}$/.test(ph)) { if (MEM) { MEM = false; redraw(); } return; }
+      rpc("pay_quote", { p_name: nm, p_phone: ph }).then(function (r) { var m = !!(r && r.member); if (m !== MEM) { MEM = m; redraw(); } }).catch(function () { });
+    }, 400);
+  }
+  function redraw() { var nm = document.getElementById("nm").value, ph = document.getElementById("ph").value; PRICE = LC ? priceOf(KIND) : PRICE; form(); document.getElementById("nm").value = nm; document.getElementById("ph").value = ph; }
+  ["nm", "ph"].forEach(function (id) { document.getElementById(id).addEventListener("input", quote); });
   app.querySelectorAll("[data-s]").forEach(function (x) { x.onclick = function () { var nm = document.getElementById("nm").value, ph = document.getElementById("ph").value; SEA = +x.dataset.s; form(); document.getElementById("nm").value = nm; document.getElementById("ph").value = ph; }; });
-  app.querySelectorAll("[data-k]").forEach(function (x) { x.onclick = function () { var nm = document.getElementById("nm").value, ph = document.getElementById("ph").value; KIND = x.dataset.k; PRICE = PRODS[KIND].price; NAME = PRODS[KIND].name; history.replaceState(null, "", "/pay/?p=" + KIND); form(); document.getElementById("nm").value = nm; document.getElementById("ph").value = ph; }; });
+  app.querySelectorAll("[data-k]").forEach(function (x) { x.onclick = function () { var nm = document.getElementById("nm").value, ph = document.getElementById("ph").value; KIND = x.dataset.k; PRICE = priceOf(KIND); NAME = PRODS[KIND].name; history.replaceState(null, "", "/pay/?p=" + KIND); form(); document.getElementById("nm").value = nm; document.getElementById("ph").value = ph; }; });
   var b = document.getElementById("go");
   b.onclick = function () {
     var nm = document.getElementById("nm").value.trim(), ph = document.getElementById("ph").value.replace(/\D/g, "");
@@ -98,6 +109,7 @@ function form(msg) {
       if (o.status === "noprice") throw new Error("아직 판매 준비 중인 상품이에요. 다른 상품을 골라 주세요.");
       if (o.status !== "ok") throw new Error(o.status);
       try { sessionStorage.setItem("mkpay", JSON.stringify({ name: nm, last4: ph.slice(-4) })); } catch (e) { }
+      if (o.amount !== PRICE) { PRICE = o.amount; try { pmw.updateAmount(PRICE); } catch (e) { } }
       return w.requestPayment({ orderId: o.order_id, orderName: o.order_name, customerName: nm, customerMobilePhone: ph,
         successUrl: location.origin + "/pay/?ok=1", failUrl: location.origin + "/pay/?fail=1" });
     }).catch(function (e) {
@@ -129,7 +141,7 @@ function start() {
 // 결제 키·가격은 서버(Supabase shop_cfg)에서 받아 온다 — 키를 바꿀 때 이 파일은 그대로
 rpc("pay_cfg", {}).then(function (c) {
   if (!c || !c.ck) return; CFG = c; CLIENT_KEY = c.ck;
-  ["lc", "rc", "lcrc"].forEach(function (k) { PRODS[k].price = c[k + "_price"] || (k === "lc" ? 15000 : 0); });
+  ["lc", "rc", "lcrc"].forEach(function (k) { PRODS[k].price = c[k + "_price"] || (k === "lc" ? 15000 : 0); PRODS[k].priceM = c[k + "_price_m"] || 0; });
   if (!LC) { PRICE = c.price || PRICE; NAME = c.name || NAME; }
 }).catch(function () { }).then(function () {
   if (LC) { if (!(PRODS[KIND].price > 0)) KIND = "lc"; PRICE = PRODS[KIND].price; NAME = PRODS[KIND].name; if (!(SEA >= 1 && SEA <= 3)) SEA = CFG.cur || 2; }

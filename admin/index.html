@@ -167,7 +167,7 @@ function stTag(s) { return s.days_left < 0 ? '<span class="tag end">만료</span
 var CATS = [["lcmock", "LC 실전 모의고사 · 해설강의"], ["lcp2", "LC Part 2 유형별"], ["rcbook", "RC 교재 문제 · 실전 테스트"], ["agrade", "A급 과제 · 해설강의"], ["voca", "VOCA · 단어 게임"]];
 var PLAN_CATS = { lc: ["lcmock"], rc: ["rcbook"], lcrc: ["lcmock", "rcbook"] };
 var PLAN_NM = { lc: "LC 30일권", rc: "RC 30일권", lcrc: "LC+RC 30일권" };
-function kindTag(s) { return PLAN_NM[s.plan] ? '<span class="tag lc">' + PLAN_NM[s.plan] + '</span>' : '<span class="tag full">수강생</span>'; }
+function kindTag(s) { return (PLAN_NM[s.plan] ? '<span class="tag lc">' + PLAN_NM[s.plan] + '</span>' : '<span class="tag full">수강생</span>') + (PLAN_NM[s.plan] && s.member ? ' <span class="tag full">수업 들은 학생</span>' : ''); }
 function draw() {
   if (view !== "list") return;
   var on = students.filter(function (s) { return s.days_left >= 0; });
@@ -219,6 +219,7 @@ function editForm(s) {
     <label>이름</label><input class="in" id="f-name" value="${esc(s.name)}">
     <label>휴대폰 번호</label><input class="in" id="f-phone" inputmode="numeric" value="${esc(s.phone)}" placeholder="01012345678">
     <label>구분</label><select class="in" id="f-plan"><option value="">수강생 (학습실 전체: LC·RC·A급·VOCA)</option><option value="lc" ${s.plan === "lc" ? "selected" : ""}>비회원 LC 30일권 (이번 달 LC 모의고사)</option><option value="rc" ${s.plan === "rc" ? "selected" : ""}>비회원 RC 30일권 (이번 달 Season RC 문제)</option><option value="lcrc" ${s.plan === "lcrc" ? "selected" : ""}>비회원 LC+RC 30일권 (둘 다)</option></select>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px"><input type="checkbox" id="f-mem" ${isNew || s.member ? "checked" : ""} style="width:20px;height:20px">수업 들은 학생 (결제할 때 수강생 가격 적용)</label>
     <div class="grid"><div><label>시작일</label><input class="in" type="date" id="f-start" value="${esc(s.start_date)}"></div>
       <div><label>종료일</label><input class="in" type="date" id="f-end" value="${esc(s.end_date)}"></div></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn ghost sm" data-dur="me">이번 달 말까지</button>${[1, 2, 3].map(function (n) { return `<button class="btn ghost sm" data-dur="${n}">${n}개월</button>`; }).join("")}</div>
@@ -249,6 +250,7 @@ function editForm(s) {
     el.innerHTML = "열리는 Season: <b>" + seaTxt + "</b><br>열리는 카테고리: <b>" + catTxt + "</b>" + (cats.length ? " (직접 고름)" : pl ? " (상품 기본)" : " (기본)");
   }
   m.querySelectorAll("#f-cats input").forEach(function (c) { c.addEventListener("change", sea); });
+  if (isNew) m.querySelector("#f-plan").addEventListener("change", function () { m.querySelector("#f-mem").checked = !m.querySelector("#f-plan").value; });
   m.querySelectorAll("#f-seas input").forEach(function (c) { c.addEventListener("change", sea); });
   ["#f-start", "#f-end", "#f-plan"].forEach(function (q) { m.querySelector(q).addEventListener("change", sea); m.querySelector(q).addEventListener("input", sea); });
   m.querySelectorAll("[data-dur]").forEach(function (b) { b.addEventListener("click", sea); });
@@ -270,7 +272,7 @@ function editForm(s) {
     if (dup && !confirm("같은 이름 · 같은 번호 뒤 4자리 학생이 이미 있어요 (" + dup.start_date + " ~ " + dup.end_date + ").\n새로 등록하지 말고 그 학생을 '수정'해서 기간을 바꾸는 게 좋아요.\n그래도 저장할까요?")) return;
     var seas = [].map.call(m.querySelectorAll("#f-seas input:checked"), function (c) { return +c.value; });
     var cats = [].map.call(m.querySelectorAll("#f-cats input:checked"), function (c) { return c.value; });
-    rpc("admin_save_student", v).then(function (id) { id = id || s.id; return rpc("admin_set_seasons", { p_id: id, p_seasons: seas }).then(function () { return rpc("admin_set_cats", { p_id: id, p_cats: cats }); }); }).then(function () { m.remove(); refresh(); }).catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
+    rpc("admin_save_student", v).then(function (id) { id = id || s.id; return rpc("admin_set_seasons", { p_id: id, p_seasons: seas }).then(function () { return rpc("admin_set_cats", { p_id: id, p_cats: cats }); }).then(function () { return rpc("admin_set_member", { p_id: id, p_member: m.querySelector("#f-mem").checked }); }); }).then(function () { m.remove(); refresh(); }).catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
   };
 }
 
@@ -348,10 +350,15 @@ function viewPrice() {
   render(head() + '<div class="card">불러오는 중…</div>'); bindHead();
   rpc("admin_prices").then(function (c) {
     c = c || {};
-    var rows = [["lc_price", "비회원 LC 30일권", "이번 달 LC 실전 모의고사"], ["rc_price", "비회원 RC 30일권", "이번 달 Season RC 문제 (A급 과제 제외)"], ["lcrc_price", "비회원 LC+RC 30일권", "LC + RC 둘 다"], ["pass_price", "수업 끝난 수강생 이용권 (1개월)", "LC 그 달 Season 전체 + RC 기출"]];
+    var rows = [["lc_price", "LC 30일권", "고른 Season의 LC 실전 모의고사"], ["rc_price", "RC 30일권", "고른 Season의 RC 문제 (A급 과제 제외)"], ["lcrc_price", "LC+RC 30일권", "LC + RC 둘 다"]];
     render(head() + `<div class="card"><p class="sec">결제 화면 가격</p>
       <p class="note" style="margin-top:0">가격을 비워 두면 그 상품은 결제 화면에 안 나와요. 바꾸면 바로 결제 화면에 적용돼요.</p>
-      ${rows.map(function (r) { return `<label>${r[1]} <span style="font-weight:600">· ${r[2]}</span></label><div style="display:flex;gap:8px;align-items:center"><input class="in" inputmode="numeric" data-pk="${r[0]}" value="${esc(c[r[0]] || "")}" placeholder="판매 안 함"><span style="font-weight:800">원</span></div>`; }).join("")}
+      <p class="note"><b>수강생 가격</b>은 메이크토익에서 수업을 들은 학생(관리자에서 '수업 들은 학생'으로 표시된 학생)이 결제 화면에 등록된 이름·번호를 적으면 자동으로 적용돼요. 비워 두면 비회원 가격과 같아요.</p>
+      ${rows.map(function (r) { return `<div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">${r[1]}</b> <span style="font-size:13px;font-weight:600">· ${r[2]}</span>
+        <div class="grid" style="margin-top:6px"><div><label style="margin-top:0">비회원 가격</label><div style="display:flex;gap:6px;align-items:center"><input class="in" inputmode="numeric" data-pk="${r[0]}" value="${esc(c[r[0]] || "")}" placeholder="판매 안 함"><b>원</b></div></div>
+        <div><label style="margin-top:0">수강생 가격</label><div style="display:flex;gap:6px;align-items:center"><input class="in" inputmode="numeric" data-pk="${r[0]}_m" value="${esc(c[r[0] + "_m"] || "")}" placeholder="비회원과 같음"><b>원</b></div></div></div></div>`; }).join("")}
+      <div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">수업 끝난 수강생 이용권 (1개월)</b> <span style="font-size:13px;font-weight:600">· LC 그 달 Season 전체 + RC 기출</span>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input class="in" inputmode="numeric" data-pk="pass_price" value="${esc(c.pass_price || "")}"><b>원</b></div></div>
       <div id="pr-msg"></div><button class="btn" id="pr-save" style="width:100%;padding:14px;margin-top:12px">가격 저장</button></div>`);
     bindHead();
     document.getElementById("pr-save").onclick = function () {
