@@ -47,7 +47,7 @@ var PRICE = 150000, NAME = "학습실 이용권 (1개월)";
 var app = document.getElementById("app"), q = new URLSearchParams(location.search);
 var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : "pass", LC = KIND !== "pass", CFG = {}, SEA = +q.get("s") || 0;
 // 비회원 30일 수강권 (가격이 정해진 상품만 보여 줌 — 가격은 관리자 페이지에서)
-var PRODS = { lc: { name: "LC 30일 수강권", price: 15000, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의"] },
+var PRODS = { lc: { name: "LC 30일 수강권", price: 24900, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의"] },
   rc: { name: "RC 30일 수강권", price: 0, items: ["고른 Season의 RC 문제 (Part 5 문법 · 어휘 · Part 7 독해)", "문제별 해설 · 단어 누르면 뜻 · 품사"] },
   lcrc: { name: "LC+RC 30일 수강권", price: 0, items: ["고른 Season의 LC 실전 모의고사 10회 + 해설강의", "고른 Season의 RC 문제 + 해설 · 단어 뜻"] } };
 var MEM = false;
@@ -141,7 +141,7 @@ function start() {
 // 결제 키·가격은 서버(Supabase shop_cfg)에서 받아 온다 — 키를 바꿀 때 이 파일은 그대로
 rpc("pay_cfg", {}).then(function (c) {
   if (!c || !c.ck) return; CFG = c; CLIENT_KEY = c.ck;
-  ["lc", "rc", "lcrc"].forEach(function (k) { PRODS[k].price = c[k + "_price"] || (k === "lc" ? 15000 : 0); PRODS[k].priceM = c[k + "_price_m"] || 0; });
+  ["lc", "rc", "lcrc"].forEach(function (k) { PRODS[k].price = c[k + "_price"] || (k === "lc" ? 24900 : 0); PRODS[k].priceM = c[k + "_price_m"] || 0; });
   if (!LC) { PRICE = c.price || PRICE; NAME = c.name || NAME; }
 }).catch(function () { }).then(function () {
   if (LC) { if (!(PRODS[KIND].price > 0)) KIND = "lc"; PRICE = PRODS[KIND].price; NAME = PRODS[KIND].name; if (!(SEA >= 1 && SEA <= 3)) SEA = CFG.cur || 2; }

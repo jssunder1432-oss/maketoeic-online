@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>비회원 학습실 · LC 실전 모의고사 훈련 | 메이크토익</title>
-<meta name="description" content="메이크토익 비회원 학습실 — 이번 달 LC 실전 모의고사 10회분을 원본 음성·스크립트·해석·문제별 해설강의로 훈련. 30일 수강권 15,000원.">
+<meta name="description" content="메이크토익 비회원 학습실 — 이번 달 LC 실전 모의고사 10회분을 원본 음성·스크립트·해석·문제별 해설강의로 훈련. 30일 수강권 24,900원.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{--navy:#1F3864;--deep:#14264A;--orange:#F0562A;--ink:#101828;--text:#1F2937;--soft:#F3F5F9;--line:#E3E7EF}
@@ -56,7 +56,7 @@ footer{padding:22px 16px 40px;max-width:960px;margin:0 auto;font-size:12.5px;lin
   <span class="chip">비회원 학습실 · LC 실전 모의고사 훈련</span>
   <h1>학원에 안 다녀도<br>메이크토익 LC 모의고사로<br>훈련하세요</h1>
   <p>메이크토익 수강생 학습실에서 이번 달 진행하는 LC 실전 모의고사를 그대로 풉니다. 원본 음성, 문장별 스크립트와 해석, 문제별 해설강의까지 휴대폰 하나로.</p>
-  <div class="price"><b>15,000원</b><span>30일 수강권</span></div>
+  <div class="price"><b>24,900원</b><span>30일 수강권 · 수강생 15,000원</span></div>
   <p id="more" hidden style="font-size:15px;margin:-6px 0 16px;color:#fff"></p>
   <div class="acts"><a class="btn or" href="/pay/?p=lc">30일 수강권 결제하기</a><a class="btn line" href="/study/">이미 결제했어요 · 입장</a></div>
 </div></div>
@@ -100,7 +100,7 @@ footer{padding:22px 16px 40px;max-width:960px;margin:0 auto;font-size:12.5px;lin
 
 <section class="cta"><div class="wrap">
   <h2>오늘 바로 LC 훈련 시작</h2>
-  <p class="sub" style="color:#fff">30일 15,000원 · 결제 즉시 이용</p>
+  <p class="sub" style="color:#fff">30일 24,900원 · 메이크토익 수강생 15,000원 · 결제 즉시 이용</p>
   <div class="acts" style="justify-content:center"><a class="btn wh" href="/pay/?p=lc">30일 수강권 결제하기</a></div>
 </div></section>
 
@@ -109,6 +109,7 @@ footer{padding:22px 16px 40px;max-width:960px;margin:0 auto;font-size:12.5px;lin
 fetch("https://hrlldteviatcatxyzrrz.supabase.co/rest/v1/rpc/pay_cfg",{method:"POST",headers:{apikey:"sb_publishable_YT1A99HvH7VoMz76xq7Tvg__Imr0_qy","Content-Type":"application/json"},body:"{}"}).then(function(r){return r.json()}).then(function(c){
   if(!c)return; var o=[]; if(c.rc_price)o.push("RC "+(+c.rc_price).toLocaleString()+"원"); if(c.lcrc_price)o.push("LC+RC 세트 "+(+c.lcrc_price).toLocaleString()+"원");
   if(c.lc_price){document.querySelectorAll(".price b").forEach(function(b){b.textContent=(+c.lc_price).toLocaleString()+"원"});}
+  if(c.lc_price_m){document.querySelectorAll(".price span").forEach(function(x){x.textContent="30일 수강권 · 수강생 "+(+c.lc_price_m).toLocaleString()+"원"});}
   if(o.length){var m=document.getElementById("more");m.innerHTML="RC 문제도 함께 풀고 싶다면 · "+o.join(" · ")+" (결제 화면에서 선택)";m.hidden=false;}
 }).catch(function(){});
 </script>
