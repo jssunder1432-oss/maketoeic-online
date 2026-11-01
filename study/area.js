@@ -38,16 +38,20 @@ function viewHome() {
   mine.forEach(function (s) { var t = secStats(s); tot += t.total; done += t.done; ok += t.ok; });
   var wrongN = Object.keys(S.prog).filter(function (k) { return !S.prog[k][1] && mine.some(function (s) { return k.indexOf(s.id + ":") === 0; }); }).length;
   var fulls = lc ? fullGroups(ser) : [];
-  var menu = lc
-    ? roomRow("#/learn", "문제", "📝 문제 풀기", "기본 유형 연습 · 실전 모의고사 PART별 풀기", "linear-gradient(125deg,#14233E,#233C5C)") +
+  function box(title, sub, color, inner) { return `<div style="border:2px solid ${color};border-radius:18px;padding:12px 12px 2px;margin:0 0 14px;background:#fff"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:2px 4px 10px"><b style="font-size:17px;color:#172844">${title}</b><small style="color:#33404F;font-size:13px">${sub}</small></div>${inner}</div>`; }
+  var top = lc
+    ? box("🎧 LC 문제 · 해설강의", "Season " + ser, "#172844",
+      roomRow("#/learn", "문제", "📝 문제 풀기", "기본 유형 연습 · 실전 모의고사 PART별 풀기", "linear-gradient(125deg,#14233E,#233C5C)") +
       (fulls.length ? roomRow("#/full", "전체", "🎯 실전 모의고사 회차 전체 풀기", "한 회차 PART 1~4 전체를 실전처럼 한 번에 · " + fulls.length + "회", "linear-gradient(125deg,#E95721,#FF8A3D)") : "") +
       (typeof viewLcvRounds === "function" && window.MKST_LCVID ? roomRow("#/lcv", "강의", "🎬 실전 모의고사 해설강의", "회차 → 문제를 골라 그 문제 강의만 보기", "") : "") +
-      (reelList().length ? roomRow("#/reels", "REELS", "🎬 기출 릴스 · PART 3·4", "원본 음원 + 단어 자막 + 정답 공개 · " + reelList().length + "편", "linear-gradient(125deg,#172844,#3A2A6B)") : "")
-    : roomRow("#/learn", "문제", "📝 문제 풀기 · Series " + ser, ({ 1: "교재1 기출문법 · 기출어휘 · PART 7 · 해설", 2: "교재2 기출문법 · 기출어휘 · PART 7 · 해설", 3: "유형별 기본 문제 · PART 5~7 · 해설" })[ser] || "PART 5~7", "linear-gradient(125deg,#E95721,#FF8A3D)") +
-      roomRow("#/a", "A급", "A급 과제 · Series " + ser, "1~15회 · PART 5·6·7 과제 · 해설", "") +
-      `<a class="row" href="https://maketoeic.kr/ls/69ec23199641/voca/?s=${ser}" style="background:linear-gradient(125deg,#14233E,#233C5C);color:#fff;border:0;text-decoration:none"><span class="pill" style="background:#fff;color:#172844">VOCA</span><span class="t"><b style="color:#fff">VOCA 단어 암기장 · Series ${ser}</b><small style="color:#fff">DAY 01~30 · 815단어 · 단어·파생어·예문 누르면 성우 발음</small></span>›</a>` +
+      (reelList().length ? roomRow("#/reels", "REELS", "🎬 기출 릴스 · PART 3·4", "원본 음원 + 단어 자막 + 정답 공개 · " + reelList().length + "편", "linear-gradient(125deg,#172844,#3A2A6B)") : ""))
+    : box("📚 교재 · A급 과제 문제", "Season " + ser, "#FF581F",
+      roomRow("#/learn", "교재", "📝 교재 문제 풀기", ({ 1: "교재1 기출문법 · 기출어휘 · PART 7 · 해설", 2: "교재2 기출문법 · 기출어휘 · PART 7 · 해설", 3: "유형별 기본 문제 · PART 5~7 · 해설" })[ser] || "PART 5~7", "linear-gradient(125deg,#E95721,#FF8A3D)") +
+      roomRow("#/a", "A급", "A급 과제", "1~15회 · PART 5·6·7 과제 · 해설 · 해설강의", ""));
+  var bottom = lc ? "" : box("🔤 VOCA · 단어 게임", "Season " + ser, "#172844",
+      `<a class="row" href="https://maketoeic.kr/ls/69ec23199641/voca/?s=${ser}" style="background:linear-gradient(125deg,#14233E,#233C5C);color:#fff;border:0;text-decoration:none"><span class="pill" style="background:#fff;color:#172844">VOCA</span><span class="t"><b style="color:#fff">VOCA 단어 암기장</b><small style="color:#fff">DAY 01~30 · 815단어 · 단어·파생어·예문 누르면 성우 발음</small></span>›</a>` +
       roomRow("#/game", "GAME", "🎮 단어 점프 게임", "뜻을 보고 철자가 맞는 단어 블록을 점프로 치기", "") +
-      roomRow("#/race", "GAME", "🚗 빈칸 레이서", "파트5 빈칸에 맞는 차선으로 운전 · 시간 순위", "");
+      roomRow("#/race", "GAME", "🚗 빈칸 레이서", "파트5 빈칸에 맞는 차선으로 운전 · 시간 순위", ""));
   render(`<div class="card hero"><img class="logo" src="${LOGO}" alt="MAKE TOEIC" onerror="this.style.display='none'">
     <span class="kicker">MAKE TOEIC · ${lc ? "🎧 LC 학습실" : "📖 RC 학습실"}</span><h1>${esc(p.name)}님, 오늘도 한 걸음!</h1>
     <p>${S.area} 푼 문제 ${done} / ${tot} · 정답률 ${pct(ok, done)}%</p>
@@ -55,9 +59,8 @@ function viewHome() {
   <div class="serbar" style="border-color:${lc ? "#172844" : "#FF581F"}"><span>지금 학습실</span><b style="color:${lc ? "#172844" : "#FF581F"}">${lc ? "🎧 LC 학습실" : "📖 RC 학습실"}</b><button data-go="#/room">학습실 바꾸기</button></div>
   ${serBar()}
   ${todayCard()}
-  <div class="grp">학습 선택</div>
-  ${menu}
-  <div class="tiles" style="margin-top:10px">
+  ${top}
+  <div class="tiles" style="margin:0 0 14px">
     <button class="tile" data-go="#/mock"><span class="pill o">실전 테스트</span><b>${lc ? "파트2 25문제" : "파트5 30문제"}</b><small>${lc ? "실전처럼 자동 넘김" : "제한 시간 10분 · 랜덤 출제"}</small></button>
     <button class="tile" data-go="#/weak"><span class="pill o">약점 맞춤</span><b>약점 유형 20문제</b><small>틀린·안 푼 문제 위주</small></button>
     <button class="tile" data-go="#/wrong"><span class="pill n">오답노트</span><b>틀린 문제 ${wrongN}개</b><small>다시 풀고 졸업하기</small></button>
@@ -65,6 +68,7 @@ function viewHome() {
     <button class="tile" data-go="#/stats"><span class="pill n">실력 분석</span><b>유형별 정답률</b><small>약점 유형 · 맞춤 문제 추천</small></button>
     <button class="tile" data-go="#/room"><span class="pill o">학습실</span><b>${lc ? "📖 RC 학습실로" : "🎧 LC 학습실로"}</b><small>학습실 바꾸기</small></button>
   </div>
+  ${bottom}
   <div class="foot"><button class="btn ghost sm" id="mkst-logout">로그아웃</button><br><br><a href="/">메인페이지로 돌아가기</a></div>`);
   bindCommon();
   app.querySelectorAll("[data-goal]").forEach(function (b) { b.onclick = function () { ls("goal", b.dataset.goal); viewHome(); }; });
