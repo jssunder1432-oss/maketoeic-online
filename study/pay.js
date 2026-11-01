@@ -57,24 +57,37 @@ function viewExpired() {
     }).catch(function () { return false; });
   });
 }
-// ---------- 비회원 30일 수강권 : 그 달 Season 의 LC 실전 모의고사(lc) / RC 문제(rc) / 둘 다(lcrc) ----------
-function payLc() { var p = S.profile || {}; return p.full === false && (p.plan === "lc" || p.plan === "rc" || p.plan === "lcrc"); }
-function planLC() { var p = (S.profile || {}).plan; return p === "lc" || p === "lcrc"; }
-function planRC() { var p = (S.profile || {}).plan; return p === "rc" || p === "lcrc"; }
-function planName() { var p = (S.profile || {}).plan; return p === "lcrc" ? "LC+RC 30일 수강권" : p === "rc" ? "RC 30일 수강권" : "LC 30일 수강권"; }
+// ---------- 열람 범위 제한 : 비회원 30일권(lc/rc/lcrc) 또는 관리자가 고른 카테고리(cats) ----------
+//   카테고리: lcmock(LC 실전 모의고사·해설강의) lcp2(LC Part 2 유형별) rcbook(RC 교재·추가 문제·실전 테스트) agrade(A급 과제·해설강의) voca(VOCA·단어 게임)
+function myCats() { var c = (S.profile || {}).cats; return c && c.length ? c : null; }
+function hasCat(k) { var c = myCats(); return !c || c.indexOf(k) >= 0; }
+function payPart() { var p = S.profile || {}; return p.full === false && (p.plan === "lc" || p.plan === "rc" || p.plan === "lcrc"); }
+function payLc() { return !!myCats(); }
+function planLC() { return hasCat("lcmock") || hasCat("lcp2"); }
+function planRC() { return hasCat("rcbook") || hasCat("agrade"); }
+function planName() { var p = (S.profile || {}).plan; if (!payPart()) return "학습실"; return p === "lcrc" ? "LC+RC 30일 수강권" : p === "rc" ? "RC 30일 수강권" : "LC 30일 수강권"; }
+function secCat(s) { return s.area === "LC" ? (/LC 실전 모의고사/.test(s.group || "") ? "lcmock" : "lcp2") : s.group === "A급 과제" ? "agrade" : "rcbook"; }
 function planSec(s) {
-  var cur = +(S.profile || {}).cur_series, sea = s.season ? +s.season : 3;
-  if (planLC() && s.area === "LC" && /LC 실전 모의고사/.test(s.group || "") && sea === cur) return true;
-  if (planRC() && s.area === "RC" && s.group !== "A급 과제" && sea === cur) return true;
-  return false;
+  var k = secCat(s); if (!hasCat(k)) return false;
+  if (payPart() && (k === "lcmock" || k === "rcbook")) { var sea = s.season ? +s.season : 3; return allowedSeries().indexOf(sea) >= 0; }
+  return true;
 }
 var LC_OPEN = ["", "learn", "full", "s", "lcv", "lec", "ex", "wrong", "bm", "stats", "weak", "lock", "pick", "room"];
+function catOpen(h) {
+  var r = h[0] || "";
+  if (LC_OPEN.indexOf(r) >= 0) return true;
+  if (r === "mock") return hasCat("rcbook");
+  if (r === "a" || r === "alec") return hasCat("agrade");
+  if (["v", "w", "game", "race", "reel", "reels", "rank", "rrank"].indexOf(r) >= 0) return hasCat("voca");
+  if (r === "rec") return !payPart();
+  return false;
+}
 function viewLockedLc() {
-  var what = planLC() && planRC() ? "이번 달 LC 실전 모의고사와 RC 문제" : planRC() ? "이번 달 RC 문제(해설 · 단어 뜻)" : "이번 달 LC 실전 모의고사(회차 전체 풀기 · PART별 풀기 · 해설강의)";
-  var more = !planRC() ? `<a class="btn" href="/pay/?p=lcrc&name=${encodeURIComponent((S.profile || {}).name || "")}">RC까지 함께 보기 (LC+RC 30일권)</a>` : !planLC() ? `<a class="btn" href="/pay/?p=lcrc&name=${encodeURIComponent((S.profile || {}).name || "")}">LC까지 함께 보기 (LC+RC 30일권)</a>` : "";
+  var nm = encodeURIComponent((S.profile || {}).name || "");
+  var more = payPart() && !(hasCat("lcmock") && hasCat("rcbook")) ? `<a class="btn" href="/pay/?p=lcrc&name=${nm}">LC+RC 30일권으로 함께 보기</a>` : "";
   render(topbar(planName()) +
-    `<div class="card hero"><span class="kicker">MAKE TOEIC · ${planName()}</span><h1>이 메뉴는 수강권에 포함되지 않았어요</h1>
-      <p>${planName()}으로 ${what}를 이용할 수 있어요. A급 과제 · VOCA · 게임은 메이크토익 수강생 전용이에요.</p></div>
+    `<div class="card hero"><span class="kicker">MAKE TOEIC · ${planName()}</span><h1>이 메뉴는 열려 있지 않아요</h1>
+      <p>${payPart() ? planName() + "에 포함되지 않은 메뉴예요." : "이 학습 메뉴는 아직 열려 있지 않아요. 필요하면 메이크토익 질문방으로 문의해 주세요."}</p></div>
     ${more}<button class="btn ghost" data-go="#/" style="margin-top:8px">학습실 홈으로</button>`);
   bindCommon();
 }
@@ -94,7 +107,17 @@ function viewPick() {
   var lo = document.getElementById("mkst-logout"); if (lo) lo.onclick = logout;
 }
 // 비회원 30일권: 수강권에 없는 메뉴(A급 · VOCA · 게임 · 실전 테스트 등)는 화면에서 숨김
-function payLockSel() { return '[data-go="#/mock"],[data-go^="#/game"],[data-go^="#/race"],[data-go^="#/reel"],a[href*="/voca/"],[data-aser],[data-go="#/a"],[data-go="#/v"],[data-go^="#/alec"],[data-go="#/rec"]' + (planLC() && planRC() ? "" : ',[data-go="#/room"]') + (planRC() ? "" : ',[data-room="RC"]') + (planLC() ? "" : ',[data-room="LC"]'); }
+function payLockSel() {
+  var a = [];
+  if (!hasCat("voca")) a.push('[data-go^="#/game"]', '[data-go^="#/race"]', '[data-go^="#/reel"]', 'a[href*="/voca/"]', '[data-go="#/v"]', '[data-go^="#/w"]');
+  if (!hasCat("agrade")) a.push('[data-aser]', '[data-go="#/a"]', '[data-go^="#/alec"]');
+  if (!hasCat("rcbook")) a.push('[data-go="#/mock"]');
+  if (payPart()) a.push('[data-go="#/rec"]');
+  if (!(planLC() && planRC())) a.push('[data-go="#/room"]');
+  if (!planRC()) a.push('[data-room="RC"]');
+  if (!planLC()) a.push('[data-room="LC"]');
+  return a.join(",") || "#__none";
+}
 function payHide() {
   if (!S.token || !payLc()) return;
   document.querySelectorAll(".mkst " + payLockSel().split(",").join(",.mkst ")).forEach(function (el) {
@@ -120,11 +143,11 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["function viewExpired() {\n  var p = S.profile || {};\n", "function viewExpiredOld() {\n  var p = S.profile || {};\n"],
 ["function logout() {", FN + "\nfunction logout() {"],
 // 잠금 라우트 (LC 수강권은 LC 모의고사 화면만)
-["  if (!S.catalog) return boot();\n  var h = location.hash.replace(/^#\\/?/, \"\").split(\"/\");\n", "  if (!S.catalog) return boot();\n  var h = location.hash.replace(/^#\\/?/, \"\").split(\"/\");\n  if (payLc()) { S.picked = true; if (!(planLC() && planRC())) { S.area = planRC() ? \"RC\" : \"LC\"; S.roomPicked = true; } if (LC_OPEN.indexOf(h[0]) < 0 || payLocked(h)) return viewLockedLc(); }\n  else if (h[0] === \"lock\" || payLocked(h)) return viewLocked();\n"],
+["  if (!S.catalog) return boot();\n  var h = location.hash.replace(/^#\\/?/, \"\").split(\"/\");\n", "  if (!S.catalog) return boot();\n  var h = location.hash.replace(/^#\\/?/, \"\").split(\"/\");\n  if (payLc()) { if (allowedSeries().length < 2) S.picked = true; if (!(planLC() && planRC())) { S.area = planRC() ? \"RC\" : \"LC\"; S.roomPicked = true; } if (h[0] === \"lock\" || !catOpen(h)) return viewLockedLc(); }\n  else if (h[0] === \"lock\" || payLocked(h)) return viewLocked();\n"],
 // 입장할 때마다 시즌 선택 (LC 수강권 제외)
-["if (!S.picked && allowedSeries().length > 1 && (!h[0] || h[0] === \"\")) { S.picked = true; return viewPick(); }", "if (!S.picked && !payLc() && (!h[0] || h[0] === \"\")) { S.picked = true; return viewPick(); }"],
+["if (!S.picked && allowedSeries().length > 1 && (!h[0] || h[0] === \"\")) { S.picked = true; return viewPick(); }", "if (!S.picked && (!payPart() || allowedSeries().length > 1) && (!h[0] || h[0] === \"\")) { S.picked = true; return viewPick(); }"],
 // LC 수강권: 이번 달 Series 만
-["function allowedSeries() {\n  var p = S.profile || {}, out = [];", "function allowedSeries() {\n  var p = S.profile || {}, out = [];\n  if ((p.plan === \"lc\" || p.plan === \"rc\" || p.plan === \"lcrc\") && p.full === false && p.cur_series) return [p.cur_series];\n  if (p.seasons && p.seasons.length) return p.seasons.map(Number).filter(function (n) { return n >= 1 && n <= 3; }).sort();"],
+["function allowedSeries() {\n  var p = S.profile || {}, out = [];", "function allowedSeries() {\n  var p = S.profile || {}, out = [];\n  if ((p.plan === \"lc\" || p.plan === \"rc\" || p.plan === \"lcrc\") && p.full === false && p.cur_series && !(p.seasons && p.seasons.length)) return [p.cur_series];\n  if (p.seasons && p.seasons.length) return p.seasons.map(Number).filter(function (n) { return n >= 1 && n <= 3; }).sort();"],
 // LC 수강권: 목록에는 이번 달 LC 실전 모의고사만
 ["S.catalog = x[0] || { sections: [] }; S.videos", "S.catalog = x[0] || { sections: [] }; if (payLc()) S.catalog = { sections: S.catalog.sections.filter(planSec) }; S.videos"],
 // 로그인 화면: 처음 온 사람도 이용권 결제
