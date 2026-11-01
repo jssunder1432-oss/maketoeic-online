@@ -34,6 +34,7 @@ input:focus{outline:none;border-color:var(--navy)}
 footer{max-width:560px;margin:0 auto;padding:8px 16px 40px;font-size:12.5px;line-height:1.7;color:#344054}
 .pick{display:grid;gap:8px;margin-top:10px}.pk{display:flex;justify-content:space-between;align-items:center;border:2px solid #E3E7EF;background:#fff;border-radius:12px;padding:14px;font:inherit;font-size:16px;cursor:pointer;color:#101828}.pk b{font-size:16px}.pk span{font-weight:800}.pk.on{border-color:#F0562A;background:#FFF4EC}.pk.on span{color:#F0562A}.pick.s3{grid-template-columns:repeat(3,1fr)}.pick.s3 .pk{flex-direction:column;gap:2px;padding:12px 6px}.pick.s3 .pk span{font-size:12.5px;min-height:16px}
 .reg{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;background:#F3F5F9;border-radius:12px;padding:12px 14px;font-size:16px;color:#101828}.reg em{white-space:nowrap;font-style:normal;font-size:12.5px;font-weight:800;color:#1E8E5A;background:#E3F4EB;border-radius:99px;padding:2px 8px;margin-left:4px}.reg button{white-space:nowrap;flex:none;border:1.5px solid #E3E7EF;background:#fff;border-radius:10px;padding:6px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#101828}.ck{display:flex!important;align-items:center;gap:8px;margin-top:12px;font-size:15px;font-weight:700;color:#101828}.ck input{width:20px;height:20px;margin:0}.consent{margin-top:6px;font-size:13.5px;color:#101828}.consent summary{cursor:pointer;font-weight:700}.consent p{margin:6px 0 0;line-height:1.6}
+.bk{text-align:center;font-weight:800;color:#101828;background:#FFF4EC;border-radius:10px;padding:10px 12px}
 </style>
 </head>
 <body>
@@ -88,7 +89,7 @@ function form(msg) {
     (LC && !REG ? '<button class="btn" id="reg">등록하고 결제로 넘어가기</button>' :
     '<div class="card">' + (LC ? '<b style="color:var(--ink)">② 결제</b>' : '') + '<div id="pm"></div><div id="ag"></div></div>' +
     '<button class="btn" id="go">' + PRICE.toLocaleString() + '원 결제하기</button>') +
-    '<p class="note" style="text-align:center">결제 후 환불되지 않아요. 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
+    '<p class="note bk">※ 온라인 수강 교재비는 별도입니다 · 문의 요망 (<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">메이크토익 질문방</a> · 010-4845-1432)</p><p class="note" style="text-align:center">결제 후 환불되지 않아요. 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
   var w, pmw;
   if (LC && !REG) { bindReg(); bindPick(); return; }
   try {
