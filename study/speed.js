@@ -36,6 +36,6 @@ function attach(v) {
   paint(r);
   (box && getComputedStyle(box).position === "sticky" ? box : v.parentNode).appendChild(bar);
 }
-function scan() { document.querySelectorAll("#mk-host video[controls]").forEach(attach); }
+function scan() { document.querySelectorAll(".mkst video[controls], #mk-host video[controls]").forEach(attach); }
 new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
 })();
