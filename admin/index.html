@@ -151,12 +151,12 @@ function pwForm() {
 
 /* ---------- 상단 ---------- */
 function head() {
-  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : "수강생 관리"}</h1></div>
-  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
+  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : "수강생 관리"}</h1></div>
+  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
   <span style="flex:1"></span><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button></div>`;
 }
 function bindHead() {
-  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "rec" ? viewRecs() : view === "price" ? viewPrice() : draw(); }; });
+  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
   document.getElementById("ad-out").onclick = function () { sb.auth.signOut().then(function () { viewLogin(); }); };
   document.getElementById("ad-chpw").onclick = pwForm;
 }
@@ -342,6 +342,33 @@ function viewRecs() {
       rpc("admin_put_content", { p_key: "videos", p_data: o, p_text: null }).then(function () { v = o; msg.innerHTML = '<div class="msg ok">저장했어요. (' + out.length + "개)</div>"; })
         .catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
     };
+  }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
+}
+
+/* ---------- 비회원 등록 · 결제 기록 ---------- */
+var logTab = "leads";
+function phoneFmt(p) { return String(p || "").replace(/^(\d{3})(\d{3,4})(\d{4})$/, "$1-$2-$3"); }
+function dt(s) { if (!s) return ""; var d = new Date(s); return (d.getMonth() + 1) + "/" + d.getDate() + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+function viewLog() {
+  render(head() + '<div class="card">불러오는 중…</div>'); bindHead();
+  rpc("admin_pay_log").then(function (d) {
+    var L = d.leads || [], O = d.orders || [];
+    var paid = L.filter(function (x) { return x.paid_at; }).length;
+    var sum = O.filter(function (o) { return o.status === "done"; }).reduce(function (a, o) { return a + (o.amount || 0); }, 0);
+    var KN = { lc: "LC", rc: "RC", lcrc: "LC+RC", pass: "이용권" }, ST = { done: '<span class="tag ok">결제 완료</span>', ready: '<span class="tag soon">결제 안 함</span>', fail: '<span class="tag end">실패</span>' };
+    var body = logTab === "leads"
+      ? (L.length ? L.map(function (x) {
+          return `<div class="st"><div class="top"><div><span class="nm">${esc(x.name)}</span> ${x.member ? '<span class="tag full">수업 들은 학생</span>' : ''}<div class="info">${esc(phoneFmt(x.phone))} · ${esc(KN[x.kind] || "-")}${x.season ? " · Season " + x.season : ""}</div><div class="info">등록 ${dt(x.created_at)}${x.visits > 1 ? " · 최근 " + dt(x.updated_at) + " (" + x.visits + "번째)" : ""}</div></div>${x.paid_at ? '<span class="tag ok">결제 ' + x.pay_count + '회</span>' : '<span class="tag soon">미결제</span>'}</div>
+          ${x.paid_at ? "" : `<div class="acts"><a class="btn ghost sm" href="sms:${esc(x.phone)}?body=${encodeURIComponent(x.name + "님, 메이크토익입니다. 학습실 30일 수강권 결제가 아직 완료되지 않았어요. 이어서 결제하려면: https://maketoeic.kr/pay/?p=" + (x.kind || "lc"))}" style="text-decoration:none">문자 보내기</a></div>`}</div>`;
+        }).join("") : '<p class="note">아직 등록한 비회원이 없어요.</p>')
+      : (O.length ? `<div style="overflow-x:auto"><table><tr><th>일시</th><th>이름</th><th>상품</th><th>금액</th><th>상태</th></tr>${O.map(function (o) {
+          return `<tr><td style="white-space:nowrap">${dt(o.approved_at || o.created_at)}</td><td>${esc(o.name)}<div style="font-size:12.5px">${esc(phoneFmt(o.phone))}</div></td><td>${esc(o.product || "")}</td><td style="white-space:nowrap">${(o.amount || 0).toLocaleString()}원</td><td>${ST[o.status] || esc(o.status)}${o.method ? '<div style="font-size:12.5px">' + esc(o.method) + '</div>' : ''}</td></tr>`;
+        }).join("")}</table></div>` : '<p class="note">아직 결제 기록이 없어요.</p>');
+    render(head() + `<div class="card"><div class="stat"><div><b>${L.length}</b>등록한 비회원</div><div><b>${paid}</b>결제한 사람</div><div><b>${L.length - paid}</b>미결제</div><div><b>${sum.toLocaleString()}</b>결제 금액(원)</div></div></div>
+      <div class="card"><div class="chips"><button data-lt="leads" class="${logTab === "leads" ? "on" : ""}">비회원 등록 (${L.length})</button><button data-lt="orders" class="${logTab === "orders" ? "on" : ""}">결제 내역 (${O.length})</button></div>
+      <p class="note" style="margin-top:0">${logTab === "leads" ? "결제 화면에서 이름 · 휴대폰을 등록한 사람이에요. 미결제인 사람에게는 문자 보내기로 결제를 안내할 수 있어요." : "결제 화면에서 결제 버튼을 누른 기록이에요. '결제 안 함'은 결제창을 열었다가 끝내지 않은 경우예요."}</p>${body}</div>`);
+    bindHead();
+    app.querySelectorAll("[data-lt]").forEach(function (b) { b.onclick = function () { logTab = b.dataset.lt; viewLog(); }; });
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
 }
 
