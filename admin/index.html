@@ -94,7 +94,7 @@ function seasonsOf(start, end, upToNow) {
   return out;
 }
 function seaTag(s) {
-  if (s.plan === "lc") return "";
+  if (PLAN_NM[s.plan]) return "";
   if (s.seasons && s.seasons.length) return s.seasons.map(function (n) { return `<span class="tag" style="background:#FF581F;color:#fff">Season ${n}</span>`; }).join(" ") + ' <span class="tag soon">직접 지정</span>';
   var a = seasonsOf(s.start_date, s.end_date, true), u = [];
   a.forEach(function (x) { if (u.indexOf(x[2]) < 0) u.push(x[2]); });
@@ -150,12 +150,12 @@ function pwForm() {
 
 /* ---------- 상단 ---------- */
 function head() {
-  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : "수강생 관리"}</h1></div>
-  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button>
+  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : "수강생 관리"}</h1></div>
+  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
   <span style="flex:1"></span><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button></div>`;
 }
 function bindHead() {
-  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "rec" ? viewRecs() : draw(); }; });
+  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "rec" ? viewRecs() : view === "price" ? viewPrice() : draw(); }; });
   document.getElementById("ad-out").onclick = function () { sb.auth.signOut().then(function () { viewLogin(); }); };
   document.getElementById("ad-chpw").onclick = pwForm;
 }
@@ -163,7 +163,8 @@ function bindHead() {
 /* ---------- 수강생 목록 ---------- */
 function refresh() { return rpc("admin_list_students").then(function (d) { students = d || []; draw(); }).catch(function (e) { render('<div class="msg err">' + esc(e.message) + "</div>"); }); }
 function stTag(s) { return s.days_left < 0 ? '<span class="tag end">만료</span>' : s.days_left <= 7 ? `<span class="tag soon">D-${s.days_left}</span>` : `<span class="tag ok">D-${s.days_left}</span>`; }
-function kindTag(s) { return s.plan === "lc" ? '<span class="tag lc">LC 30일권</span>' : '<span class="tag full">수강생</span>'; }
+var PLAN_NM = { lc: "LC 30일권", rc: "RC 30일권", lcrc: "LC+RC 30일권" };
+function kindTag(s) { return PLAN_NM[s.plan] ? '<span class="tag lc">' + PLAN_NM[s.plan] + '</span>' : '<span class="tag full">수강생</span>'; }
 function draw() {
   if (view !== "list") return;
   var on = students.filter(function (s) { return s.days_left >= 0; });
@@ -174,14 +175,14 @@ function draw() {
     if (fil === "on" && s.days_left < 0) return false;
     if (fil === "end" && s.days_left >= 0) return false;
     if (fil === "idle" && (s.days_left < 0 || s.week)) return false;
-    if (fil === "lc" && s.plan !== "lc") return false;
+    if (fil === "lc" && !PLAN_NM[s.plan]) return false;
     return !k || (s.name + s.phone + (s.memo || "")).toLowerCase().indexOf(k) >= 0;
   });
   render(head() + `<div class="card"><div class="stat"><div><b>${on.length}</b>이용 중</div><div><b>${soon}</b>7일 내 만료</div><div><b>${idle}</b>이번 주 미학습</div><div><b>${students.length - on.length}</b>만료</div></div></div>
   <div class="card">
     <button class="btn" id="ad-add" style="width:100%;padding:14px;font-size:17px">+ 수강생 등록</button>
     <input class="in" id="ad-q" placeholder="이름 · 번호 · 메모 검색" value="${esc(q)}" style="margin-top:10px">
-    <div class="chips">${[["on", "이용 중"], ["idle", "이번 주 미학습"], ["lc", "LC 30일권"], ["end", "만료"], ["all", "전체"]].map(function (c) { return `<button data-f="${c[0]}" class="${fil === c[0] ? "on" : ""}">${c[1]}</button>`; }).join("")}</div>
+    <div class="chips">${[["on", "이용 중"], ["idle", "이번 주 미학습"], ["lc", "비회원 30일권"], ["end", "만료"], ["all", "전체"]].map(function (c) { return `<button data-f="${c[0]}" class="${fil === c[0] ? "on" : ""}">${c[1]}</button>`; }).join("")}</div>
     ${rows.map(function (s) {
       var rate = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
       return `<div class="st"><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${s.memo ? `<div class="info">메모: ${esc(s.memo)}</div>` : ""}</div>${stTag(s)}</div>
@@ -214,7 +215,7 @@ function editForm(s) {
     <p class="note" style="margin:0">학생은 <b>이름 + 휴대폰 번호 뒤 4자리</b>로 학습실에 들어가요.</p>
     <label>이름</label><input class="in" id="f-name" value="${esc(s.name)}">
     <label>휴대폰 번호</label><input class="in" id="f-phone" inputmode="numeric" value="${esc(s.phone)}" placeholder="01012345678">
-    <label>구분</label><select class="in" id="f-plan"><option value="">수강생 (학습실 전체: LC·RC·A급·VOCA)</option><option value="lc" ${s.plan === "lc" ? "selected" : ""}>LC 30일권 (이번 달 LC 모의고사만)</option></select>
+    <label>구분</label><select class="in" id="f-plan"><option value="">수강생 (학습실 전체: LC·RC·A급·VOCA)</option><option value="lc" ${s.plan === "lc" ? "selected" : ""}>비회원 LC 30일권 (이번 달 LC 모의고사)</option><option value="rc" ${s.plan === "rc" ? "selected" : ""}>비회원 RC 30일권 (이번 달 Season RC 문제)</option><option value="lcrc" ${s.plan === "lcrc" ? "selected" : ""}>비회원 LC+RC 30일권 (둘 다)</option></select>
     <div class="grid"><div><label>시작일</label><input class="in" type="date" id="f-start" value="${esc(s.start_date)}"></div>
       <div><label>종료일</label><input class="in" type="date" id="f-end" value="${esc(s.end_date)}"></div></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn ghost sm" data-dur="me">이번 달 말까지</button>${[1, 2, 3].map(function (n) { return `<button class="btn ghost sm" data-dur="${n}">${n}개월</button>`; }).join("")}</div>
@@ -235,9 +236,9 @@ function editForm(s) {
     };
   });
   function sea() { var st = m.querySelector("#f-start").value, en = m.querySelector("#f-end").value, el = m.querySelector("#f-sea");
-    var lc = m.querySelector("#f-plan").value === "lc";
+    var lc = !!m.querySelector("#f-plan").value;
     m.querySelectorAll("#f-seas input").forEach(function (c) { c.disabled = lc; c.parentNode.style.opacity = lc ? ".45" : "1"; });
-    if (lc) { el.innerHTML = "LC 30일권: 그 달 Season의 LC 실전 모의고사만 열려요."; return; }
+    if (lc) { el.innerHTML = { lc: "LC 30일권: 그 달 Season의 LC 실전 모의고사만 열려요.", rc: "RC 30일권: 그 달 Season의 RC 문제(A급 과제 제외)만 열려요.", lcrc: "LC+RC 30일권: 그 달 Season의 LC 실전 모의고사 + RC 문제가 열려요." }[m.querySelector("#f-plan").value]; return; }
     var pick = [].map.call(m.querySelectorAll("#f-seas input:checked"), function (c) { return "Season " + c.value; });
     if (pick.length) { el.innerHTML = "직접 고른 Season만 열려요: <b>" + pick.join(", ") + "</b> (기간 동안)"; return; }
     el.innerHTML = (seaPlan(st, en) || "시작일·종료일을 넣으면 열리는 Season이 보여요.") + "<br>Season을 체크하지 않으면 이렇게 기간에 맞춰 자동으로 열려요."; }
@@ -260,7 +261,7 @@ function editForm(s) {
     if (!v.p_start || !v.p_end || v.p_end < v.p_start) { msg.innerHTML = '<div class="msg err">시작일·종료일을 확인해 주세요.</div>'; return; }
     var dup = students.find(function (x) { return x.id !== s.id && x.name === v.p_name && String(x.phone).slice(-4) === v.p_phone.slice(-4); });
     if (dup && !confirm("같은 이름 · 같은 번호 뒤 4자리 학생이 이미 있어요 (" + dup.start_date + " ~ " + dup.end_date + ").\n새로 등록하지 말고 그 학생을 '수정'해서 기간을 바꾸는 게 좋아요.\n그래도 저장할까요?")) return;
-    var seas = v.p_plan === "lc" ? [] : [].map.call(m.querySelectorAll("#f-seas input:checked"), function (c) { return +c.value; });
+    var seas = v.p_plan ? [] : [].map.call(m.querySelectorAll("#f-seas input:checked"), function (c) { return +c.value; });
     rpc("admin_save_student", v).then(function (id) { return rpc("admin_set_seasons", { p_id: id || s.id, p_seasons: seas }); }).then(function () { m.remove(); refresh(); }).catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
   };
 }
@@ -329,6 +330,33 @@ function viewRecs() {
       if (bad) { msg.innerHTML = '<div class="msg err">유튜브 주소가 아닌 칸이 ' + bad + "개 있어요.</div>"; return; }
       var o = Object.assign({}, v, { rec: out });
       rpc("admin_put_content", { p_key: "videos", p_data: o, p_text: null }).then(function () { v = o; msg.innerHTML = '<div class="msg ok">저장했어요. (' + out.length + "개)</div>"; })
+        .catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
+    };
+  }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
+}
+
+/* ---------- 상품 가격 (비회원 30일권) ---------- */
+function viewPrice() {
+  render(head() + '<div class="card">불러오는 중…</div>'); bindHead();
+  rpc("admin_prices").then(function (c) {
+    c = c || {};
+    var rows = [["lc_price", "비회원 LC 30일권", "이번 달 LC 실전 모의고사"], ["rc_price", "비회원 RC 30일권", "이번 달 Season RC 문제 (A급 과제 제외)"], ["lcrc_price", "비회원 LC+RC 30일권", "LC + RC 둘 다"], ["pass_price", "수업 끝난 수강생 이용권 (1개월)", "LC 그 달 Season 전체 + RC 기출"]];
+    render(head() + `<div class="card"><p class="sec">결제 화면 가격</p>
+      <p class="note" style="margin-top:0">가격을 비워 두면 그 상품은 결제 화면에 안 나와요. 바꾸면 바로 결제 화면에 적용돼요.</p>
+      ${rows.map(function (r) { return `<label>${r[1]} <span style="font-weight:600">· ${r[2]}</span></label><div style="display:flex;gap:8px;align-items:center"><input class="in" inputmode="numeric" data-pk="${r[0]}" value="${esc(c[r[0]] || "")}" placeholder="판매 안 함"><span style="font-weight:800">원</span></div>`; }).join("")}
+      <div id="pr-msg"></div><button class="btn" id="pr-save" style="width:100%;padding:14px;margin-top:12px">가격 저장</button></div>`);
+    bindHead();
+    document.getElementById("pr-save").onclick = function () {
+      var jobs = [], bad = false, msg = document.getElementById("pr-msg");
+      app.querySelectorAll("[data-pk]").forEach(function (i) {
+        var v = i.value.replace(/[^0-9]/g, ""), n = v ? +v : null;
+        if (n !== null && (n < 100 || n > 10000000)) bad = true;
+        if (i.dataset.pk === "pass_price" && n === null) bad = true;
+        jobs.push([i.dataset.pk, n]);
+      });
+      if (bad) { msg.innerHTML = '<div class="msg err">가격을 확인해 주세요 (100원 이상, 수강생 이용권은 비울 수 없어요).</div>'; return; }
+      Promise.all(jobs.map(function (j) { return rpc("admin_set_price", { p_key: j[0], p_price: j[1] }); }))
+        .then(function () { msg.innerHTML = '<div class="msg ok">저장했어요. 결제 화면에 바로 적용돼요.</div>'; })
         .catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
     };
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
