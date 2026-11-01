@@ -93,9 +93,20 @@ function viewPick() {
   app.querySelectorAll("[data-pick]").forEach(function (b) { b.onclick = function () { ls("ser", b.dataset.pick); S.picked = true; location.hash = "#/"; viewHome(); }; });
   var lo = document.getElementById("mkst-logout"); if (lo) lo.onclick = logout;
 }
+// 비회원 30일권: 수강권에 없는 메뉴(A급 · VOCA · 게임 · 실전 테스트 등)는 화면에서 숨김
+function payLockSel() { return '[data-go="#/mock"],[data-go^="#/game"],[data-go^="#/race"],[data-go^="#/reel"],a[href*="/voca/"],[data-aser],[data-go="#/a"],[data-go="#/v"],[data-go^="#/alec"],[data-go="#/rec"]' + (planLC() && planRC() ? "" : ',[data-go="#/room"]') + (planRC() ? "" : ',[data-room="RC"]') + (planLC() ? "" : ',[data-room="LC"]'); }
+function payHide() {
+  if (!S.token || !payLc()) return;
+  document.querySelectorAll(".mkst " + payLockSel().split(",").join(",.mkst ")).forEach(function (el) {
+    var row = el.closest(".row") || el; if (row.style.display === "none") return; row.style.display = "none";
+    var box = row.parentNode;
+    if (box && box.className.indexOf("mkst") < 0 && box.id !== "app" && ![].some.call(box.querySelectorAll(".row,button"), function (x) { return x.style.display !== "none" && x.offsetParent !== null; })) box.style.display = "none";
+  });
+}
+new MutationObserver(function () { payHide(); }).observe(document.documentElement, { childList: true, subtree: true });
 document.addEventListener("click", function (e) {
   if (!S.token) return;
-  if (payLc()) { var sel = '[data-go="#/mock"],[data-go^="#/game"],[data-go^="#/race"],[data-go^="#/reel"],a[href*="/voca/"],[data-aser],[data-go="#/a"],[data-go="#/v"],[data-go^="#/alec"]' + (planLC() && planRC() ? "" : ',[data-go="#/room"]') + (planRC() ? "" : ',[data-room="RC"]') + (planLC() ? "" : ',[data-room="LC"]'); var r = e.target.closest && e.target.closest(sel); if (r) { e.preventDefault(); e.stopPropagation(); go("#/lock"); } return; }
+  if (payLc()) { var r = e.target.closest && e.target.closest(payLockSel()); if (r) { e.preventDefault(); e.stopPropagation(); go("#/lock"); } return; }
   if (payFull()) return;
   var a = e.target.closest && e.target.closest('[data-aser],a[href*="/voca/"],[data-go="#/a"],[data-go="#/v"],[data-go^="#/alec"]');
   if (!a) return;
