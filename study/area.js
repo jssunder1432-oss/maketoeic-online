@@ -43,7 +43,7 @@ function viewHome() {
       (fulls.length ? roomRow("#/full", "전체", "🎯 실전 모의고사 회차 전체 풀기", "한 회차 PART 1~4 전체를 실전처럼 한 번에 · " + fulls.length + "회", "linear-gradient(125deg,#E95721,#FF8A3D)") : "") +
       (typeof viewLcvRounds === "function" && window.MKST_LCVID ? roomRow("#/lcv", "강의", "🎬 실전 모의고사 해설강의", "회차 → 문제를 골라 그 문제 강의만 보기", "") : "") +
       (reelList().length ? roomRow("#/reels", "REELS", "🎬 기출 릴스 · PART 3·4", "원본 음원 + 단어 자막 + 정답 공개 · " + reelList().length + "편", "linear-gradient(125deg,#172844,#3A2A6B)") : "")
-    : roomRow("#/learn", "문제", "📝 문제 풀기", "기본 문제 연습 · PART 5~7", "linear-gradient(125deg,#E95721,#FF8A3D)") +
+    : roomRow("#/learn", "문제", "📝 문제 풀기 · Series " + ser, ({ 1: "교재1 기출문법 · 기출어휘 · PART 7 · 해설", 2: "교재2 기출문법 · 기출어휘 · PART 7 · 해설", 3: "유형별 기본 문제 · PART 5~7 · 해설" })[ser] || "PART 5~7", "linear-gradient(125deg,#E95721,#FF8A3D)") +
       roomRow("#/a", "A급", "A급 과제 · Series " + ser, "1~15회 · PART 5·6·7 과제 · 해설", "") +
       `<a class="row" href="https://maketoeic.kr/ls/69ec23199641/voca/?s=${ser}" style="background:linear-gradient(125deg,#14233E,#233C5C);color:#fff;border:0;text-decoration:none"><span class="pill" style="background:#fff;color:#172844">VOCA</span><span class="t"><b style="color:#fff">VOCA 단어 암기장 · Series ${ser}</b><small style="color:#fff">DAY 01~30 · 815단어 · 단어·파생어·예문 누르면 성우 발음</small></span>›</a>` +
       roomRow("#/game", "GAME", "🎮 단어 점프 게임", "뜻을 보고 철자가 맞는 단어 블록을 점프로 치기", "") +
@@ -214,6 +214,8 @@ function viewLearn() {
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 1) 학습실 선택·메뉴·전체 풀기 추가, 예전 홈은 "문제 풀기"(viewLearn)로
 ["function viewHome() {\n", NEW_HOME + "\n"],
+// RC 유형별 기본 문제(시즌 표시 없는 RC)는 Series 3 — Series 1·2 는 교재1·교재2 문제
+["  if (s.season) return +s.season;\n  if (s.area === \"LC\" && /^LC 실전 모의고사/.test(s.group || \"\")) return 3;", "  if (s.season) return +s.season;\n  if (s.area === \"LC\" && /^LC 실전 모의고사/.test(s.group || \"\")) return 3;\n  if (s.area === \"RC\" && s.group !== \"A급 과제\") return 3;"],
 // 2) 문제 풀기 화면: 위쪽 큰 카드·오늘의 학습은 숨기고 뒤로 버튼
 ["  render(`\n  <div class=\"card hero\"><img class=\"logo\" src=\"${LOGO}\" alt=\"MAKE TOEIC\" onerror=\"this.style.display='none'\">\n    <span class=\"kicker\">MAKE TOEIC · 학습실</span><h1>${esc(p.name)}님, 오늘도", "  render(`${topbar((S.area === \"LC\" ? \"🎧 LC\" : \"📖 RC\") + \" 문제 풀기\")}<div style=\"display:none\">\n  <div class=\"card hero\"><img class=\"logo\" src=\"${LOGO}\" alt=\"MAKE TOEIC\" onerror=\"this.style.display='none'\">\n    <span class=\"kicker\">MAKE TOEIC · 학습실</span><h1>${esc(p.name)}님, 오늘도"],
 ["  ${todayCard()}\n  <div class=\"seg lv\">", "  </div>\n  <div class=\"seg lv\">"],
