@@ -28,13 +28,15 @@ function viewRoom() {
   });
   document.getElementById("mkst-logout").onclick = logout;
 }
+function inSea(s) { return s.group === "A급 과제" ? serOf(s) === curSer() : (!seasonOf([s]) || seasonOf([s]) === curSer()); }
+function bmSea() { return bmList().filter(function (k) { var id = k.split(":")[0]; return S.catalog.sections.some(function (s) { return s.id === id && s.area === S.area && inSea(s); }); }); }
 function roomRow(go2, pill, title, sub, bg) {
   return `<button class="row" data-go="${go2}" style="${bg ? "background:" + bg + ";color:#fff;border:0" : ""}"><span class="pill ${bg ? "" : "o"}" style="${bg ? "background:#fff;color:#172844" : ""}">${pill}</span><span class="t"><b style="${bg ? "color:#fff" : ""}">${title}</b><small style="${bg ? "color:#fff" : ""}">${sub}</small></span>›</button>`;
 }
 function viewHome() {
   if (!S.roomPicked) return viewRoom();
   var p = S.profile, lc = S.area === "LC", ser = curSer();
-  var mine = S.catalog.sections.filter(function (s) { return s.area === S.area; }), tot = 0, done = 0, ok = 0;
+  var mine = S.catalog.sections.filter(function (s) { return s.area === S.area && inSea(s); }), tot = 0, done = 0, ok = 0;
   mine.forEach(function (s) { var t = secStats(s); tot += t.total; done += t.done; ok += t.ok; });
   var wrongN = Object.keys(S.prog).filter(function (k) { return !S.prog[k][1] && mine.some(function (s) { return k.indexOf(s.id + ":") === 0; }); }).length;
   var fulls = lc ? fullGroups(ser) : [];
@@ -64,7 +66,7 @@ function viewHome() {
     roomRow("#/mock", "실전", lc ? "실전 테스트 · 파트2 25문제" : "실전 테스트 · 파트5 30문제", lc ? "실전처럼 자동 넘김" : "제한 시간 10분 · 랜덤 출제", "") +
     roomRow("#/weak", "약점", "약점 유형 20문제", "틀린·안 푼 문제 위주로 맞춤 출제", "") +
     roomRow("#/wrong", "오답", "오답노트 · 틀린 문제 " + wrongN + "개", "다시 풀고 졸업하기", "") +
-    roomRow("#/bm", "저장", "저장한 문제 · ☆ " + bmList().length + "문제", "다시 볼 문제 모음", "") +
+    roomRow("#/bm", "저장", "저장한 문제 · ☆ " + bmSea().length + "문제", "다시 볼 문제 모음", "") +
     roomRow("#/stats", "분석", "실력 분석 · 유형별 정답률", "약점 유형 · 맞춤 문제 추천", ""))}
   ${bottom}
   <div class="foot"><button class="btn ghost sm" id="mkst-logout">로그아웃</button><br><br><a href="/">메인페이지로 돌아가기</a></div>`);
@@ -217,7 +219,13 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 1) 학습실 선택·메뉴·전체 풀기 추가, 예전 홈은 "문제 풀기"(viewLearn)로
 ["function viewHome() {\n", NEW_HOME + "\n"],
 // 실전 테스트·약점 맞춤·실력 분석 문제는 지금 보는 Season 문제에서만 (교재 + 그 Season A급 과제, LC는 기본 유형도)
-["if (s.area !== area) return; (s.keys", "if (s.area !== area) return; if (s.group === \"A급 과제\" ? serOf(s) !== curSer() : (seasonOf([s]) && seasonOf([s]) !== curSer())) return; (s.keys"],
+["if (s.area !== area) return; (s.keys", "if (s.area !== area || !inSea(s)) return; (s.keys"],
+// A급 과제 목록도 지금 Season 것만 (다른 Season 탭 없음)
+["var al = allowedSeries(), ser = +(ls(\"aser\") || curSer()); if (al.indexOf(ser) < 0) ser = curSer();", "var al = [curSer()], ser = curSer();"],
+["  render(topbar(\"A급 과제\") + tabs + ", "  render(topbar(\"A급 과제\") + "],
+// 오답노트 · 저장한 문제도 지금 Season(+지금 학습실 LC/RC) 문제만
+["  var metas = S.catalog.sections.filter(function (s) { return bySec[s.id]; });", "  var metas = S.catalog.sections.filter(function (s) { return bySec[s.id] && s.area === S.area && inSea(s); });"],
+["  var ks = bmList().filter(function (k) { return S.catalog.sections.some(function (s) { return s.keys && s.keys.indexOf(k) >= 0; }); });", "  var ks = bmSea();"],
 ["공개된 전체 문제에서 무작위로 출제돼요.", "지금 보는 Season ${curSer()} 문제(교재 · A급 과제)에서 무작위로 출제돼요."],
 // RC 유형별 기본 문제(시즌 표시 없는 RC)는 Series 3 — Series 1·2 는 교재1·교재2 문제
 ["  if (s.season) return +s.season;\n  if (s.area === \"LC\" && /^LC 실전 모의고사/.test(s.group || \"\")) return 3;", "  if (s.season) return +s.season;\n  if (s.area === \"LC\" && /^LC 실전 모의고사/.test(s.group || \"\")) return 3;\n  if (s.area === \"RC\" && s.group !== \"A급 과제\") return 3;"],
