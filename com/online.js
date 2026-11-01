@@ -48,7 +48,7 @@
       '<div class="pr"><b>150,000원</b><br>지난달 현장 수강생 100,000원</div>' +
       '<a class="bt" href="https://maketoeic.liveklass.com/classes/323558" target="_blank" rel="noopener">수강신청</a></div></div>' +
       "</div>" +
-      '<p class="bk">※ 온라인 수강 교재비는 별도입니다 · 문의 요망 (010-4845-1432)</p>' +
+      '<p class="bk">※ 온라인 수강 교재비는 별도 · 택배 배송 시 착불 · 문의 요망 (010-4845-1432)</p>' +
       '<a class="more" href="https://maketoeic.kr/online/">온라인 수업 자세히 보기 →</a>';
     anchor.parentNode.insertBefore(box, anchor.nextSibling);
     fetch("https://hrlldteviatcatxyzrrz.supabase.co/rest/v1/rpc/pay_cfg", { method: "POST", headers: { apikey: "sb_publishable_YT1A99HvH7VoMz76xq7Tvg__Imr0_qy", "Content-Type": "application/json" }, body: "{}" })
