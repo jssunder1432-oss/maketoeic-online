@@ -103,7 +103,7 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 입장할 때마다 시즌 선택 (LC 수강권 제외)
 ["if (!S.picked && allowedSeries().length > 1 && (!h[0] || h[0] === \"\")) { S.picked = true; return viewPick(); }", "if (!S.picked && !payLc() && (!h[0] || h[0] === \"\")) { S.picked = true; return viewPick(); }"],
 // LC 수강권: 이번 달 Series 만
-["function allowedSeries() {\n  var p = S.profile || {}, out = [];", "function allowedSeries() {\n  var p = S.profile || {}, out = [];\n  if (p.plan === \"lc\" && p.full === false && p.cur_series) return [p.cur_series];"],
+["function allowedSeries() {\n  var p = S.profile || {}, out = [];", "function allowedSeries() {\n  var p = S.profile || {}, out = [];\n  if (p.plan === \"lc\" && p.full === false && p.cur_series) return [p.cur_series];\n  if (p.seasons && p.seasons.length) return p.seasons.map(Number).filter(function (n) { return n >= 1 && n <= 3; }).sort();"],
 // LC 수강권: 목록에는 이번 달 LC 실전 모의고사만
 ["S.catalog = x[0] || { sections: [] }; S.videos", "S.catalog = x[0] || { sections: [] }; if (payLc()) S.catalog = { sections: S.catalog.sections.filter(function (s) { return s.area === \"LC\" && /LC 실전 모의고사/.test(s.group || \"\") && +s.season === +S.profile.cur_series; }) }; S.videos"],
 // 로그인 화면: 처음 온 사람도 이용권 결제

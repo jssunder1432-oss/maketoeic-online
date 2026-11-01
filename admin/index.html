@@ -82,6 +82,29 @@ function ago(s) {
   var d = Math.floor((Date.now() - new Date(s).getTime()) / 86400000);
   return d <= 0 ? "오늘" : d === 1 ? "어제" : d + "일 전";
 }
+function serForMonth(y, m) { var k = ((y - 2026) * 12 + m - 10) % 3; k = (k + 3) % 3; return [3, 2, 1][k]; }
+// 학습실과 같은 규칙: 등록 기간에 걸친 달마다 그 달의 Season이 열림 (2026년 10월부터, 이번 달까지)
+function seasonsOf(start, end, upToNow) {
+  var st = String(start || "").split("-"), en = String(end || "").split("-"), out = [];
+  if (st.length < 2 || en.length < 2) return out;
+  var y = +st[0], m = +st[1], ey = +en[0], em = +en[1], now = new Date();
+  if (y * 12 + m < 2026 * 12 + 10) { y = 2026; m = 10; }
+  if (upToNow && ey * 12 + em > now.getFullYear() * 12 + now.getMonth() + 1) { ey = now.getFullYear(); em = now.getMonth() + 1; }
+  for (var i = 0; i < 36 && y * 12 + m <= ey * 12 + em; i++) { out.push([y, m, serForMonth(y, m)]); m++; if (m > 12) { m = 1; y++; } }
+  return out;
+}
+function seaTag(s) {
+  if (s.plan === "lc") return "";
+  if (s.seasons && s.seasons.length) return s.seasons.map(function (n) { return `<span class="tag" style="background:#FF581F;color:#fff">Season ${n}</span>`; }).join(" ") + ' <span class="tag soon">직접 지정</span>';
+  var a = seasonsOf(s.start_date, s.end_date, true), u = [];
+  a.forEach(function (x) { if (u.indexOf(x[2]) < 0) u.push(x[2]); });
+  return u.length ? u.sort().map(function (n) { return `<span class="tag ok" style="background:#1F3864;color:#fff">Season ${n}</span>`; }).join(" ") : "";
+}
+function seaPlan(start, end) {
+  var a = seasonsOf(start, end, false);
+  if (!a.length) return "";
+  return "열리는 Season: " + a.map(function (x) { return x[1] + "월 → <b>Season " + x[2] + "</b>"; }).join(", ");
+}
 function rpc(fn, args) { return sb.rpc(fn, args || {}).then(function (r) { if (r.error) throw r.error; return r.data; }); }
 function modal(html) { var m = document.createElement("div"); m.className = "modal"; m.innerHTML = '<div class="card">' + html + "</div>"; document.body.appendChild(m); m.addEventListener("click", function (e) { if (e.target === m) m.remove(); }); return m; }
 
@@ -161,7 +184,7 @@ function draw() {
     <div class="chips">${[["on", "이용 중"], ["idle", "이번 주 미학습"], ["lc", "LC 30일권"], ["end", "만료"], ["all", "전체"]].map(function (c) { return `<button data-f="${c[0]}" class="${fil === c[0] ? "on" : ""}">${c[1]}</button>`; }).join("")}</div>
     ${rows.map(function (s) {
       var rate = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
-      return `<div class="st"><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${s.memo ? `<div class="info">메모: ${esc(s.memo)}</div>` : ""}</div>${stTag(s)}</div>
+      return `<div class="st"><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${s.memo ? `<div class="info">메모: ${esc(s.memo)}</div>` : ""}</div>${stTag(s)}</div>
         <div class="prog"><span>푼 문제 ${s.solved}</span><span>정답률 ${rate}%</span><span>최근 7일 ${s.week}문제</span><span>마지막 학습 ${ago(s.last_at)}</span><span>마지막 접속 ${ago(s.last_login)}</span></div>
         <div class="acts"><button class="btn navy sm" data-rep="${s.id}">진도 보기</button><button class="btn sm" data-ext="${s.id}">+1개월</button><button class="btn ghost sm" data-edit="${s.id}">수정</button></div></div>`;
     }).join("") || '<p class="note">해당하는 수강생이 없어요.</p>'}
@@ -195,6 +218,9 @@ function editForm(s) {
     <div class="grid"><div><label>시작일</label><input class="in" type="date" id="f-start" value="${esc(s.start_date)}"></div>
       <div><label>종료일</label><input class="in" type="date" id="f-end" value="${esc(s.end_date)}"></div></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn ghost sm" data-dur="me">이번 달 말까지</button>${[1, 2, 3].map(function (n) { return `<button class="btn ghost sm" data-dur="${n}">${n}개월</button>`; }).join("")}</div>
+    <label>볼 수 있는 Season (직접 고르기)</label>
+    <div id="f-seas" style="display:flex;gap:8px;flex-wrap:wrap">${[1, 2, 3].map(function (n) { return `<label style="margin:0;display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:15px;cursor:pointer"><input type="checkbox" value="${n}" ${(s.seasons || []).indexOf(n) >= 0 ? "checked" : ""} style="width:20px;height:20px">Season ${n}</label>`; }).join("")}</div>
+    <div class="msg ok" id="f-sea" style="margin-top:10px"></div>
     <label>레벨</label><select class="in" id="f-level">${["기초", "중급", "고급"].map(function (l) { return `<option ${s.level === l ? "selected" : ""}>${l}</option>`; }).join("")}</select>
     <label>메모 (반 · 입금 등)</label><input class="in" id="f-memo" value="${esc(s.memo || "")}">
     <div id="f-msg"></div>
@@ -208,6 +234,17 @@ function editForm(s) {
       m.querySelector("#f-end").value = ymd(d);
     };
   });
+  function sea() { var st = m.querySelector("#f-start").value, en = m.querySelector("#f-end").value, el = m.querySelector("#f-sea");
+    var lc = m.querySelector("#f-plan").value === "lc";
+    m.querySelectorAll("#f-seas input").forEach(function (c) { c.disabled = lc; c.parentNode.style.opacity = lc ? ".45" : "1"; });
+    if (lc) { el.innerHTML = "LC 30일권: 그 달 Season의 LC 실전 모의고사만 열려요."; return; }
+    var pick = [].map.call(m.querySelectorAll("#f-seas input:checked"), function (c) { return "Season " + c.value; });
+    if (pick.length) { el.innerHTML = "직접 고른 Season만 열려요: <b>" + pick.join(", ") + "</b> (기간 동안)"; return; }
+    el.innerHTML = (seaPlan(st, en) || "시작일·종료일을 넣으면 열리는 Season이 보여요.") + "<br>Season을 체크하지 않으면 이렇게 기간에 맞춰 자동으로 열려요."; }
+  m.querySelectorAll("#f-seas input").forEach(function (c) { c.addEventListener("change", sea); });
+  ["#f-start", "#f-end", "#f-plan"].forEach(function (q) { m.querySelector(q).addEventListener("change", sea); m.querySelector(q).addEventListener("input", sea); });
+  m.querySelectorAll("[data-dur]").forEach(function (b) { b.addEventListener("click", sea); });
+  sea();
   m.querySelector("#f-cancel").onclick = function () { m.remove(); };
   var del = m.querySelector("#f-del");
   if (del) del.onclick = function () {
@@ -223,7 +260,8 @@ function editForm(s) {
     if (!v.p_start || !v.p_end || v.p_end < v.p_start) { msg.innerHTML = '<div class="msg err">시작일·종료일을 확인해 주세요.</div>'; return; }
     var dup = students.find(function (x) { return x.id !== s.id && x.name === v.p_name && String(x.phone).slice(-4) === v.p_phone.slice(-4); });
     if (dup && !confirm("같은 이름 · 같은 번호 뒤 4자리 학생이 이미 있어요 (" + dup.start_date + " ~ " + dup.end_date + ").\n새로 등록하지 말고 그 학생을 '수정'해서 기간을 바꾸는 게 좋아요.\n그래도 저장할까요?")) return;
-    rpc("admin_save_student", v).then(function () { m.remove(); refresh(); }).catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
+    var seas = v.p_plan === "lc" ? [] : [].map.call(m.querySelectorAll("#f-seas input:checked"), function (c) { return +c.value; });
+    rpc("admin_save_student", v).then(function (id) { return rpc("admin_set_seasons", { p_id: id || s.id, p_seasons: seas }); }).then(function () { m.remove(); refresh(); }).catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
   };
 }
 
