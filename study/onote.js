@@ -7,7 +7,7 @@ var ON_T5 = { "어휘 · 명사": "vocab-n", "어휘 · 동사": "vocab-v", "어
 var ON_BANK = { 6: [], 7: [] }; for (var _i = 1; _i <= 30; _i++) ON_BANK[6].push("tp6-" + _i); for (_i = 1; _i <= 50; _i++) ON_BANK[7].push("tp7-" + _i);
 function onIds5(slug) { var a = ["tp5-" + slug]; for (var k = 2; k <= 6; k++) a.push("tp5-" + slug + "-" + k); return a; }
 function onUsed(id) { var n = 0, p = id + ":"; for (var k in S.prog) if (k.indexOf(p) === 0) n++; return n; }
-var ON_RCT = null;
+var ON_RCT = null, ON_LAST = {};
 function onTypes() { if (ON_RCT) return Promise.resolve(ON_RCT); return fetch("/study/rctypes.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (j) { ON_RCT = j || {}; return ON_RCT; }); }
 function onGuess(q, set, part) { return window.MKONOTE ? window.MKONOTE.guess(q, set, part) : ""; }
 function onTitle(ser, n) { return "A급 과제 " + n + "회 (Season " + ser + ")"; }
@@ -64,7 +64,8 @@ function onPractice(part, wrongTypes, back) {
     });
     have.forEach(function (t) { var k = Math.min(want[t], pool[t].length, left); pick = pick.concat(pool[t].splice(0, k)); left -= k; });
     var i = 0; while (left > 0 && have.some(function (t) { return pool[t].length; })) { var t = have[i++ % have.length]; if (pool[t].length) { pick.push(pool[t].shift()); left--; } }
-    mixQuiz("PART " + part + " 틀린 유형 " + pick.length + "문제", "RC", shuffle(pick), back);
+    pick = shuffle(pick); ON_LAST[part] = pick;
+    mixQuiz("PART " + part + " 틀린 유형 " + pick.length + "문제", "RC", pick, back);
   });
 }
 function onWrongBy(parts) {
@@ -77,6 +78,18 @@ function onPracBtn(p, w) {
 function onBind(box, wrongBy, back, note) {
   box.querySelectorAll("[data-onp]").forEach(function (b) { b.onclick = function () { onPractice(+b.dataset.onp, wrongBy[b.dataset.onp], back); }; });
   var nb = box.querySelector("[data-onnote]"); if (nb) nb.onclick = function () { if (!window.MKONOTE) return; var d = new Date(); window.MKONOTE.open({ name: (S.profile || {}).name || "", title: note.title, date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: note.parts }); };
+}
+function onLastBtns(parts) {
+  return parts.filter(function (p) { return ON_LAST[p] && ON_LAST[p].some(function (x) { return S.prog[x.key]; }); }).map(function (p) {
+    return '<button class="btn ghost" data-onlast="' + p + '">📄 방금 푼 PART ' + p + ' 50문제 오답노트</button>';
+  }).join("");
+}
+function onLastBind(box) {
+  box.querySelectorAll("[data-onlast]").forEach(function (b) { b.onclick = function () {
+    var p = +b.dataset.onlast, rct = ON_RCT || {}, d = new Date();
+    var list = ON_LAST[p].filter(function (x) { return S.prog[x.key]; }).map(function (x) { var g = S.prog[x.key]; return { key: x.key, q: x.q, set: x.set, mine: g[0], ok: !!g[1], type: x.q.qtype || rct[x.key] || onGuess(x.q, x.set, p) }; });
+    window.MKONOTE.open({ name: (S.profile || {}).name || "", title: "PART " + p + " 틀린 유형 연습 " + list.length + "문제", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: [{ part: p, title: "틀린 유형 연습", list: list }] });
+  }; });
 }
 function onoteRound(secs, ser, n) {
   secs = secs.filter(function (s) { return s.area !== "LC" && s.part >= 5; });
@@ -94,8 +107,8 @@ function onoteRound(secs, ser, n) {
   app.appendChild(box);
   onTypes().then(function (rct) { return onCollect(fin, rct); }).then(function (parts) {
     var w = onWrongBy(parts), pr = box.querySelector(".on-prac"); if (!pr) return;
-    pr.innerHTML = fin.map(function (s) { return onPracBtn(s.part, w[s.part]); }).join("") || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>';
-    onBind(box, w, back, { title: onTitle(ser, n), parts: parts });
+    pr.innerHTML = (fin.map(function (s) { return onPracBtn(s.part, w[s.part]); }).join("") || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + onLastBtns(fin.map(function (s) { return s.part; }));
+    onBind(box, w, back, { title: onTitle(ser, n), parts: parts }); onLastBind(box);
   });
 }
 function onoteExam(sec) {
@@ -107,8 +120,8 @@ function onoteExam(sec) {
     return onCollect([meta], rct);
   }).then(function (parts) {
     var w = onWrongBy(parts), b = onPracBtn(sec.part, w[sec.part]);
-    box.innerHTML = '<div class="card" style="border:2px solid #172844;display:grid;gap:8px">' + (b || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + '<button class="btn ghost" data-onnote="1">📄 이 PART 오답노트 출력 · PDF 저장</button></div>';
-    onBind(box, w, back, { title: String(sec.title || "A급 과제"), parts: parts });
+    box.innerHTML = '<div class="card" style="border:2px solid #172844;display:grid;gap:8px">' + (b || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + '<button class="btn ghost" data-onnote="1">📄 이 PART 오답노트 출력 · PDF 저장</button>' + onLastBtns([sec.part]) + '</div>';
+    onBind(box, w, back, { title: String(sec.title || "A급 과제"), parts: parts }); onLastBind(box);
   });
 }
 function viewARound(n) {

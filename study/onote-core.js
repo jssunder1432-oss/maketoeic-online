@@ -25,13 +25,29 @@
     + '#mk-onote .sec{background:#000;color:#fff;font-weight:900;padding:6px 10px;margin:18px 0 10px;font-size:15px;break-after:avoid;page-break-after:avoid}'
     + '#mk-onote .q{border:1px solid #000;padding:10px 12px;margin:0 0 10px;break-inside:avoid;page-break-inside:avoid}'
     + '#mk-onote .q .no{font-weight:900;margin-right:6px}#mk-onote .q .ty{float:right;border:1px solid #000;font-size:11px;padding:0 6px;font-weight:700}'
-    + '#mk-onote .q ol{list-style:none;padding:0;margin:6px 0}#mk-onote .q li{padding:1px 0}#mk-onote .q li.ok{font-weight:900}#mk-onote .q li.ok:after{content:"  ← 정답"}#mk-onote .q li.me{text-decoration:line-through}#mk-onote .q li.me:after{content:"  ← 내 답";text-decoration:none;display:inline-block;margin-left:4px}'
+    + '#mk-onote .why{border:2px solid #000;padding:6px 10px;margin:6px 0;border-radius:6px}#mk-onote .why p{margin:3px 0}#mk-onote .q ol{list-style:none;padding:0;margin:6px 0}#mk-onote .q li{padding:1px 0}#mk-onote .q li.ok{font-weight:900}#mk-onote .q li.ok:after{content:"  ← 정답"}#mk-onote .q li.me{text-decoration:line-through}#mk-onote .q li.me:after{content:"  ← 내 답";text-decoration:none;display:inline-block;margin-left:4px}'
     + '#mk-onote .ex{border-top:1px dashed #000;margin-top:6px;padding-top:6px;font-size:13px}#mk-onote .ex p{margin:2px 0}'
     + '#mk-onote .ps{border:1px solid #000;padding:10px 12px;margin:0 0 8px;white-space:pre-wrap;font-size:12.5px;line-height:1.55;break-inside:auto}#mk-onote .ps hr{border:0;border-top:1px dashed #000}'
     + '#mk-onote .tr{font-size:12.5px;margin:0 0 10px;padding:8px 12px;border-left:3px solid #000;background:#f2f2f2;white-space:pre-wrap}'
     + '#mk-onote .bl{display:inline-block;min-width:60px;border-bottom:2px solid #000}#mk-onote .bn{text-decoration:underline}'
     + '#mk-onote .none{border:1px solid #000;padding:14px;text-align:center;font-weight:700}'
     + '@media print{@page{size:A4;margin:12mm}body>*:not(#mk-onote){display:none!important}html,body{background:#fff!important}#mk-onote{position:static;overflow:visible}#mk-onote .tb{display:none}#mk-onote .pg{max-width:none;padding:0}#mk-onote .q,#mk-onote .tr{background:#fff}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+  function why(q, mine) {
+    var ex = String(q.explain || ""), a = q.answer, h = "";
+    function seg(k) {
+      var re = new RegExp("\\(" + L[k] + "\\)\\s*([^\\n]*?)(?=\\s+/\\s+\\([A-D]\\)|\\n|$)", "g"), m, r = "";
+      while ((m = re.exec(ex))) { var pre = ex.slice(Math.max(0, m.index - 4), m.index); if (/정답\s*$/.test(pre)) continue; r = m[1]; break; }
+      return r.replace(/^[^:：]{0,40}[:：]\s*/, function (x) { return /['"‘’]/.test(x) || x.length < 40 ? x : ""; }).trim();
+    }
+    function point() {
+      var m = ex.match(/(?:정답 근거|의식의 흐름|정답 포인트)\s*[:：—-]?\s*([^\n]+)/); return m ? m[1].trim() : "";
+    }
+    var op = q.options || [];
+    if (mine == null || mine < 0) h += '<p><b>✕ 답을 고르지 않음</b></p>';
+    else { var r = seg(mine); h += '<p><b>✕ 내가 고른 (' + L[mine] + ') ' + esc(op[mine] || "") + '</b>' + (r ? ' — 틀린 이유: ' + esc(r.slice(0, String(op[mine] || "").length + 3).replace(/[:：]\s*$/, "").trim() === String(op[mine] || "").trim() || r.indexOf(String(op[mine]) + ":") === 0 ? r.slice(String(op[mine]).length).replace(/^\s*[:：]\s*/, "") : r) : "") + "</p>"; }
+    var pt = point(); h += '<p><b>○ 정답 (' + L[a] + ') ' + esc(op[a] || "") + '</b>' + (pt ? ' — 이유: ' + esc(pt) : "") + "</p>";
+    return '<div class="why">' + h + "</div>";
+  }
   function html(o) {
     var tot = 0, ok = 0, rows = [], types = {};
     o.parts.forEach(function (p) {
@@ -56,7 +72,7 @@
         }
         out += '<div class="q">' + (x.type ? '<span class="ty">' + esc(x.type) + "</span>" : "") + '<span class="no">' + esc(q.no != null ? q.no : "") + ".</span>" + (q.q ? blankTxt(q.q) : "") + "<ol>"
           + (q.options || []).map(function (op, k) { return '<li class="' + (k === q.answer ? "ok" : k === x.mine ? "me" : "") + '">(' + L[k] + ") " + esc(op) + "</li>"; }).join("") + "</ol>"
-          + (x.mine == null || x.mine < 0 ? "<p>(답을 고르지 않음)</p>" : "")
+          + why(q, x.mine)
           + '<div class="ex">' + (q.translation ? "<p><b>해석</b> " + esc(q.translation) + "</p>" : "") + fmt(q.explain) + "</div></div>";
       });
     });
