@@ -65,6 +65,7 @@ th{background:var(--bg);font-size:13px;color:var(--navy)}
 <body>
 <div class="wrap" id="app"><div class="card">불러오는 중…</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/study/onote-core.js?v=1"></script>
 <script>
 (function () {
 "use strict";
@@ -304,7 +305,47 @@ function report(s) {
       ${games.length ? `<p class="grp">VOCA 단어 게임</p><p class="note">${games.map(function (g) { return "DAY " + g.day + " " + "★".repeat(g.stars || 0) + " (" + g.plays + "회)"; }).join(" · ")}</p>` : ""}
       <p class="note" style="margin-top:14px">문제를 풀고 채점한 기록 기준이에요. 해설강의 시청 시간은 따로 기록되지 않아요.</p>`;
     m.querySelector("#r-x").onclick = function () { m.remove(); };
+    var nb = document.createElement("div"); nb.style.marginTop = "14px";
+    nb.innerHTML = '<p class="grp">A급 과제 오답노트</p><div id="r-on" class="note">불러오는 중…</div>';
+    m.querySelector(".card").appendChild(nb); onoteList(s, nb.querySelector("#r-on"));
   }).catch(function (e) { m.querySelector(".card").innerHTML = '<div class="msg err">' + esc(e.message) + '</div><button class="btn ghost" onclick="this.closest(\'.modal\').remove()">닫기</button>'; });
+}
+
+/* ---------- A급 과제 오답노트 (학생이 푼 기록으로 그대로 다시 만든다) ---------- */
+var ON_CAT = null, ON_RCT = null;
+function onoteList(s, box) {
+  Promise.all([ON_CAT ? ON_CAT : rpc("admin_get_content", { p_key: "catalog" }), rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }),
+    ON_RCT ? ON_RCT : fetch("/study/rctypes.json?t=" + Date.now()).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; })]).then(function (x) {
+    ON_CAT = x[0]; ON_RCT = x[2] || {}; var prog = x[1] || {};
+    var secs = ((ON_CAT || {}).sections || []).filter(function (c) { return c.group === "A급 과제" && c.area !== "LC" && c.part >= 5; });
+    var rounds = {}, order = [];
+    secs.forEach(function (c) {
+      var keys = c.keys || [], done = keys.filter(function (k) { return prog[k]; }).length; if (!done) return;
+      var ser = +(c.series || 3), id = ser + "-" + c.round;
+      if (!rounds[id]) { rounds[id] = { ser: ser, n: c.round, secs: [], done: 0, total: 0, ok: 0, last: "" }; order.push(id); }
+      var r = rounds[id]; r.secs.push(c); r.done += done; r.total += keys.length;
+      keys.forEach(function (k) { var p = prog[k]; if (p) { if (p[1]) r.ok++; if (String(p[2] || "") > r.last) r.last = String(p[2] || ""); } });
+    });
+    order.sort(function (a, b) { return rounds[b].last.localeCompare(rounds[a].last); });
+    if (!order.length) { box.innerHTML = "아직 푼 A급 과제가 없어요."; return; }
+    box.innerHTML = '<table><tr><th>회차</th><th>푼 문제</th><th>정답</th><th>최근</th><th></th></tr>' + order.map(function (id) {
+      var r = rounds[id];
+      return "<tr><td>" + r.n + "회 <span class=\"tag full\">S" + r.ser + "</span></td><td>" + r.done + " / " + r.total + "</td><td>" + r.ok + "</td><td>" + md(r.last) + '</td><td><button class="btn navy sm" data-on="' + id + '">오답노트</button></td></tr>';
+    }).join("") + "</table>";
+    box.querySelectorAll("[data-on]").forEach(function (b) { b.onclick = function () {
+      var r = rounds[b.dataset.on]; b.disabled = true; b.textContent = "여는 중…";
+      Promise.all(r.secs.slice().sort(function (a, c) { return a.part - c.part; }).map(function (c) { return rpc("admin_get_content", { p_key: "sec:" + c.id }); })).then(function (full) {
+        var parts = full.map(function (sec) {
+          return { part: sec.part, title: String(sec.title || "").replace(/^A급 과제 \d+회 · PART \d\s*/, "").replace(/^\(|\)$/g, ""), list: MKONOTE.itemsOf(sec).filter(function (it) { return prog[it.key]; }).map(function (it) {
+            var p = prog[it.key]; return { key: it.key, q: it.q, set: it.set, mine: p[0], ok: !!p[1], type: ON_RCT[it.key] || MKONOTE.guess(it.q, it.set, sec.part) };
+          }) };
+        });
+        var last = r.last ? new Date(r.last) : new Date();
+        MKONOTE.open({ name: s.name, title: "A급 과제 " + r.n + "회 (Season " + r.ser + ")", date: last.getFullYear() + "." + (last.getMonth() + 1) + "." + last.getDate(), parts: parts });
+        b.disabled = false; b.textContent = "오답노트";
+      }).catch(function (e) { b.disabled = false; b.textContent = "오답노트"; alert(e.message || e); });
+    }; });
+  }).catch(function (e) { box.innerHTML = '<span style="color:#C00">' + esc(e.message || e) + "</span>"; });
 }
 
 /* ---------- 당일 수업 녹화 (유튜브 링크) ---------- */
