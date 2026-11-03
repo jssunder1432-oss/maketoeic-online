@@ -66,7 +66,7 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 1) 기능 함수
 ["function lecturesOf(sec) {\n", FN + "\n"],
 // 2) LC 학습실 메뉴 박스에 "교재 강의" 줄
-["      (reelList().length ? roomRow(\"#/reels\"", "      (tblOf(ser).length ? roomRow(\"#/tbl\", \"교재\", \"📘 교재 강의\", ({ 1: \"교재1\", 2: \"교재2\", 3: \"통합 교재\" })[ser] + \" · \" + tblOf(ser).map(function (c) { return c.c.replace(/ 공략법 · 유형별$/, \"\"); }).join(\" · \"), \"linear-gradient(125deg,#0E6E5C,#1BA37F)\") : \"\") +\n      (reelList().length ? roomRow(\"#/reels\""],
+["      (reelList().length ? roomRow(\"#/reels\"", "      (tblOf(ser).length ? roomRow(\"#/tbl\", \"교재\", \"📘 교재 강의\", ({ 1: \"교재1\", 2: \"교재2\", 3: \"통합 교재\" })[ser] + \" · PART 2 · PART 3·4 · 강의 \" + tblOf(ser).reduce(function (a, c) { return a + c.l.length; }, 0) + \"개\",\"linear-gradient(125deg,#0E6E5C,#1BA37F)\") : \"\") +\n      (reelList().length ? roomRow(\"#/reels\""],
 // 3) 주소 연결
 ["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"tbl\" && h[3] != null) return viewTblPlay(+h[1], +h[2], +h[3]);\n  if (h[0] === \"tbl\") return viewTbl();\n"]
 ]);
