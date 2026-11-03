@@ -28,7 +28,7 @@ function payCard(title) {
   return `<div class="card peach"><h2>${title}</h2>
     <p style="font-size:14.5px;margin:6px 0 4px">학습실 이용권 · 1개월 · 결제 즉시 이용</p>
     <p style="font-size:14px;margin:0 0 12px;color:#33404F">LC 그 달 Series 전체 + RC 기출문제<br>결제할 때 <b>학습실 로그인 이름·휴대폰 번호</b>를 그대로 적어 주세요. 결제 후에는 환불되지 않아요.</p>
-    <a class="btn" href="${PAY_URL}?name=${encodeURIComponent((S.profile || {}).name || "")}">💳 이용권 결제하기</a>
+    <a class="btn" href="${PAY_URL}?p=lc&name=${encodeURIComponent((S.profile || {}).name || "")}">💳 이용권 결제하기</a>
     <button class="btn ghost" id="pay-chk" style="margin-top:8px">결제했어요 · 바로 열기</button>
     <p id="pay-msg" style="font-size:13.5px;margin:8px 0 0;color:#33404F"></p></div>`;
 }
@@ -151,7 +151,7 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // LC 수강권: 목록에는 이번 달 LC 실전 모의고사만
 ["S.catalog = x[0] || { sections: [] }; S.videos", "S.catalog = x[0] || { sections: [] }; if (payLc()) S.catalog = { sections: S.catalog.sections.filter(planSec) }; S.videos"],
 // 로그인 화면: 처음 온 사람도 이용권 결제
-["<b>처음이신가요?</b><p style=\"margin:6px 0 12px;font-size:14px\">학습실은 메이크토익 수강생 전용입니다. 등록·기간 연장 문의는 카카오톡으로 해 주세요.</p>", "<b>처음이신가요?</b><p style=\"margin:6px 0 12px;font-size:14px\">메이크토익 오프라인 수강생은 수업하는 달에 무료로 이용해요. 학원생이 아니면 <b>비회원 학습실</b>에서 30일 수강권(LC · RC · LC+RC 중 선택)으로 시작할 수 있어요. 결제할 때 적은 이름·휴대폰 뒤 4자리로 입장하세요.</p><a class=\"btn\" href=\"/lc/\" style=\"margin-bottom:8px\">🎧 비회원 학습실 · 30일 수강권</a><a class=\"btn ghost\" href=\"${PAY_URL}\" style=\"margin-bottom:8px\">수업 끝난 수강생 · 학습실 이용권</a>"],
+["<b>처음이신가요?</b><p style=\"margin:6px 0 12px;font-size:14px\">학습실은 메이크토익 수강생 전용입니다. 등록·기간 연장 문의는 카카오톡으로 해 주세요.</p>", "<b>처음이신가요?</b><p style=\"margin:6px 0 12px;font-size:14px\">메이크토익 오프라인 수강생은 수업하는 달에 무료로 이용해요. 학원생이 아니면 <b>비회원 학습실</b>에서 30일 수강권(LC · RC · LC+RC 중 선택)으로 시작할 수 있어요. 결제할 때 적은 이름·휴대폰 뒤 4자리로 입장하세요.</p><a class=\"btn\" href=\"/lc/\" style=\"margin-bottom:8px\">🎧 비회원 학습실 · 30일 수강권</a><a class=\"btn ghost\" href=\"${PAY_URL}?p=lc\" style=\"margin-bottom:8px\">수업 끝난 수강생 · 30일 수강권(수강생가)</a>"],
 // 결제 직후 로그인: 아직 학습실에 안 넘어왔으면 한 번 당겨 오고 다시 로그인
 ["      if (r.status === \"notfound\") return viewLogin(", "      if (r.status === \"notfound\" && !submit.retried) { submit.retried = true; return paySync().then(function () { b.disabled = false; submit(); }); }\n      if (r.status === \"notfound\") return viewLogin("]
 ]);

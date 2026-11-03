@@ -47,7 +47,7 @@ var SUPA = "https://hrlldteviatcatxyzrrz.supabase.co", KEY = "sb_publishable_YT1
 var CLIENT_KEY = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; // 토스페이먼츠 클라이언트 키 (실제 키로 바꾸면 실결제)
 var PRICE = 150000, NAME = "학습실 이용권 (1개월)";
 var app = document.getElementById("app"), q = new URLSearchParams(location.search);
-var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : "pass", LC = KIND !== "pass", CFG = {}, SEA = +q.get("s") || 0;
+var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : "lc", LC = KIND !== "pass", CFG = {}, SEA = +q.get("s") || 0;
 // 비회원 30일 수강권 (가격이 정해진 상품만 보여 줌 — 가격은 관리자 페이지에서)
 var PRODS = { lc: { name: "LC 30일 수강권", price: 24900, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의"] },
   rc: { name: "RC 30일 수강권", price: 0, items: ["고른 Season의 RC 문제 (Part 5 문법 · 어휘 · Part 7 독해)", "문제별 해설 · 단어 누르면 뜻 · 품사"] },
