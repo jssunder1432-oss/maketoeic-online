@@ -55,6 +55,6 @@
   }
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; });
   window.addEventListener("appinstalled", function () { close(); var f = document.getElementById("mk-fab"); if (f) f.remove(); });
-  function start() { fab(); if (mobile && !get("mk:installSeen")) setTimeout(guide, 3000); }
+  function start() { fab(); if (/[?&]dl=1/.test(location.search)) return setTimeout(guide, 600); if (mobile && !get("mk:installSeen")) setTimeout(guide, 3000); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();
