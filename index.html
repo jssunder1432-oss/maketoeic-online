@@ -55,6 +55,10 @@ h1,h2,h3{color:var(--ink);letter-spacing:-.035em;margin:0}
 @media (max-width:380px){.top nav{gap:7px}.logo{font-size:16px}}
 
 /* 버튼 */
+.appdl{display:flex;align-items:center;gap:12px;width:100%;max-width:440px;margin:14px 0 0;padding:12px 14px;border:0;border-radius:16px;background:var(--navy);color:#fff;text-align:left;font-family:var(--font);cursor:pointer;box-shadow:0 10px 26px rgba(23,40,68,.22)}
+.appdl img{width:48px;height:48px;border-radius:12px;flex:none}
+.appdl span{flex:1;min-width:0}.appdl b{display:block;font-size:16px;font-weight:800}.appdl small{display:block;font-size:12.5px;color:#C9D5EA;margin-top:3px;line-height:1.4}
+.appdl i{font-style:normal;flex:none;background:var(--orange);border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 24px;border-radius:14px;font:700 16px/1 var(--font);text-decoration:none;border:0;cursor:pointer;transition:transform .15s ease,background .15s ease}
 .btn:active{transform:scale(.98)}
 .btn-primary{background:var(--navy);color:#fff}
@@ -209,6 +213,11 @@ footer .logo{display:inline-block;margin-bottom:10px}
         <a href="/study/" class="btn btn-primary">수강생 학습실 입장</a>
         <a href="/lc/" class="btn btn-line">비회원 학습실</a>
       </div>
+      <button type="button" class="appdl" id="mk-dl" onclick="window.MK_INSTALL&&window.MK_INSTALL()">
+        <img src="/app/icon-192.png" alt="">
+        <span><b>메이크토익 앱 다운로드</b><small>크롬(아이폰은 사파리)에서 홈페이지 접속 시 다운로드 가능</small></span>
+        <i>받기</i>
+      </button>
       <div class="meta">
         <div><b>매달</b>새 LC 모의고사</div>
         <div><b>30일</b>결제 즉시 이용</div>
@@ -365,6 +374,6 @@ document.querySelectorAll('[data-link]').forEach(function (a) {
   if (a.getAttribute('href') === '#') a.addEventListener('click', function (e) { e.preventDefault(); alert('곧 오픈합니다.'); });
 });
 </script>
-<script src="/app-install.js?v=3" defer></script>
+<script src="/app-install.js?v=4" defer></script>
 </body>
 </html>
