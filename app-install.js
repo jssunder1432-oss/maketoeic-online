@@ -33,10 +33,17 @@
   var SHARE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" style="vertical-align:-2px"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg>';
   function guide() {
     if (deferred) return show("<b>메이크토익 앱으로 설치하기</b>홈 화면에 아이콘이 생기고 앱처럼 바로 열려요.", "설치", function () { close(); deferred.prompt(); deferred.userChoice.then(function () { deferred = null; }); });
-    if (inapp) return show("<b>앱으로 설치하려면</b>" + (ios ? "오른쪽 아래 <i>⋯</i> 또는 <i>" + SHARE + "</i> → <i>Safari로 열기</i>" : "오른쪽 위 <i>⋮</i> → <i>다른 브라우저로 열기</i>") + " 후 이 버튼을 다시 눌러 주세요.");
+    if (inapp && android) return show("<b>앱으로 설치하려면</b>지금은 네이버·카톡 앱 안이라 설치가 안 돼요. 아래 버튼으로 인터넷 브라우저에서 열어 주세요.", "브라우저로 열기", openOut);
+    if (inapp) return show("<b>앱으로 설치하려면</b>지금은 앱 안 화면이라 설치가 안 돼요. 아래쪽 <i>≡</i> 또는 <i>⋯</i> 메뉴 → <i>Safari로 열기</i>(<i>기본 브라우저로 열기</i>) 후 다시 눌러 주세요.");
     if (ios) return show("<b>메이크토익 앱으로 설치하기</b>사파리 아래쪽 <i>" + SHARE + " 공유</i> 버튼 → 아래로 내려서 <i>홈 화면에 추가</i> → <i>추가</i>");
     if (android) return show("<b>메이크토익 앱으로 설치하기</b>" + (samsung ? "아래쪽 <i>≡</i> 메뉴 → <i>현재 페이지 추가</i> → <i>홈 화면</i>" : "오른쪽 위 <i>⋮</i> 메뉴 → <i>홈 화면에 추가</i> 또는 <i>앱 설치</i>"));
     show("<b>휴대폰에서 설치할 수 있어요</b>휴대폰으로 <i>maketoeic.kr</i>에 들어가 이 버튼을 누르면 설치 방법이 나와요.");
+  }
+  function openOut() {
+    var u = location.href.replace(/^https?:\/\//, "");
+    if (/KAKAOTALK/i.test(ua)) { location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href); return; }
+    var pkg = samsung || /SM-|Samsung/i.test(ua) ? "com.sec.android.app.sbrowser" : "com.android.chrome";
+    location.href = "intent://" + u + "#Intent;scheme=https;package=" + pkg + ";S.browser_fallback_url=" + encodeURIComponent(location.href) + ";end";
   }
   function fab() {
     if (document.getElementById("mk-fab")) return;
