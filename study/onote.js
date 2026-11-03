@@ -4,7 +4,9 @@
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["function viewARound(n) {\n", String.raw`
 var ON_T5 = { "어휘 · 명사": "vocab-n", "어휘 · 동사": "vocab-v", "어휘 · 형용사": "vocab-adj", "어휘 · 부사": "vocab-adv", "품사 자리": "pos", "동사 태": "voice", "동사 시제·수일치": "tense", "준동사": "verbal", "대명사": "pronoun", "전치사 선택": "prep", "전치사 vs 접속사 vs 접속부사": "conj", "관계사 · 명사절": "relative", "비교 · 수량 · 한정사": "compare" };
-var ON_BANK = { 6: [1, 2, 3, 4, 5].map(function (i) { return "tp6-" + i; }), 7: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (i) { return "tp7-" + i; }) };
+var ON_BANK = { 6: [], 7: [] }; for (var _i = 1; _i <= 30; _i++) ON_BANK[6].push("tp6-" + _i); for (_i = 1; _i <= 50; _i++) ON_BANK[7].push("tp7-" + _i);
+function onIds5(slug) { var a = ["tp5-" + slug]; for (var k = 2; k <= 6; k++) a.push("tp5-" + slug + "-" + k); return a; }
+function onUsed(id) { var n = 0, p = id + ":"; for (var k in S.prog) if (k.indexOf(p) === 0) n++; return n; }
 var ON_RCT = null;
 function onTypes() { if (ON_RCT) return Promise.resolve(ON_RCT); return fetch("/study/rctypes.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (j) { ON_RCT = j || {}; return ON_RCT; }); }
 function onGuess(q, set, part) { return window.MKONOTE ? window.MKONOTE.guess(q, set, part) : ""; }
@@ -32,20 +34,30 @@ function onFill(set, keepNo) {
 function onPractice(part, wrongTypes, back) {
   var types = Object.keys(wrongTypes); if (!types.length) return;
   render('<div class="empty">틀린 유형 문제를 모으는 중…</div>');
-  var ids = part === 5 ? types.map(function (t) { return ON_T5[t] ? "tp5-" + ON_T5[t] : null; }).filter(Boolean) : ON_BANK[part];
-  Promise.all(ids.map(function (id) { return load("sec:" + id).catch(function () { return null; }); })).then(function (secs) {
-    var pool = {};
-    secs.forEach(function (sec) { if (!sec) return; itemsOf(sec).forEach(function (x) {
-      var t = x.q.qtype || sec.qtype; if (!wrongTypes[t]) return;
-      x.sec = sec; if (part === 6 && x.set) x.set = onFill(x.set, x.q.no);
-      (pool[t] = pool[t] || []).push(x);
-    }); });
+  var tot = types.reduce(function (a, t) { return a + wrongTypes[t]; }, 0), want = {};
+  types.forEach(function (t) { want[t] = Math.max(1, Math.round(50 * wrongTypes[t] / tot)); });
+  // 덜 푼 문제은행 파일부터 조금씩 불러온다 (안 푼 문제가 모자라면 더 불러옴)
+  var ids = [];
+  if (part === 5) types.forEach(function (t) { if (ON_T5[t]) ids = ids.concat(onIds5(ON_T5[t])); }); else ids = ON_BANK[part].slice();
+  ids = shuffle(ids).sort(function (a, b) { return onUsed(a) - onUsed(b); });
+  var pool = {}, seen = {}, step = part === 5 ? Math.max(2, types.length) : part === 6 ? 6 : 8;
+  function unN(t) { return (pool[t] || []).filter(function (x) { return !S.prog[x.key]; }).length; }
+  function enough() { return types.every(function (t) { return unN(t) >= want[t]; }); }
+  function more() {
+    var batch = ids.splice(0, step); if (!batch.length) return Promise.resolve();
+    return Promise.all(batch.map(function (id) { return load("sec:" + id).catch(function () { return null; }); })).then(function (secs) {
+      secs.forEach(function (sec) { if (!sec || seen[sec.id]) return; seen[sec.id] = 1; itemsOf(sec).forEach(function (x) {
+        var t = x.q.qtype || sec.qtype; if (!wrongTypes[t]) return;
+        x.sec = sec; if (part === 6 && x.set) x.set = onFill(x.set, x.q.no);
+        (pool[t] = pool[t] || []).push(x);
+      }); });
+      if (!enough() && ids.length) return more();
+    });
+  }
+  more().then(function () {
     var have = types.filter(function (t) { return pool[t] && pool[t].length; });
     if (!have.length) { render(topbar("틀린 유형 50문제") + '<div class="card peach">이 유형의 연습 문제를 준비 중이에요.</div><button class="btn" data-go="' + back + '">돌아가기</button>'); bindCommon(); return; }
-    // 틀린 개수 비율로 50문제 배분 (안 푼 문제 → 틀린 문제 → 맞힌 문제 순)
-    var tot = have.reduce(function (a, t) { return a + wrongTypes[t]; }, 0), want = {}, left = 50;
-    have.forEach(function (t) { want[t] = Math.max(1, Math.round(50 * wrongTypes[t] / tot)); });
-    var pick = [];
+    var left = 50, pick = [];
     have.forEach(function (t) {
       var ks = pool[t], un = ks.filter(function (x) { return !S.prog[x.key]; }), wr = ks.filter(function (x) { var p = S.prog[x.key]; return p && !p[1]; }), rt = ks.filter(function (x) { var p = S.prog[x.key]; return p && p[1]; });
       pool[t] = shuffle(un).concat(shuffle(wr), shuffle(rt));
