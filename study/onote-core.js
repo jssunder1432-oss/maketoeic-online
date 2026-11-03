@@ -73,7 +73,7 @@
         out += '<div class="q">' + (x.type ? '<span class="ty">' + esc(x.type) + "</span>" : "") + '<span class="no">' + esc(q.no != null ? q.no : "") + ".</span>" + (q.q ? blankTxt(q.q) : "") + "<ol>"
           + (q.options || []).map(function (op, k) { return '<li class="' + (k === q.answer ? "ok" : k === x.mine ? "me" : "") + '">(' + L[k] + ") " + esc(op) + "</li>"; }).join("") + "</ol>"
           + why(q, x.mine)
-          + '<div class="ex">' + (q.translation ? "<p><b>해석</b> " + esc(q.translation) + "</p>" : "") + fmt(q.explain) + "</div></div>";
+          + '<div class="ex">' + (q.translation && !/(^|\n)\s*해석\s*[:：]/.test(q.explain || "") ? "<p><b>해석</b> " + esc(q.translation) + "</p>" : "") + fmt(q.explain) + "</div></div>";
       });
     });
     if (!any) out += '<div class="none">틀린 문제가 없어요. 전부 맞혔어요!</div>';
