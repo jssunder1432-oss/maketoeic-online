@@ -55,7 +55,7 @@ h1,h2,h3{color:var(--ink);letter-spacing:-.035em;margin:0}
 @media (max-width:380px){.top nav{gap:7px}.logo{font-size:16px}}
 
 /* 버튼 */
-.appdl{display:flex;align-items:center;gap:12px;width:100%;max-width:440px;margin:14px 0 0;padding:12px 14px;border:0;border-radius:16px;background:var(--navy);color:#fff;text-align:left;font-family:var(--font);cursor:pointer;box-shadow:0 10px 26px rgba(23,40,68,.22)}
+.appdl{display:flex;align-items:center;gap:12px;width:100%;max-width:440px;margin:0 0 18px;padding:12px 14px;border:0;border-radius:16px;background:var(--navy);color:#fff;text-align:left;font-family:var(--font);cursor:pointer;box-shadow:0 10px 26px rgba(23,40,68,.22)}
 .appdl img{width:48px;height:48px;border-radius:12px;flex:none}
 .appdl span{flex:1;min-width:0}.appdl b{display:block;font-size:16px;font-weight:800}.appdl small{display:block;font-size:12.5px;color:#C9D5EA;margin-top:3px;line-height:1.4}
 .appdl i{font-style:normal;flex:none;background:var(--orange);border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px}
@@ -192,7 +192,7 @@ footer .logo{display:inline-block;margin-bottom:10px}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="메이크토익">
-<script>/* 새 버전이 올라가면 예전 화면 대신 새로 받기 */(function(){var B="h1";function c(){fetch("/ver-home.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=(v||"").trim();if(!v||v===B)return;try{if(sessionStorage.getItem("mk:rlh")===v)return;sessionStorage.setItem("mk:rlh",v)}catch(e){}location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}c();document.addEventListener("visibilitychange",function(){if(!document.hidden)c()});window.addEventListener("pageshow",function(e){if(e.persisted)c()})})();</script>
+<script>/* 새 버전이 올라가면 예전 화면 대신 새로 받기 */(function(){var B="h2";function c(){fetch("/ver-home.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=(v||"").trim();if(!v||v===B)return;try{if(sessionStorage.getItem("mk:rlh")===v)return;sessionStorage.setItem("mk:rlh",v)}catch(e){}location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}c();document.addEventListener("visibilitychange",function(){if(!document.hidden)c()});window.addEventListener("pageshow",function(e){if(e.persisted)c()})})();</script>
 </head>
 <body>
 
@@ -207,6 +207,11 @@ footer .logo{display:inline-block;margin-bottom:10px}
 <section class="hero">
   <div class="wrap">
     <div>
+      <button type="button" class="appdl" id="mk-dl" onclick="window.MK_INSTALL&&window.MK_INSTALL()">
+        <img src="/app/icon-192.png" alt="">
+        <span><b>메이크토익 앱 다운로드</b><small>크롬(아이폰은 사파리)에서 홈페이지 접속 시 다운로드 가능</small></span>
+        <i>받기</i>
+      </button>
       <span class="chip">청주토익 1위 메이크토익 온라인</span>
       <h1>토익 수업을<br>휴대폰 안으로.</h1>
       <p class="lead"><b>MakeToeic</b>, 더 쉽게 만나 보세요.<br>학원 수강생은 등록한 이름과 휴대폰 뒤 4자리로 바로 입장하고, 학원생이 아니어도 비회원 학습실에서 LC 실전 모의고사로 훈련할 수 있어요.</p>
@@ -214,11 +219,6 @@ footer .logo{display:inline-block;margin-bottom:10px}
         <a href="/study/" class="btn btn-primary">수강생 학습실 입장</a>
         <a href="/lc/" class="btn btn-line">비회원 학습실</a>
       </div>
-      <button type="button" class="appdl" id="mk-dl" onclick="window.MK_INSTALL&&window.MK_INSTALL()">
-        <img src="/app/icon-192.png" alt="">
-        <span><b>메이크토익 앱 다운로드</b><small>크롬(아이폰은 사파리)에서 홈페이지 접속 시 다운로드 가능</small></span>
-        <i>받기</i>
-      </button>
       <div class="meta">
         <div><b>매달</b>새 LC 모의고사</div>
         <div><b>30일</b>결제 즉시 이용</div>
