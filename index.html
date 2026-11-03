@@ -182,6 +182,12 @@ footer .logo{display:inline-block;margin-bottom:10px}
   section{padding:96px 0}
 }
 </style>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#1D2C4D">
+<link rel="apple-touch-icon" href="/app/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="메이크토익">
 </head>
 <body>
 
@@ -359,5 +365,6 @@ document.querySelectorAll('[data-link]').forEach(function (a) {
   if (a.getAttribute('href') === '#') a.addEventListener('click', function (e) { e.preventDefault(); alert('곧 오픈합니다.'); });
 });
 </script>
+<script src="/app-install.js" defer></script>
 </body>
 </html>

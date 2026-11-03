@@ -1,6 +1,6 @@
 /* 학습실 앱 설치 안내: 안드로이드는 설치 버튼, 아이폰은 '홈 화면에 추가' 방법 안내 */
 (function () {
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(function () { });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () { });
   var ua = navigator.userAgent || "", standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   if (standalone) return;
   var mobile = /Android|iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -23,7 +23,7 @@
   function show(html, btn, onBtn) {
     var old = document.getElementById("mk-inst"); if (old) old.remove();
     var d = document.createElement("div"); d.id = "mk-inst";
-    d.innerHTML = '<img src="app/icon-192.png" alt=""><div class="t">' + html + '</div>' + (btn ? '<button class="go">' + btn + '</button>' : "") + '<button class="x" aria-label="닫기">×</button>';
+    d.innerHTML = '<img src="/app/icon-192.png" alt=""><div class="t">' + html + '</div>' + (btn ? '<button class="go">' + btn + '</button>' : "") + '<button class="x" aria-label="닫기">×</button>';
     document.body.appendChild(d);
     d.querySelector(".x").onclick = function () { set("mk:installHide", String(Date.now() + 7 * 864e5)); d.remove(); };
     if (btn) d.querySelector(".go").onclick = onBtn;

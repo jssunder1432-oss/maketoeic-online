@@ -6,14 +6,13 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="robots" content="noindex,nofollow">
 <title>메이크토익 학습실 · MAKE TOEIC</title>
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1D2C4D">
-<link rel="icon" href="app/icon-32.png" sizes="32x32">
-<link rel="apple-touch-icon" href="app/icon-180.png">
+<link rel="icon" href="/app/icon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/app/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="메이크토익">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 html,body{margin:0;background:#F5F7FA}
@@ -33,7 +32,7 @@ html,body{margin:0;background:#F5F7FA}
 window.MKST_PATCH_READY=Promise.all(F.map(function(f){return fetch(f+"?t="+t,{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).catch(function(){return ""})})).then(function(ts){ts.forEach(function(x){try{(0,eval)(x)}catch(e){}})});
 window.addEventListener("pageshow",function(e){if(e.persisted)location.reload();});
 /* 새 버전이 올라가면(ver.txt) 열려 있던 화면도 자동으로 새로 받기 */
-var BUILD="20261103h";function chk(){fetch("ver.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=(v||"").trim();if(!v||v===BUILD)return;try{if(sessionStorage.getItem("mkst:rl")===v)return;sessionStorage.setItem("mkst:rl",v)}catch(e){}location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
+var BUILD="20261103i";function chk(){fetch("ver.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=(v||"").trim();if(!v||v===BUILD)return;try{if(sessionStorage.getItem("mkst:rl")===v)return;sessionStorage.setItem("mkst:rl",v)}catch(e){}location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()});window.addEventListener("hashchange",chk);})();
 </script>
 <div id="mk-host"><p id="mk-load">학습실을 불러오는 중…</p></div>
@@ -50,6 +49,6 @@ chk();document.addEventListener("visibilitychange",function(){if(!document.hidde
     .catch(function(){host.innerHTML='<p id="mk-load">학습실을 불러오지 못했어요. 새로고침해 주세요.</p>'});
 })();
 </script>
-<script src="install.js" defer></script>
+<script src="/app-install.js" defer></script>
 </body>
 </html>
