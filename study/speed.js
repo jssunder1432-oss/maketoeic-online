@@ -16,7 +16,7 @@ function attach(v) {
   v.addEventListener("contextmenu", function (e) { e.preventDefault(); });
   var r = cur(); apply(v, r);
   ["loadedmetadata", "play", "loadstart"].forEach(function (ev) { v.addEventListener(ev, function () { var x = cur(); if (v.playbackRate !== x) apply(v, x); }); });
-  var box = v.parentElement, row = box && box.querySelector("#lcv-pg, #al-pg");
+  var box = v.parentElement, row = box && box.querySelector("#lcv-pg, #al-pg, #tb-pg");
   if (row) {
     var b = document.createElement("button");
     b.className = "mk-speed";
