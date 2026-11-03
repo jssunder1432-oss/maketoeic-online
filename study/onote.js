@@ -55,40 +55,53 @@ function onPractice(part, wrongTypes, back) {
     mixQuiz("PART " + part + " 틀린 유형 " + pick.length + "문제", "RC", shuffle(pick), back);
   });
 }
+function onWrongBy(parts) {
+  var w = {}; parts.forEach(function (p) { p.list.forEach(function (x) { if (!x.ok) { w[p.part] = w[p.part] || {}; w[p.part][x.type] = (w[p.part][x.type] || 0) + 1; } }); }); return w;
+}
+function onPracBtn(p, w) {
+  var ks = Object.keys(w || {}); if (!ks.length) return "";
+  return '<button class="btn navy" data-onp="' + p + '" style="text-align:left;line-height:1.35">🎯 PART ' + p + ' 틀린 유형 50문제 더 풀기<br><small style="font-weight:600;opacity:.85">' + ks.map(function (t) { return esc(t.replace(/^PART \d · /, "")) + " " + w[t]; }).join(" · ") + "</small></button>";
+}
+function onBind(box, wrongBy, back, note) {
+  box.querySelectorAll("[data-onp]").forEach(function (b) { b.onclick = function () { onPractice(+b.dataset.onp, wrongBy[b.dataset.onp], back); }; });
+  var nb = box.querySelector("[data-onnote]"); if (nb) nb.onclick = function () { if (!window.MKONOTE) return; var d = new Date(); window.MKONOTE.open({ name: (S.profile || {}).name || "", title: note.title, date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: note.parts }); };
+}
 function onoteRound(secs, ser, n) {
   secs = secs.filter(function (s) { return s.area !== "LC" && s.part >= 5; });
-  var tt = 0, dd = 0; secs.forEach(function (s) { var t = secStats(s); tt += t.total; dd += t.done; });
-  var box = document.createElement("div"); box.className = "card"; box.style.cssText = "margin-top:6px;border:2px solid #172844";
   if (!secs.length) return;
-  if (dd < tt) {
-    box.innerHTML = '<b>📄 RC 오답노트 · 🎯 틀린 유형 50문제</b><p style="margin:6px 0 0;font-size:14px;color:#5B6573">PART 5·6·7을 다 풀면 열려요. (' + dd + " / " + tt + " 문제 풀이)</p>";
+  var fin = secs.filter(function (s) { var t = secStats(s); return t.total && t.done >= t.total; });
+  var box = document.createElement("div"); box.className = "card"; box.style.cssText = "margin-top:6px;border:2px solid #172844";
+  if (!fin.length) {
+    box.innerHTML = '<b>📄 RC 오답노트 · 🎯 틀린 유형 50문제</b><p style="margin:6px 0 0;font-size:14px;color:#5B6573">PART를 하나 다 풀면 그 PART의 틀린 유형 50문제와 오답노트가 열려요.</p>';
     app.appendChild(box); return;
   }
   var back = location.hash || "#/a";
-  box.innerHTML = '<b style="font-size:16px">이 회차를 다 풀었어요!</b><p style="margin:4px 0 10px;font-size:14px;color:#5B6573">틀린 문제로 오답노트를 출력하고, 틀린 유형을 50문제 더 풀어 보세요.</p>'
-    + '<button class="btn" id="on-note" style="width:100%">📄 오답노트 출력 · PDF 저장</button><div id="on-prac" style="display:grid;gap:8px;margin-top:8px"></div>';
+  var rest = secs.filter(function (s) { return fin.indexOf(s) < 0; }).map(function (s) { return s.part; });
+  box.innerHTML = '<b style="font-size:16px">📄 오답노트 · 🎯 틀린 유형 50문제</b><p style="margin:4px 0 10px;font-size:14px;color:#5B6573">다 푼 PART ' + fin.map(function (s) { return s.part; }).join("·") + '의 틀린 문제로 만들어요.' + (rest.length ? " (PART " + rest.join("·") + "도 다 풀면 추가돼요)" : "") + '</p>'
+    + '<button class="btn" data-onnote="1" style="width:100%">📄 오답노트 출력 · PDF 저장</button><div class="on-prac" style="display:grid;gap:8px;margin-top:8px"><div class="empty" style="padding:8px">틀린 유형 확인 중…</div></div>';
   app.appendChild(box);
+  onTypes().then(function (rct) { return onCollect(fin, rct); }).then(function (parts) {
+    var w = onWrongBy(parts), pr = box.querySelector(".on-prac"); if (!pr) return;
+    pr.innerHTML = fin.map(function (s) { return onPracBtn(s.part, w[s.part]); }).join("") || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>';
+    onBind(box, w, back, { title: onTitle(ser, n), parts: parts });
+  });
+}
+function onoteExam(sec) {
+  if (!sec || sec.group !== "A급 과제" || sec.area === "LC" || !(sec.part >= 5)) return;
+  var box = document.getElementById("on-ex"); if (!box) return;
+  var back = location.hash;
   onTypes().then(function (rct) {
-    var wrongBy = { 5: {}, 6: {}, 7: {} };
-    var keys = []; secs.forEach(function (s) { (s.keys || []).forEach(function (k) { keys.push([k, s.part]); }); });
-    // 유형 판정에 문항 본문이 필요할 수 있어 섹션을 불러 둔다
-    onCollect(secs, rct).then(function (parts) {
-      parts.forEach(function (p) { p.list.forEach(function (x) { if (!x.ok && wrongBy[p.part]) wrongBy[p.part][x.type] = (wrongBy[p.part][x.type] || 0) + 1; }); });
-      var pr = document.getElementById("on-prac"); if (!pr) return;
-      pr.innerHTML = [5, 6, 7].map(function (p) {
-        var w = wrongBy[p], ks = Object.keys(w); if (!ks.length) return "";
-        return '<button class="btn navy" data-onp="' + p + '" style="text-align:left;line-height:1.35">🎯 PART ' + p + ' 틀린 유형 50문제 풀기<br><small style="font-weight:600;opacity:.85">' + ks.map(function (t) { return esc(t.replace(/^PART \d · /, "")) + " " + w[t]; }).join(" · ") + "</small></button>";
-      }).join("") || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>';
-      pr.querySelectorAll("[data-onp]").forEach(function (b) { b.onclick = function () { onPractice(+b.dataset.onp, wrongBy[b.dataset.onp], back); }; });
-      document.getElementById("on-note").onclick = function () {
-        if (!window.MKONOTE) return;
-        var d = new Date();
-        window.MKONOTE.open({ name: (S.profile || {}).name || "", title: onTitle(ser, n), date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: parts });
-      };
-    });
+    var meta = S.catalog.sections.filter(function (s) { return s.id === sec.id; })[0] || sec;
+    return onCollect([meta], rct);
+  }).then(function (parts) {
+    var w = onWrongBy(parts), b = onPracBtn(sec.part, w[sec.part]);
+    box.innerHTML = '<div class="card" style="border:2px solid #172844;display:grid;gap:8px">' + (b || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + '<button class="btn ghost" data-onnote="1">📄 이 PART 오답노트 출력 · PDF 저장</button></div>';
+    onBind(box, w, back, { title: String(sec.title || "A급 과제"), parts: parts });
   });
 }
 function viewARound(n) {
 `],
-["  bindCommon();\n}\n\n/* ---------- 섹션 & 문제 풀이 ---------- */", "  onoteRound(secs, ser, n);\n  bindCommon();\n}\n\n/* ---------- 섹션 & 문제 풀이 ---------- */"]
+["  bindCommon();\n}\n\n/* ---------- 섹션 & 문제 풀이 ---------- */", "  onoteRound(secs, ser, n);\n  bindCommon();\n}\n\n/* ---------- 섹션 & 문제 풀이 ---------- */"],
+["<div style=\"display:grid;gap:8px\">${lectureButton(sec, true)}<button class=\"btn ghost\" id=\"ex-retry\">", "<div id=\"on-ex\"></div><div style=\"display:grid;gap:8px\">${lectureButton(sec, true)}<button class=\"btn ghost\" id=\"ex-retry\">"],
+["document.getElementById(\"ex-go\").onclick = function () { examReview(sec, list.filter(function (x) { return pick[x.key]; }), draw); };", "document.getElementById(\"ex-go\").onclick = function () { examReview(sec, list.filter(function (x) { return pick[x.key]; }), draw); };\n      onoteExam(sec);"]
 ]);
