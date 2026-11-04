@@ -394,6 +394,24 @@ function onoteList(s, box) {
 
 /* ---------- A급 과제 날짜별 제출 현황 (학생이 학습실 A급 과제 회차 화면에서 '과제 제출'을 누른 기록) ---------- */
 var HW = {};
+function hwNote(s, ser, n, b) {
+  var old = b.textContent; b.disabled = true; b.textContent = "여는 중…";
+  Promise.all([ON_CAT ? ON_CAT : rpc("admin_get_content", { p_key: "catalog" }), rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }),
+    ON_RCT ? ON_RCT : fetch("/study/rctypes.json?t=" + Date.now()).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; })]).then(function (x) {
+    ON_CAT = x[0]; ON_RCT = x[2] || {}; var prog = x[1] || {};
+    var secs = ((ON_CAT || {}).sections || []).filter(function (c) { return c.group === "A급 과제" && c.area !== "LC" && c.part >= 5 && +(c.series || 3) === ser && String(c.round) === String(n) && (c.keys || []).some(function (k) { return prog[k]; }); });
+    if (!secs.length) throw new Error("이 회차에서 푼 RC 문제가 아직 없어요.");
+    return Promise.all(secs.sort(function (a, c) { return a.part - c.part; }).map(function (c) { return rpc("admin_get_content", { p_key: "sec:" + c.id }); })).then(function (full) {
+      var parts = full.map(function (sec) {
+        return { part: sec.part, title: String(sec.title || "").replace(/^A급 과제 \d+회 · PART \d\s*/, "").replace(/^\(|\)$/g, ""), list: MKONOTE.itemsOf(sec).filter(function (it) { return prog[it.key]; }).map(function (it) {
+          var p = prog[it.key]; return { key: it.key, q: it.q, set: it.set, mine: p[0], ok: !!p[1], type: ON_RCT[it.key] || it.q.qtype || MKONOTE.guess(it.q, it.set, sec.part) };
+        }) };
+      });
+      var d = new Date(HW.day || today());
+      MKONOTE.open({ name: s.name, title: "A급 과제 " + n + "회 (Season " + ser + ")", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: parts });
+    });
+  }).then(function () { b.disabled = false; b.textContent = old; }).catch(function (e) { b.disabled = false; b.textContent = old; alert(e.message || e); });
+}
 function hwTick() { clearInterval(HW.t); if (HW.live) HW.t = setInterval(function () { if (view !== "hw" || !document.getElementById("hw-live")) { clearInterval(HW.t); return; } viewHw(HW.day, true); }, 20000); }
 function viewHw(day, quiet) {
   day = day || HW.day || today(); HW.day = day;
@@ -414,7 +432,7 @@ function viewHw(day, quiet) {
     var strip = []; for (var i = 13; i >= 0; i--) { var d = today(-i); strip.push(d); }
     render(head() + `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="in" type="date" id="hw-d" value="${esc(day)}" style="max-width:180px"><button class="btn ghost sm" id="hw-p">◀ 전날</button><button class="btn ghost sm" id="hw-n">다음날 ▶</button><button class="btn ghost sm" id="hw-t">오늘</button><span style="flex:1"></span><button class="btn ${HW.live ? "" : "ghost"} sm" id="hw-live">${HW.live ? "⏱ 실시간 켜짐 (20초마다)" : "⏱ 실시간 보기"}</button><button class="btn ghost sm" id="hw-r">🔄 새로고침</button></div><p class="note" style="margin:6px 0 0">마지막 확인 ${new Date().toLocaleTimeString("ko-KR")} · 학생이 '과제 제출'을 누르면 ${HW.live ? "20초 안에 자동으로" : "새로고침하면"} 여기에 나와요.</p>
       <div style="display:flex;gap:4px;margin-top:10px;overflow-x:auto">${strip.map(function (d) { var n = days[d.replace(/-/g, "")] || 0; return `<button class="btn ${d === day ? "" : "ghost"} sm" data-hd="${d}" style="min-width:52px;padding:6px 4px;line-height:1.2">${md(d)}<br><b>${n}명</b></button>`; }).join("")}</div></div>
-      <div class="card"><p class="sec">✅ 제출 ${sub.length}명 · ${md(day)} <span class="note" style="font-weight:600">(${HW.mon} 수강생 ${sub.length + not.length}명 중)</span></p>${sub.length ? '<table><tr><th>학생</th><th>제출한 과제</th><th>푼 문제</th><th>제출 시각</th></tr>' + sub.map(function (r) { return r[1].map(function (x, k) { return `<tr>${k ? "<td></td>" : `<td><b>${esc(r[0].name)}</b></td>`}<td>A급 과제 ${x.n}회 <span class="tag full">S${x.ser}</span></td><td>${x.cnt}문제</td><td>${x.tm}</td></tr>`; }).join(""); }).join("") + "</table>" : '<p class="note">이 날 제출한 학생이 없어요.</p>'}</div>
+      <div class="card"><p class="sec">✅ 제출 ${sub.length}명 · ${md(day)} <span class="note" style="font-weight:600">(${HW.mon} 수강생 ${sub.length + not.length}명 중)</span></p>${sub.length ? '<table><tr><th>학생</th><th>제출한 과제</th><th>푼 문제</th><th>제출 시각</th><th></th></tr>' + sub.map(function (r) { return r[1].map(function (x, k) { return `<tr>${k ? "<td></td>" : `<td><b>${esc(r[0].name)}</b></td>`}<td>A급 과제 ${x.n}회 <span class="tag full">S${x.ser}</span></td><td>${x.cnt}문제</td><td>${x.tm}</td><td><button class="btn navy sm" data-hwn="${esc(r[0].id)}|${x.ser}|${x.n}">📄 오답노트</button></td></tr>`; }).join(""); }).join("") + "</table>" : '<p class="note">이 날 제출한 학생이 없어요.</p>'}</div>
       <div class="card"><p class="sec">⬜ 미제출 ${not.length}명</p><p class="note" style="margin:0">${not.map(function (s) { return esc(s.name); }).join(" · ") || "모두 제출했어요 👏"}</p></div>`);
     bindHead();
     function goD(d) { viewHw(d); }
@@ -423,6 +441,7 @@ function viewHw(day, quiet) {
     document.getElementById("hw-n").onclick = function () { var d = new Date(day); d.setDate(d.getDate() + 1); goD(ymd(d)); };
     document.getElementById("hw-t").onclick = function () { goD(today()); };
     app.querySelectorAll("[data-hd]").forEach(function (b) { b.onclick = function () { goD(b.dataset.hd); }; });
+    app.querySelectorAll("[data-hwn]").forEach(function (b) { b.onclick = function () { var z = b.dataset.hwn.split("|"), st = students.filter(function (x) { return String(x.id) === z[0]; })[0]; if (st) hwNote(st, +z[1], z[2], b); }; });
     document.getElementById("hw-r").onclick = function () { viewHw(day); };
     document.getElementById("hw-live").onclick = function () { HW.live = !HW.live; hwTick(); viewHw(day, true); };
     hwTick();
