@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psI").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psM").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psI").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psM").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -320,7 +320,7 @@ function ebCamFloat(fn) {
 }
 // 한 단어 여러 품사: 이 문장에서 쓰인 용도를 맨 위(우선)로, 다른 쓰임은 아래에
 var EB_ALT = null;
-function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psI").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
+function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psM").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
 function ebAltShow(pop, word, g) {
   var k = String(word || "").toLowerCase().replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
   ebAlt().then(function (A) {
@@ -333,6 +333,55 @@ function ebAltShow(pop, word, g) {
     var mn = pop.querySelector(".mn"); if (mn) { mn.insertAdjacentHTML("afterbegin", '<span class="eb-no1">1</span>'); mn.after(box); } else pop.appendChild(box);
     if (pop.style.transform) ebPopFollow(pop);
   });
+}
+// 이 쪽 음원 받기: 듣기 묶음 구간을 원본 음원에서 잘라 순서대로 이어 MP3 한 파일로
+function ebAudDl(m, segs, btn) {
+  segs = (segs || []).filter(Boolean); if (!segs.length) return;
+  var old = btn.textContent; btn.disabled = true; btn.textContent = "음원 준비 중…";
+  var R = 22050, Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext, cache = {};
+  function dec(url) {
+    if (!cache[url]) cache[url] = fetch(url).then(function (r) { if (!r.ok) throw new Error("http"); return r.arrayBuffer(); }).then(function (ab) {
+      var c = new Ctx(1, 1, R); return new Promise(function (res, rej) { var p = c.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+    });
+    return cache[url];
+  }
+  var parts = [], i = 0;
+  function nx() {
+    if (i >= segs.length) return Promise.resolve();
+    var a = segs[i++]; btn.textContent = "음원 자르는 중 " + i + " / " + segs.length;
+    return dec(ebSrc(m, a[0])).then(function (buf) {
+      var ch = buf.getChannelData(0), sr = buf.sampleRate, s0 = Math.max(0, Math.floor((+a[1] || 0) * sr)), s1 = Math.min(ch.length, a[2] ? Math.ceil(+a[2] * sr) : ch.length);
+      var seg = ch.slice(s0, s1);
+      if (sr !== R) { var k = sr / R, n = Math.floor(seg.length / k), o = new Float32Array(n); for (var j = 0; j < n; j++) o[j] = seg[Math.floor(j * k)]; seg = o; }
+      parts.push(seg, new Float32Array(Math.round(R * 0.8)));
+    }).catch(function () { }).then(nx);
+  }
+  nx().then(function () {
+    var tot = parts.reduce(function (s, p) { return s + p.length; }, 0); if (!tot) throw new Error("none");
+    var pcm = new Int16Array(tot), o = 0;
+    parts.forEach(function (p) { for (var j = 0; j < p.length; j++) { var v = Math.max(-1, Math.min(1, p[j])); pcm[o++] = v < 0 ? v * 32768 : v * 32767; } });
+    btn.textContent = "MP3 만드는 중…";
+    return new Promise(function (res) {
+      if (window.lamejs) return res(window.lamejs);
+      var sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"; sc.onload = function () { res(window.lamejs || null); }; sc.onerror = function () { res(null); }; document.head.appendChild(sc);
+    }).then(function (lame) {
+      var blob, ext;
+      if (lame) {
+        var enc = new lame.Mp3Encoder(1, R, 64), out = [];
+        for (var j = 0; j < pcm.length; j += 1152) { var b = enc.encodeBuffer(pcm.subarray(j, j + 1152)); if (b.length) out.push(new Uint8Array(b)); }
+        var e = enc.flush(); if (e.length) out.push(new Uint8Array(e));
+        blob = new Blob(out, { type: "audio/mpeg" }); ext = "mp3";
+      } else {
+        var bf = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(bf);
+        function w(o2, t) { for (var q = 0; q < t.length; q++) v.setUint8(o2 + q, t.charCodeAt(q)); }
+        w(0, "RIFF"); v.setUint32(4, 36 + pcm.length * 2, true); w(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, R, true); v.setUint32(28, R * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, pcm.length * 2, true);
+        new Int16Array(bf, 44).set(pcm); blob = new Blob([bf], { type: "audio/wav" }); ext = "wav";
+      }
+      var c = EB.cur || {}, a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "메이크토익_" + String(c.nm || "교재").replace(/\s+/g, "_") + "_" + (c.n || "") + "쪽_음원." + ext;
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+      btn.textContent = "✔ 받았어요"; setTimeout(function () { btn.textContent = old; btn.disabled = false; }, 3000);
+    });
+  }).catch(function () { alert("음원을 받지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요."); btn.textContent = old; btn.disabled = false; });
 }
 function ebPopFollow(pop) {
   var V = window.visualViewport; if (!V) return;
@@ -355,6 +404,10 @@ function ebDraw(m, d) {
   ov.innerHTML = W.map(function (w, i) {
     return `<span class="eb-w${w[5] >= 0 ? " au" : ""}" data-i="${i}" style="left:${w[0] * 100}%;top:${w[1] * 100}%;width:${w[2] * 100}%;height:${w[3] * 100}%"></span>`;
   }).join("");
+  if ((d.ft || []).length && !(d.t || []).length) {
+    var tk1 = app.querySelector("#eb-trk");
+    if (tk1) { tk1.style.display = "block"; var db = document.createElement("button"); db.className = "eb-ft in"; db.style.background = "#1E8E5A"; db.textContent = "⬇ 이 쪽 음원 받기"; db.onclick = function () { ebAudDl(m, d.ft.map(function (f) { return A[f[1]]; }), db); }; tk1.appendChild(db); }
+  }
   // 대화·담화 스크립트 쪽: 단마다 전체 듣기 (쪽 아래 빈 곳)
   (d.ft || []).forEach(function (f, k) {
     var b = document.createElement("button"); b.className = "eb-ft"; b.textContent = "▶ " + f[0];
@@ -374,7 +427,7 @@ function ebDraw(m, d) {
   if (tk && T2.length) {
     var hasQA = T2.some(function (t) { return t[2]; }), rep = ls("ebrep") === "1" && hasQA, run = 0;
     tk.style.display = "block";
-    tk.innerHTML = `<div class="eb-tt"><button id="eb-tall">▶ 전체 듣기</button>${hasQA ? `<button id="eb-trep" class="${rep ? "on" : ""}">🔁 정답 반복 듣기 ${rep ? "켜짐" : "꺼짐"}</button>` : ""}<button id="eb-tstop">■ 멈춤</button></div>` +
+    tk.innerHTML = `<div class="eb-tt"><button id="eb-tall">▶ 전체 듣기</button>${hasQA ? `<button id="eb-trep" class="${rep ? "on" : ""}">🔁 정답 반복 듣기 ${rep ? "켜짐" : "꺼짐"}</button>` : ""}<button id="eb-tstop">■ 멈춤</button><button id="eb-tdl" style="border-color:#1E8E5A;color:#1E8E5A">⬇ 음원 받기</button></div>` +
       `<p class="eb-tip" style="margin:4px 2px 6px">${hasQA ? "문제를 누르면 그 문제만 들어요. <b>정답 반복 듣기</b>를 켜면 질문과 정답만 계속 반복해요." : "문제 묶음을 누르면 그 부분만 들어요."}</p>` +
       `<button class="eb-tog" id="eb-tog">📋 문제 골라 듣기 <span>${T2.length}문제</span><b>${ls("ebtog") === "1" ? "▲ 접기" : "▼ 펼치기"}</b></button>` +
       `<div class="eb-tch" id="eb-tch" style="display:${ls("ebtog") === "1" ? "grid" : "none"}">${T2.map(function (t, i) { return `<button data-tk="${i}">▶ ${esc(t[0])}</button>`; }).join("")}</div>`;
@@ -386,6 +439,7 @@ function ebDraw(m, d) {
     function playOneTrack(i, r) {
       var t = T2[i]; mark(i);
       if (rep && t[2]) return once(A[t[2][0]]).then(function () { return gap(600, r); }).then(function () { if (r !== run) throw 0; return once(A[t[2][1]]); }).then(function () { return gap(1000, r); });
+      if (d.p2t && t[2] && A[t[2][1]]) return once(A[t[2][0]]).then(function () { return gap(500, r); }).then(function () { if (r !== run) throw 0; return once(A[t[2][1]]); }).then(function () { return gap(900, r); });
       return once(A[t[1]]).then(function () { return gap(800, r); });
     }
     function loopRep(i, r) { return playOneTrack(i, r).then(function () { if (r === run) return loopRep(i, r); }); }
@@ -394,6 +448,7 @@ function ebDraw(m, d) {
       (function nx() { if (r !== run || i >= T2.length) { if (r === run) mark(-1); return; } var k = i++; playOneTrack(k, r).then(function () { if (rep && T2[k][2]) return playOneTrack(k, r); }).then(nx).catch(function () { }); })();
     };
     tk.querySelector("#eb-tstop").onclick = stopAll;
+    tk.querySelector("#eb-tdl").onclick = function () { var sg = []; T2.forEach(function (t) { if (d.p2t && t[2] && A[t[2][1]]) sg.push(A[t[2][0]], A[t[2][1]]); else sg.push(A[t[1]]); }); ebAudDl(m, sg, this); };
     var rb = tk.querySelector("#eb-trep"); if (rb) rb.onclick = function () { rep = !rep; ls("ebrep", rep ? "1" : "0"); rb.classList.toggle("on", rep); rb.textContent = "🔁 정답 반복 듣기 " + (rep ? "켜짐" : "꺼짐"); };
     tk.querySelectorAll("[data-tk]").forEach(function (b) {
       b.onclick = function () {
