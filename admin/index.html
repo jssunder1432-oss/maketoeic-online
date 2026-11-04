@@ -152,12 +152,12 @@ function pwForm() {
 
 /* ---------- 상단 ---------- */
 function head() {
-  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : "수강생 관리"}</h1></div>
-  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
+  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : "수강생 관리"}</h1></div>
+  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
   <span style="flex:1"></span><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button></div>`;
 }
 function bindHead() {
-  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
+  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "hw" ? viewHw() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
   document.getElementById("ad-out").onclick = function () { sb.auth.signOut().then(function () { viewLogin(); }); };
   document.getElementById("ad-chpw").onclick = pwForm;
 }
@@ -346,6 +346,11 @@ function report(s) {
     var nb = document.createElement("div"); nb.style.marginTop = "14px";
     nb.innerHTML = '<p class="grp">A급 과제 · OT 오답노트</p><div id="r-on" class="note">불러오는 중…</div>';
     m.querySelector(".card").appendChild(nb); onoteList(s, nb.querySelector("#r-on"));
+    var hb = document.createElement("div"); hb.style.marginTop = "14px"; hb.innerHTML = '<p class="grp">📮 A급 과제 제출 기록</p><div class="note">불러오는 중…</div>'; m.querySelector(".card").appendChild(hb);
+    rpc("admin_student_progress", { p_id: s.id, p_prefix: "hw:" }).then(function (p) {
+      var L = Object.keys(p || {}).map(function (k) { var x = k.match(/^hw:(\d)-(\d+):(\d{4})(\d{2})(\d{2})$/); if (!x) return null; var v = +p[k][0] || 0, hm = v % 10000; return { d: x[3] + "-" + x[4] + "-" + x[5], t: x[4] * 1 + "/" + x[5] * 1 + " " + String(Math.floor(hm / 100)).padStart(2, "0") + ":" + String(hm % 100).padStart(2, "0"), r: x[2] + "회 S" + x[1], c: Math.floor(v / 10000) }; }).filter(Boolean).sort(function (a, b) { return b.d.localeCompare(a.d); });
+      hb.querySelector(".note").innerHTML = L.length ? L.map(function (x) { return "<b>" + esc(x.t) + "</b> A급 과제 " + esc(x.r) + " (" + x.c + "문제)"; }).join("<br>") : "아직 제출한 과제가 없어요.";
+    }).catch(function () { hb.querySelector(".note").textContent = "불러오지 못했어요."; });
   }).catch(function (e) { m.querySelector(".card").innerHTML = '<div class="msg err">' + esc(e.message) + '</div><button class="btn ghost" onclick="this.closest(\'.modal\').remove()">닫기</button>'; });
 }
 
@@ -390,6 +395,36 @@ function onoteList(s, box) {
       }).catch(function (e) { b.disabled = false; b.textContent = "오답노트"; alert(e.message || e); });
     }; });
   }).catch(function (e) { box.innerHTML = '<span style="color:#C00">' + esc(e.message || e) + "</span>"; });
+}
+
+/* ---------- A급 과제 날짜별 제출 현황 (학생이 학습실 A급 과제 회차 화면에서 '과제 제출'을 누른 기록) ---------- */
+var HW = {};
+function viewHw(day) {
+  day = day || HW.day || today(); HW.day = day;
+  render(head() + '<div class="card">불러오는 중…</div>'); bindHead();
+  (students.length ? Promise.resolve(students) : rpc("admin_list_students").then(function (x) { students = x || []; return students; })).then(function (L) {
+    var act = L.filter(function (s) { return !s.end_date || String(s.end_date) >= today(-30); });
+    return Promise.all(act.map(function (s) { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "hw:" }).then(function (p) { return [s, p || {}]; }).catch(function () { return [s, {}]; }); }));
+  }).then(function (rows) {
+    var key = day.replace(/-/g, ""), sub = [], not = [], days = {};
+    rows.forEach(function (r) {
+      var s = r[0], p = r[1], mine = [];
+      Object.keys(p).forEach(function (k) { var m = k.match(/^hw:(\d)-(\d+):(\d{8})$/); if (!m) return; days[m[3]] = (days[m[3]] || 0) + 1; if (m[3] === key) { var v = +p[k][0] || 0, hm = v % 10000; mine.push({ ser: +m[1], n: +m[2], cnt: Math.floor(v / 10000), tm: String(Math.floor(hm / 100)).padStart(2, "0") + ":" + String(hm % 100).padStart(2, "0") }); } });
+      if (mine.length) sub.push([s, mine]); else not.push(s);
+    });
+    var strip = []; for (var i = 13; i >= 0; i--) { var d = today(-i); strip.push(d); }
+    render(head() + `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="in" type="date" id="hw-d" value="${esc(day)}" style="max-width:180px"><button class="btn ghost sm" id="hw-p">◀ 전날</button><button class="btn ghost sm" id="hw-n">다음날 ▶</button><button class="btn ghost sm" id="hw-t">오늘</button></div>
+      <div style="display:flex;gap:4px;margin-top:10px;overflow-x:auto">${strip.map(function (d) { var n = days[d.replace(/-/g, "")] || 0; return `<button class="btn ${d === day ? "" : "ghost"} sm" data-hd="${d}" style="min-width:52px;padding:6px 4px;line-height:1.2">${md(d)}<br><b>${n}명</b></button>`; }).join("")}</div></div>
+      <div class="card"><p class="sec">✅ 제출 ${sub.length}명 · ${md(day)}</p>${sub.length ? '<table><tr><th>학생</th><th>제출한 과제</th><th>푼 문제</th><th>제출 시각</th></tr>' + sub.map(function (r) { return r[1].map(function (x, k) { return `<tr>${k ? "<td></td>" : `<td><b>${esc(r[0].name)}</b></td>`}<td>A급 과제 ${x.n}회 <span class="tag full">S${x.ser}</span></td><td>${x.cnt}문제</td><td>${x.tm}</td></tr>`; }).join(""); }).join("") + "</table>" : '<p class="note">이 날 제출한 학생이 없어요.</p>'}</div>
+      <div class="card"><p class="sec">⬜ 미제출 ${not.length}명</p><p class="note" style="margin:0">${not.map(function (s) { return esc(s.name); }).join(" · ") || "모두 제출했어요 👏"}</p></div>`);
+    bindHead();
+    function goD(d) { viewHw(d); }
+    document.getElementById("hw-d").onchange = function () { goD(this.value); };
+    document.getElementById("hw-p").onclick = function () { var d = new Date(day); d.setDate(d.getDate() - 1); goD(ymd(d)); };
+    document.getElementById("hw-n").onclick = function () { var d = new Date(day); d.setDate(d.getDate() + 1); goD(ymd(d)); };
+    document.getElementById("hw-t").onclick = function () { goD(today()); };
+    app.querySelectorAll("[data-hd]").forEach(function (b) { b.onclick = function () { goD(b.dataset.hd); }; });
+  }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message || e) + "</div>"); bindHead(); });
 }
 
 /* ---------- 당일 수업 녹화 (유튜브 링크) ---------- */
