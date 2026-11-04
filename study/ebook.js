@@ -32,8 +32,13 @@ var EB_CSS = `
 .mkst .eb-bar{position:sticky;top:calc(52px + env(safe-area-inset-top));z-index:20;display:flex;align-items:center;gap:6px;background:rgba(245,247,250,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:8px 0;margin:-4px 0 8px}
 .mkst .eb-bar button,.mkst .eb-bar select{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;font-weight:800;font-size:14px;color:#172844;min-height:40px}
 .mkst .eb-bar select{flex:1;min-width:0;padding:9px 6px}
-.mkst .eb-trk{display:flex;gap:6px;overflow-x:auto;padding:0 0 8px;margin:0 0 4px}
-.mkst .eb-trk button{flex-shrink:0;border:0;border-radius:99px;padding:8px 13px;background:#172844;color:#fff;font-weight:800;font-size:13.5px}
+.mkst .eb-trk{padding:0 0 6px;margin:0 0 4px}
+.mkst .eb-tt{display:flex;gap:6px;flex-wrap:wrap}
+.mkst .eb-tt button{border:1.5px solid #172844;background:#fff;color:#172844;border-radius:12px;padding:10px 13px;font-weight:900;font-size:14.5px}
+.mkst .eb-tt #eb-tall{background:#E95721;border-color:#E95721;color:#fff}
+.mkst .eb-tt #eb-trep.on{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
+.mkst .eb-tch{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px}
+.mkst .eb-tch button{flex-shrink:0;border:0;border-radius:99px;padding:8px 13px;background:#172844;color:#fff;font-weight:800;font-size:13.5px}
 .mkst .eb-trk button.on{background:#E95721}
 .mkst .eb-scroll{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:calc(100vh - 150px);overscroll-behavior:contain}
 .mkst .eb-pg{position:relative;margin:0;transform-origin:0 0}
@@ -151,17 +156,34 @@ function ebDraw(m, d) {
   ov.innerHTML = W.map(function (w, i) {
     return `<span class="eb-w${w[5] >= 0 ? " au" : ""}" data-i="${i}" style="left:${w[0] * 100}%;top:${w[1] * 100}%;width:${w[2] * 100}%;height:${w[3] * 100}%"></span>`;
   }).join("");
-  // 파트 3·4 실전 문제 쪽: 대화·담화 묶음 듣기 버튼
+  // 듣기 묶음(파트2 마킹 시트·파트3·4 실전): 전체 듣기 / 문제 골라 듣기 / 정답 반복 듣기
   var tk = app.querySelector("#eb-trk"), T2 = d.t || [];
   if (tk && T2.length) {
-    tk.style.display = "flex";
-    tk.innerHTML = T2.map(function (t, i) { return `<button data-tk="${i}">▶ ${esc(t[0])}</button>`; }).join("");
+    var hasQA = T2.some(function (t) { return t[2]; }), rep = ls("ebrep") === "1" && hasQA, run = 0;
+    tk.style.display = "block";
+    tk.innerHTML = `<div class="eb-tt"><button id="eb-tall">▶ 전체 듣기</button>${hasQA ? `<button id="eb-trep" class="${rep ? "on" : ""}">🔁 정답 반복 듣기 ${rep ? "켜짐" : "꺼짐"}</button>` : ""}<button id="eb-tstop">■ 멈춤</button></div>` +
+      `<p class="eb-tip" style="margin:4px 2px 6px">${hasQA ? "문제를 누르면 그 문제만 들어요. <b>정답 반복 듣기</b>를 켜면 질문과 정답만 계속 반복해요." : "문제 묶음을 누르면 그 부분만 들어요."}</p>` +
+      `<div class="eb-tch">${T2.map(function (t, i) { return `<button data-tk="${i}">▶ ${esc(t[0])}</button>`; }).join("")}</div>`;
+    function once(a) { return new Promise(function (res) { ebPlay(m, a, res); }); }
+    function gap(ms, r) { return new Promise(function (res, rej) { setTimeout(function () { r === run ? res() : rej(); }, ms); }); }
+    function mark(i) { tk.querySelectorAll("[data-tk]").forEach(function (x) { var on = +x.dataset.tk === i; x.classList.toggle("on", on); x.textContent = (on ? "■ " : "▶ ") + T2[+x.dataset.tk][0]; }); if (i >= 0) { var c = tk.querySelector('[data-tk="' + i + '"]'); if (c && c.scrollIntoView) c.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" }); } }
+    function stopAll() { run++; EBP.stop++; stopPlay(); mark(-1); }
+    function playOneTrack(i, r) {
+      var t = T2[i]; mark(i);
+      if (rep && t[2]) return once(A[t[2][0]]).then(function () { return gap(600, r); }).then(function () { if (r !== run) throw 0; return once(A[t[2][1]]); }).then(function () { return gap(1000, r); });
+      return once(A[t[1]]).then(function () { return gap(800, r); });
+    }
+    function loopRep(i, r) { return playOneTrack(i, r).then(function () { if (r === run) return loopRep(i, r); }); }
+    tk.querySelector("#eb-tall").onclick = function () {
+      stopAll(); var r = run, i = 0;
+      (function nx() { if (r !== run || i >= T2.length) { if (r === run) mark(-1); return; } var k = i++; playOneTrack(k, r).then(function () { if (rep && T2[k][2]) return playOneTrack(k, r); }).then(nx).catch(function () { }); })();
+    };
+    tk.querySelector("#eb-tstop").onclick = stopAll;
+    var rb = tk.querySelector("#eb-trep"); if (rb) rb.onclick = function () { rep = !rep; ls("ebrep", rep ? "1" : "0"); rb.classList.toggle("on", rep); rb.textContent = "🔁 정답 반복 듣기 " + (rep ? "켜짐" : "꺼짐"); };
     tk.querySelectorAll("[data-tk]").forEach(function (b) {
       b.onclick = function () {
-        var on = b.classList.contains("on"); tk.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); x.textContent = x.textContent.replace(/^■/, "▶"); });
-        if (on) { stopPlay(); EBP.stop++; return; }
-        b.classList.add("on"); b.textContent = b.textContent.replace(/^▶/, "■");
-        ebPlay(m, A[T2[+b.dataset.tk][1]], function () { b.classList.remove("on"); b.textContent = b.textContent.replace(/^■/, "▶"); });
+        var i = +b.dataset.tk, on = b.classList.contains("on"); stopAll(); if (on) return;
+        var r = run; (rep && T2[i][2] ? loopRep(i, r) : playOneTrack(i, r)).then(function () { if (r === run) mark(-1); }).catch(function () { });
       };
     });
   }
