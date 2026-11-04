@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps3").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps4").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps3").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps4").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -42,8 +42,10 @@ var EB_CSS = `
 .mkst .eb-tt button{border:1.5px solid #172844;background:#fff;color:#172844;border-radius:12px;padding:10px 13px;font-weight:900;font-size:14.5px}
 .mkst .eb-tt #eb-tall{background:#E95721;border-color:#E95721;color:#fff}
 .mkst .eb-tt #eb-trep.on{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
-.mkst .eb-tch{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px}
-.mkst .eb-tch button{flex-shrink:0;border:0;border-radius:99px;padding:8px 13px;background:#172844;color:#fff;font-weight:800;font-size:13.5px}
+.mkst .eb-tog{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 6px;border:1.5px solid #172844;background:#fff;border-radius:12px;padding:11px 14px;font-weight:900;font-size:15px;color:#172844;text-align:left}
+.mkst .eb-tog span{font-size:13px;font-weight:700;color:#33404F}.mkst .eb-tog b{margin-left:auto;font-size:14px}
+.mkst .eb-tch{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;padding:2px 0 8px;max-height:46vh;overflow-y:auto}
+.mkst .eb-tch button{border:0;border-radius:10px;padding:10px 8px;background:#172844;color:#fff;font-weight:800;font-size:14px;text-align:left}
 .mkst .eb-trk button.on{background:#E95721}
 .mkst .eb-scroll{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:calc(100vh - 150px);overscroll-behavior:contain}
 .mkst .eb-pg{position:relative;margin:0;transform-origin:0 0}
@@ -269,10 +271,12 @@ function ebDraw(m, d) {
     tk.style.display = "block";
     tk.innerHTML = `<div class="eb-tt"><button id="eb-tall">▶ 전체 듣기</button>${hasQA ? `<button id="eb-trep" class="${rep ? "on" : ""}">🔁 정답 반복 듣기 ${rep ? "켜짐" : "꺼짐"}</button>` : ""}<button id="eb-tstop">■ 멈춤</button></div>` +
       `<p class="eb-tip" style="margin:4px 2px 6px">${hasQA ? "문제를 누르면 그 문제만 들어요. <b>정답 반복 듣기</b>를 켜면 질문과 정답만 계속 반복해요." : "문제 묶음을 누르면 그 부분만 들어요."}</p>` +
-      `<div class="eb-tch">${T2.map(function (t, i) { return `<button data-tk="${i}">▶ ${esc(t[0])}</button>`; }).join("")}</div>`;
+      `<button class="eb-tog" id="eb-tog">📋 문제 골라 듣기 <span>${T2.length}문제</span><b>${ls("ebtog") === "1" ? "▲ 접기" : "▼ 펼치기"}</b></button>` +
+      `<div class="eb-tch" id="eb-tch" style="display:${ls("ebtog") === "1" ? "grid" : "none"}">${T2.map(function (t, i) { return `<button data-tk="${i}">▶ ${esc(t[0])}</button>`; }).join("")}</div>`;
+    tk.querySelector("#eb-tog").onclick = function () { var g = tk.querySelector("#eb-tch"), on = g.style.display === "none"; g.style.display = on ? "grid" : "none"; ls("ebtog", on ? "1" : "0"); this.querySelector("b").textContent = on ? "▲ 접기" : "▼ 펼치기"; };
     function once(a) { return new Promise(function (res) { ebPlay(m, a, res); }); }
     function gap(ms, r) { return new Promise(function (res, rej) { setTimeout(function () { r === run ? res() : rej(); }, ms); }); }
-    function mark(i) { tk.querySelectorAll("[data-tk]").forEach(function (x) { var on = +x.dataset.tk === i; x.classList.toggle("on", on); x.textContent = (on ? "■ " : "▶ ") + T2[+x.dataset.tk][0]; }); if (i >= 0) { var c = tk.querySelector('[data-tk="' + i + '"]'); if (c && c.scrollIntoView) c.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" }); } }
+    function mark(i) { tk.querySelectorAll("[data-tk]").forEach(function (x) { var on = +x.dataset.tk === i; x.classList.toggle("on", on); x.textContent = (on ? "■ " : "▶ ") + T2[+x.dataset.tk][0]; }); if (i >= 0) { var c = tk.querySelector('[data-tk="' + i + '"]'); if (c && c.offsetParent && c.scrollIntoView) c.scrollIntoView({ block: "nearest", behavior: "smooth" }); } }
     function stopAll() { run++; EBP.stop++; stopPlay(); mark(-1); }
     function playOneTrack(i, r) {
       var t = T2[i]; mark(i);
