@@ -42,6 +42,7 @@ var EB_CSS = `
 .mkst .eb-tt button{border:1.5px solid #172844;background:#fff;color:#172844;border-radius:12px;padding:10px 13px;font-weight:900;font-size:14.5px}
 .mkst .eb-tt #eb-tall{background:#E95721;border-color:#E95721;color:#fff}
 .mkst .eb-tt #eb-trep.on{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
+.mkst .eb-pg{container-type:inline-size}.mkst .eb-tp{position:absolute;z-index:4;transform:translate(-100%,-50%);width:3.4cqw;height:auto!important;aspect-ratio:1;min-width:0;min-height:0;border:0;border-radius:50%;background:#E95721;color:#fff;font-weight:900;font-size:1.6cqw;line-height:1;padding:0 0 0 .2cqw;margin:0;box-shadow:0 2px 6px rgba(233,87,33,.45);display:flex;align-items:center;justify-content:center}.mkst .eb-tp.r{transform:translate(-100%,-50%);background:#E95721;outline:2px solid #fff}.mkst .eb-tp.m{transform:translate(-50%,-50%)}.mkst .eb-tp.on{background:#172844;animation:ebtp 1s infinite}@keyframes ebtp{50%{box-shadow:0 0 0 6px rgba(233,87,33,.35)}}
 .mkst .eb-ft{position:absolute;z-index:3;border:0;border-radius:14px;padding:12px 18px;background:#E95721;color:#fff;font-weight:900;font-size:clamp(13px,2.2vw,17px);box-shadow:0 6px 16px rgba(233,87,33,.3);white-space:nowrap}
 .mkst .eb-ft.on{background:#172844}.mkst .eb-ft.in{position:static;margin:0 6px 6px 0}
 .mkst .eb-pg{container-type:inline-size}
@@ -452,7 +453,7 @@ function ebDraw(m, d) {
     tk.querySelector("#eb-tog").onclick = function () { var g = tk.querySelector("#eb-tch"), on = g.style.display === "none"; g.style.display = on ? "grid" : "none"; ls("ebtog", on ? "1" : "0"); this.querySelector("b").textContent = on ? "▲ 접기" : "▼ 펼치기"; };
     function once(a) { return new Promise(function (res) { ebPlay(m, a, res); }); }
     function gap(ms, r) { return new Promise(function (res, rej) { setTimeout(function () { r === run ? res() : rej(); }, ms); }); }
-    function mark(i) { tk.querySelectorAll("[data-tk]").forEach(function (x) { var on = +x.dataset.tk === i; x.classList.toggle("on", on); x.textContent = (on ? "■ " : "▶ ") + T2[+x.dataset.tk][0]; }); if (i >= 0) { var c = tk.querySelector('[data-tk="' + i + '"]'); if (c && c.offsetParent && c.scrollIntoView) c.scrollIntoView({ block: "nearest", behavior: "smooth" }); } }
+    function mark(i) { ov.querySelectorAll(".eb-tp").forEach(function (x) { var on = +x.dataset.tp === i; x.classList.toggle("on", on); x.textContent = on ? "■" : "▶"; }); tk.querySelectorAll("[data-tk]").forEach(function (x) { var on = +x.dataset.tk === i; x.classList.toggle("on", on); x.textContent = (on ? "■ " : "▶ ") + T2[+x.dataset.tk][0]; }); if (i >= 0) { var c = tk.querySelector('[data-tk="' + i + '"]'); if (c && c.offsetParent && c.scrollIntoView) c.scrollIntoView({ block: "nearest", behavior: "smooth" }); } }
     function stopAll() { run++; EBP.stop++; stopPlay(); mark(-1); }
     function playOneTrack(i, r) {
       var t = T2[i]; mark(i);
@@ -472,6 +473,37 @@ function ebDraw(m, d) {
       b.onclick = function () {
         var i = +b.dataset.tk, on = b.classList.contains("on"); stopAll(); if (on) return;
         var r = run; (rep && T2[i][2] ? loopRep(i, r) : playOneTrack(i, r)).then(function () { if (r === run) mark(-1); }).catch(function () { });
+      };
+    });
+    // 쪽 위 문제 자리마다 ▶ 버튼 (그 문제 음원) — 마킹 시트는 번호 옆, 집중훈련은 문제 번호 앞, 실전은 Questions 머리띠 끝
+    function tws(t) { var ai = t[2] ? t[2][0] : t[1], a0 = A[ai], ws = W.filter(function (w) { return w[5] === ai; }); if (!ws.length && a0) ws = W.filter(function (w) { var b = A[w[5]]; return w[5] >= 0 && b && b[0] === a0[0] && b[1] >= a0[1] - 0.05 && b[2] <= a0[2] + 0.05; }); return ws; }
+    var anyW = T2.some(function (t) { return tws(t).length; });
+    var QP = anyW ? [] : (d.qp || []).map(function (q) { return q && q.c && q.c[0] ? { x: q.c[0][0] - (q.s || 0.014) * 1.7, y: q.c[0][1] } : q && q.length > 1 ? { x: q[0] - 0.024, y: q[1] + 0.007 } : null; }).filter(Boolean), used = {}, SETS = [], HD = W.filter(function (w) { return w[6] === "Questions" || w[6] === "Question"; });
+    QP.forEach(function (q, k) { var p = QP[k - 1]; if (!p || Math.abs(p.x - q.x) > 0.02 || q.y - p.y > 0.06 || q.y < p.y) SETS.push([]); SETS[SETS.length - 1].push(q); });
+    var gi = -1, gp = null, rowH = 1;
+    QP.forEach(function (q, k) { if (k && Math.abs(q.x - QP[k - 1].x) < 0.02 && q.y > QP[k - 1].y) rowH = Math.min(rowH, q.y - QP[k - 1].y); });
+    T2.forEach(function (t, i) {
+      var x = -1, y = -1, mode = "l", ws = tws(t);
+      var pre = String(t[0]).replace(/\s*\d+\s*번.*$/, ""); if (pre !== gp) { gp = pre; gi++; }
+      if (QP.length) {
+        var nm = /(\d+)\s*번/.exec(t[0]), st = SETS.length === 1 ? QP : SETS[gi], q = st && nm ? st[+nm[1] - 1] : null;
+        if (q) { x = q.x; y = q.y; mode = "m"; }
+      } else {
+        if (ws.length) {
+          var f = ws.slice().sort(function (p, q) { return Math.abs(p[1] - q[1]) > 0.006 ? p[1] - q[1] : p[0] - q[0]; })[0];
+          var h = HD.filter(function (w) { return w[1] < f[1] && f[1] - w[1] < 0.4 && w[0] <= f[0] + 0.01 && f[0] - w[0] < 0.3; }).sort(function (p, q) { return q[1] - p[1]; })[0];
+          if (h) { var hx = HD.filter(function (w) { return w !== h && w[0] > h[0] + 0.05 && Math.abs(w[1] - h[1]) < 0.5; }).map(function (w) { return w[0]; }).sort(function (p, q) { return p - q; })[0] || 1, col = W.filter(function (w) { return w[0] >= h[0] - 0.01 && w[0] + w[2] < hx - 0.005 && Math.abs(w[1] - h[1]) < 0.45; }); x = Math.max.apply(null, col.map(function (w) { return w[0] + w[2]; }).concat([h[0] + 0.2])); y = h[1] + h[3] / 2; mode = "r"; }
+          else { x = f[0] - 0.028; y = f[1] + f[3] / 2; }
+        }
+      }
+      if (x < 0) return;
+      var k = Math.round(y * 120) + ":" + Math.round(x * 30); if (used[k]) return; used[k] = 1;
+      var b = document.createElement("button"); b.className = "eb-tp " + mode; b.dataset.tp = i; b.textContent = "▶"; b.title = t[0] + " 듣기";
+      if (mode === "m") { var sz = Math.min(3.4, rowH * 141 * 0.92); b.style.width = sz + "cqw"; b.style.fontSize = sz * 0.48 + "cqw"; }
+      b.style.left = Math.max(mode === "r" ? 0 : 0.03, x) * 100 + "%"; b.style.top = y * 100 + "%"; ov.appendChild(b);
+      b.onclick = function (e) {
+        e.stopPropagation(); var on = b.classList.contains("on"); stopAll(); if (on) return;
+        var r = run; (rep && t[2] ? loopRep(i, r) : playOneTrack(i, r)).then(function () { if (r === run) mark(-1); }).catch(function () { });
       };
     });
   }
