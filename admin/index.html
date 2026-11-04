@@ -399,7 +399,10 @@ function viewHw(day, quiet) {
   day = day || HW.day || today(); HW.day = day;
   if (!quiet) { render(head() + '<div class="card">불러오는 중…</div>'); bindHead(); }
   (students.length ? Promise.resolve(students) : rpc("admin_list_students").then(function (x) { students = x || []; return students; })).then(function (L) {
-    var act = L.filter(function (s) { return !s.end_date || String(s.end_date) >= today(-30); });
+    // 고른 날짜가 속한 달에 수강 기간이 걸친 학생만
+    var m0 = day.slice(0, 8) + "01", m1 = (function () { var d = new Date(day.slice(0, 4), +day.slice(5, 7), 0); return ymd(d); })();
+    var act = L.filter(function (s) { return (!s.start_date || String(s.start_date) <= m1) && (!s.end_date || String(s.end_date) >= m0); });
+    HW.mon = (+day.slice(5, 7)) + "월";
     return Promise.all(act.map(function (s) { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "hw:" }).then(function (p) { return [s, p || {}]; }).catch(function () { return [s, {}]; }); }));
   }).then(function (rows) {
     var key = day.replace(/-/g, ""), sub = [], not = [], days = {};
@@ -411,7 +414,7 @@ function viewHw(day, quiet) {
     var strip = []; for (var i = 13; i >= 0; i--) { var d = today(-i); strip.push(d); }
     render(head() + `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="in" type="date" id="hw-d" value="${esc(day)}" style="max-width:180px"><button class="btn ghost sm" id="hw-p">◀ 전날</button><button class="btn ghost sm" id="hw-n">다음날 ▶</button><button class="btn ghost sm" id="hw-t">오늘</button><span style="flex:1"></span><button class="btn ${HW.live ? "" : "ghost"} sm" id="hw-live">${HW.live ? "⏱ 실시간 켜짐 (20초마다)" : "⏱ 실시간 보기"}</button><button class="btn ghost sm" id="hw-r">🔄 새로고침</button></div><p class="note" style="margin:6px 0 0">마지막 확인 ${new Date().toLocaleTimeString("ko-KR")} · 학생이 '과제 제출'을 누르면 ${HW.live ? "20초 안에 자동으로" : "새로고침하면"} 여기에 나와요.</p>
       <div style="display:flex;gap:4px;margin-top:10px;overflow-x:auto">${strip.map(function (d) { var n = days[d.replace(/-/g, "")] || 0; return `<button class="btn ${d === day ? "" : "ghost"} sm" data-hd="${d}" style="min-width:52px;padding:6px 4px;line-height:1.2">${md(d)}<br><b>${n}명</b></button>`; }).join("")}</div></div>
-      <div class="card"><p class="sec">✅ 제출 ${sub.length}명 · ${md(day)}</p>${sub.length ? '<table><tr><th>학생</th><th>제출한 과제</th><th>푼 문제</th><th>제출 시각</th></tr>' + sub.map(function (r) { return r[1].map(function (x, k) { return `<tr>${k ? "<td></td>" : `<td><b>${esc(r[0].name)}</b></td>`}<td>A급 과제 ${x.n}회 <span class="tag full">S${x.ser}</span></td><td>${x.cnt}문제</td><td>${x.tm}</td></tr>`; }).join(""); }).join("") + "</table>" : '<p class="note">이 날 제출한 학생이 없어요.</p>'}</div>
+      <div class="card"><p class="sec">✅ 제출 ${sub.length}명 · ${md(day)} <span class="note" style="font-weight:600">(${HW.mon} 수강생 ${sub.length + not.length}명 중)</span></p>${sub.length ? '<table><tr><th>학생</th><th>제출한 과제</th><th>푼 문제</th><th>제출 시각</th></tr>' + sub.map(function (r) { return r[1].map(function (x, k) { return `<tr>${k ? "<td></td>" : `<td><b>${esc(r[0].name)}</b></td>`}<td>A급 과제 ${x.n}회 <span class="tag full">S${x.ser}</span></td><td>${x.cnt}문제</td><td>${x.tm}</td></tr>`; }).join(""); }).join("") + "</table>" : '<p class="note">이 날 제출한 학생이 없어요.</p>'}</div>
       <div class="card"><p class="sec">⬜ 미제출 ${not.length}명</p><p class="note" style="margin:0">${not.map(function (s) { return esc(s.name); }).join(" · ") || "모두 제출했어요 👏"}</p></div>`);
     bindHead();
     function goD(d) { viewHw(d); }
