@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psO").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psP").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psO").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psP").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -59,7 +59,7 @@ var EB_CSS = `
 .mkst .eb-qo button.bad{background:#D2453B;border-color:#D2453B;color:#fff}
 .mkst .eb-pop .sv{margin-left:auto}.mkst .eb-pop .sv.on{background:#FFE9A8 !important;color:#7A5200 !important;border-color:#E8B500 !important}
 .mkst .eb-camf{position:fixed;left:14px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147482980;width:62px;height:62px;border-radius:50%;border:2px solid #fff;background:#E95721;color:#fff;font-size:24px;line-height:1;box-shadow:0 8px 22px rgba(233,87,33,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
-.mkst .eb-camf small{font-size:11px;font-weight:900;margin-top:2px}
+.mkst .eb-camf small{font-size:11px;font-weight:900;margin-top:2px}.mkst .eb-audf{position:fixed;left:86px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147482980;width:62px;height:62px;border-radius:50%;border:2px solid #fff;background:#172844;color:#fff;font-size:24px;line-height:1;box-shadow:0 8px 22px rgba(23,40,68,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}.mkst .eb-audf small{font-size:11px;font-weight:900;margin-top:2px}.mkst .eb-audf.on{background:#E95721}.mkst .eb-auds{position:fixed;left:0;right:0;bottom:0;z-index:2147482990;max-height:62vh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -8px 28px rgba(0,0,0,.22);padding:12px 14px calc(16px + env(safe-area-inset-bottom));width:100vw;box-sizing:border-box}.mkst .eb-audh{display:flex;justify-content:space-between;align-items:center;font-size:17px;margin-bottom:10px;color:#172844}.mkst .eb-audh .x{border:0;background:#EEF1F5;border-radius:50%;width:34px;height:34px;font-size:16px}.mkst .eb-audt{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.mkst .eb-audt button{flex:1 1 40%;border:1.5px solid #172844;background:#fff;border-radius:12px;padding:12px 8px;font-weight:900;font-size:15px;color:#172844}.mkst .eb-audt button:first-child{background:#E95721;border-color:#E95721;color:#fff}.mkst .eb-audl{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.mkst .eb-audl button{border:1px solid #D5DAE1;background:#F7F8FA;border-radius:10px;padding:11px 6px;font-weight:800;font-size:14px;color:#172844;text-align:left}.mkst .eb-audt button.on,.mkst .eb-audl button.on{background:#172844;border-color:#172844;color:#fff}
 .mkst .eb-no1{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#E95721;color:#fff;font-size:13px;font-weight:900;margin-right:6px;vertical-align:2px}
 .mkst .eb-alt{margin-top:8px;padding-top:8px;border-top:1px dashed #C9D2DE}
 .mkst .eb-alt .h{font-size:12.5px;color:#33404F;margin-bottom:4px}
@@ -204,7 +204,7 @@ function viewEbPage(id, n) {
     app.querySelector("#eb-cap").onclick = function () { ebCapture(bk, n, sc, pg); };
     ebCamFloat(function () { ebCapture(bk, n, sc, pg); });
     EB.cur = { nm: bk.nm, n: n, id: id };
-    ebPage(id, n).then(function (d) { ebDraw(m, d); ebPs(d); ebQuiz(id, n, d); });
+    ebPage(id, n).then(function (d) { ebDraw(m, d); ebPs(d); ebQuiz(id, n, d); ebAudFloat(); });
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
 }
 var EBP = { stop: 0, cur: null };
@@ -319,9 +319,47 @@ function ebCamFloat(fn) {
   window.addEventListener("hashchange", function h() { if (!/^#\/eb\/b/.test(location.hash)) { b.remove(); window.removeEventListener("hashchange", h); } });
   place();
 }
+// 📸 캡처 버튼 옆 🎧 음원 버튼: 누르면 이 쪽 음원 목록(전체 듣기·문제 골라 듣기·받기)이 아래에서 올라옴 — 확대해도 따라옴
+function ebFollow(el, left, bottom) {
+  var V = window.visualViewport;
+  function place() {
+    if (!el.isConnected || !/^#\/eb\/b/.test(location.hash)) { el.remove(); if (V) { V.removeEventListener("resize", place); V.removeEventListener("scroll", place); } return; }
+    var sc = V ? V.scale || 1 : 1;
+    if (sc <= 1.01) { el.style.transform = ""; el.style.left = ""; el.style.top = ""; el.style.bottom = ""; return; }
+    el.style.left = "0"; el.style.top = "0"; el.style.bottom = "auto"; el.style.transformOrigin = "0 0";
+    el.style.transform = "translate(" + (V.offsetLeft + left / sc) + "px," + (V.offsetTop + V.height - (el.offsetHeight + bottom) / sc) + "px) scale(" + 1 / sc + ")";
+  }
+  if (V) { V.addEventListener("resize", place); V.addEventListener("scroll", place); }
+  window.addEventListener("hashchange", function h() { if (!/^#\/eb\/b/.test(location.hash)) { el.remove(); window.removeEventListener("hashchange", h); } });
+  place(); return place;
+}
+function ebAudFloat() {
+  document.querySelectorAll(".mkst .eb-audf,.mkst .eb-auds").forEach(function (x) { x.remove(); });
+  var tk = app.querySelector("#eb-trk"); if (!tk || tk.style.display === "none" || !tk.querySelector("button")) return;
+  var host = document.querySelector(".mkst") || document.body;
+  var b = document.createElement("button"); b.className = "eb-audf"; b.innerHTML = "🎧<small>음원</small>"; host.appendChild(b);
+  ebFollow(b, 86, 96);
+  b.onclick = function () {
+    var old = document.querySelector(".mkst .eb-auds"); if (old) { old.remove(); b.classList.remove("on"); return; }
+    b.classList.add("on");
+    var sh = document.createElement("div"); sh.className = "eb-auds"; host.appendChild(sh);
+    var src = [].slice.call(tk.querySelectorAll("button")).filter(function (x) { return x.id !== "eb-tog"; });
+    function draw() {
+      sh.innerHTML = '<div class="eb-audh"><b>🎧 이 쪽 음원</b><button class="x">✕</button></div><div class="eb-audt">' +
+        src.filter(function (x) { return !x.dataset.tk; }).map(function (x, k) { return '<button data-sk="' + src.indexOf(x) + '"' + (x.classList.contains("on") ? ' class="on"' : "") + ">" + esc(x.textContent) + "</button>"; }).join("") + "</div>" +
+        (src.some(function (x) { return x.dataset.tk; }) ? '<div class="eb-audl">' + src.filter(function (x) { return x.dataset.tk; }).map(function (x) { return '<button data-sk="' + src.indexOf(x) + '"' + (x.classList.contains("on") ? ' class="on"' : "") + ">" + esc(x.textContent) + "</button>"; }).join("") + "</div>" : "");
+      sh.querySelector(".x").onclick = function () { sh.remove(); b.classList.remove("on"); };
+      sh.querySelectorAll("[data-sk]").forEach(function (x) { x.onclick = function () { src[+x.dataset.sk].click(); setTimeout(draw, 60); }; });
+    }
+    draw();
+    var mo = new MutationObserver(function () { if (!sh.isConnected) { mo.disconnect(); return; } clearTimeout(sh._t); sh._t = setTimeout(draw, 50); });
+    mo.observe(tk, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["class"] });
+    ebFollow(sh, 0, 0);
+  };
+}
 // 한 단어 여러 품사: 이 문장에서 쓰인 용도를 맨 위(우선)로, 다른 쓰임은 아래에
 var EB_ALT = null;
-function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psO").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
+function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psP").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
 function ebAltShow(pop, word, g) {
   var k = String(word || "").toLowerCase().replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
   ebAlt().then(function (A) {
@@ -485,7 +523,9 @@ function ebDraw(m, d) {
     T2.forEach(function (t, i) {
       var x = -1, y = -1, mode = "l", ws = tws(t);
       var pre = String(t[0]).replace(/\s*\d+\s*번.*$/, ""); if (pre !== gp) { gp = pre; gi++; }
-      if (QP.length) {
+      if (d.tp) {
+        var tq = d.tp.filter(function (z) { return z[0] === i; })[0]; if (!tq) return; x = tq[1]; y = tq[2]; mode = "m"; rowH = d.tph || rowH;
+      } else if (QP.length) {
         var nm = /(\d+)\s*번/.exec(t[0]), st = SETS.length === 1 ? QP : SETS[gi], q = st && nm ? st[+nm[1] - 1] : null;
         if (q) { x = q.x; y = q.y; mode = "m"; }
       } else {
@@ -499,7 +539,7 @@ function ebDraw(m, d) {
       if (x < 0) return;
       var k = Math.round(y * 120) + ":" + Math.round(x * 30); if (used[k]) return; used[k] = 1;
       var b = document.createElement("button"); b.className = "eb-tp " + mode; b.dataset.tp = i; b.textContent = "▶"; b.title = t[0] + " 듣기";
-      if (mode === "m") { var sz = Math.min(3.4, rowH * 141 * 0.92); b.style.width = sz + "cqw"; b.style.fontSize = sz * 0.48 + "cqw"; }
+      if (mode === "m") { var im0 = app.querySelector("#eb-img"), asp = im0 && im0.naturalWidth ? im0.naturalHeight / im0.naturalWidth : 0.707, sz = Math.min(3.4, rowH * 100 * asp * 0.9); b.style.width = sz + "cqw"; b.style.fontSize = sz * 0.48 + "cqw"; }
       b.style.left = Math.max(mode === "r" ? 0 : 0.03, x) * 100 + "%"; b.style.top = y * 100 + "%"; ov.appendChild(b);
       b.onclick = function (e) {
         e.stopPropagation(); var on = b.classList.contains("on"); stopAll(); if (on) return;
