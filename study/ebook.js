@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps5").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps6").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps5").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps6").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -42,6 +42,8 @@ var EB_CSS = `
 .mkst .eb-tt button{border:1.5px solid #172844;background:#fff;color:#172844;border-radius:12px;padding:10px 13px;font-weight:900;font-size:14.5px}
 .mkst .eb-tt #eb-tall{background:#E95721;border-color:#E95721;color:#fff}
 .mkst .eb-tt #eb-trep.on{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
+.mkst .eb-ft{position:absolute;z-index:3;border:0;border-radius:14px;padding:12px 18px;background:#E95721;color:#fff;font-weight:900;font-size:clamp(13px,2.2vw,17px);box-shadow:0 6px 16px rgba(233,87,33,.3);white-space:nowrap}
+.mkst .eb-ft.on{background:#172844}.mkst .eb-ft.in{position:static;margin:0 6px 6px 0}
 .mkst .eb-tog{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 6px;border:1.5px solid #172844;background:#fff;border-radius:12px;padding:11px 14px;font-weight:900;font-size:15px;color:#172844;text-align:left}
 .mkst .eb-tog span{font-size:13px;font-weight:700;color:#33404F}.mkst .eb-tog b{margin-left:auto;font-size:14px}
 .mkst .eb-tch{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;padding:2px 0 8px;max-height:46vh;overflow-y:auto}
@@ -257,13 +259,27 @@ function ebPs(d) {
   }
   box.querySelectorAll("[data-pst]").forEach(function (b) { b.onclick = function () { open(+b.dataset.pst, b.dataset.k); }; });
 }
-function ebHide() { var p = document.querySelector(".mkst .eb-pop"); if (p) p.remove(); app.querySelectorAll(".eb-w.on,.eb-w.play").forEach(function (x) { x.classList.remove("on"); x.classList.remove("play"); }); }
+function ebHide() { var p = document.querySelector(".mkst .eb-pop"); if (p) p.remove(); document.querySelectorAll(".mkst .eb-ft.on").forEach(function (x) { x.classList.remove("on"); x.textContent = x.textContent.replace(/^■ /, "▶ ").replace(/ 멈춤$/, ""); }); app.querySelectorAll(".eb-w.on,.eb-w.play").forEach(function (x) { x.classList.remove("on"); x.classList.remove("play"); }); }
 function ebDraw(m, d) {
   var ov = app.querySelector("#eb-ov"); if (!ov) return;
   var W = d.w || [], G = d.g || [], A = d.a || [];
   ov.innerHTML = W.map(function (w, i) {
     return `<span class="eb-w${w[5] >= 0 ? " au" : ""}" data-i="${i}" style="left:${w[0] * 100}%;top:${w[1] * 100}%;width:${w[2] * 100}%;height:${w[3] * 100}%"></span>`;
   }).join("");
+  // 대화·담화 스크립트 쪽: 단마다 전체 듣기 (쪽 아래 빈 곳)
+  (d.ft || []).forEach(function (f, k) {
+    var b = document.createElement("button"); b.className = "eb-ft"; b.textContent = "▶ " + f[0];
+    if (f[3] >= 0) { b.style.left = f[2] * 100 + "%"; b.style.top = f[3] * 100 + "%"; ov.appendChild(b); }
+    else { var tk0 = app.querySelector("#eb-trk"); if (!tk0) return; tk0.style.display = "block"; b.classList.add("in"); tk0.appendChild(b); }
+    b.onclick = function (e) {
+      e.stopPropagation(); var on = b.classList.contains("on");
+      app.querySelectorAll(".eb-ft.on").forEach(function (x) { x.classList.remove("on"); x.textContent = "▶ " + d.ft[+x.dataset.k][0]; });
+      EBP.stop++; stopPlay(); ebHide(); if (on) return;
+      b.classList.add("on"); b.textContent = "■ " + f[0] + " 멈춤";
+      ebPlay(m, A[f[1]], function () { b.classList.remove("on"); b.textContent = "▶ " + f[0]; });
+    };
+    b.dataset.k = k;
+  });
   // 듣기 묶음(파트2 마킹 시트·파트3·4 실전): 전체 듣기 / 문제 골라 듣기 / 정답 반복 듣기
   var tk = app.querySelector("#eb-trk"), T2 = d.t || [];
   if (tk && T2.length) {
