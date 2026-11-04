@@ -67,7 +67,7 @@ function viewHome() {
       roomRow("#/learn", "문제", "📝 문제 풀기", "기본 유형 연습 · 실전 모의고사 PART별 풀기", "linear-gradient(125deg,#14233E,#233C5C)") +
       (fulls.length ? roomRow("#/full", "전체", "🎯 실전 모의고사 회차 전체 풀기", "한 회차 PART 1~4 전체를 실전처럼 한 번에 · " + fulls.length + "회", "linear-gradient(125deg,#E95721,#FF8A3D)") : "") +
       (typeof viewLcvRounds === "function" && window.MKST_LCVID ? roomRow("#/lcv", "강의", "🎬 실전 모의고사 해설강의", "회차 → 문제를 골라 그 문제 강의만 보기", "") : "") +
-      (reelList().length ? roomRow("#/reels", "REELS", "🎬 기출 릴스 · PART 3·4", "원본 음원 + 단어 자막 + 정답 공개 · " + reelList().length + "편", "linear-gradient(125deg,#172844,#3A2A6B)") : ""))
+      ("lcrow", ""))
     : box("📚 교재 · A급 과제 문제", "Season " + ser, "#FF581F",
       roomRow("#/learn", "교재", "📝 교재 문제 풀기", ({ 1: "교재1 기출문법 · 기출어휘 · PART 7 · 해설", 2: "교재2 기출문법 · 기출어휘 · PART 7 · 해설", 3: "유형별 기본 문제 · PART 5~7 · 해설" })[ser] || "PART 5~7", "linear-gradient(125deg,#E95721,#FF8A3D)") +
       roomRow("#/a", "A급", "A급 과제", "1~15회 · PART 5·6·7 과제 · 해설 · 해설강의", ""));

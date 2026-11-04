@@ -78,7 +78,7 @@ function catOpen(h) {
   if (LC_OPEN.indexOf(r) >= 0) return true;
   if (r === "mock") return hasCat("rcbook");
   if (r === "a" || r === "alec") return hasCat("agrade");
-  if (["v", "w", "game", "race", "reel", "reels", "rank", "rrank"].indexOf(r) >= 0) return hasCat("voca");
+  if (["v", "w", "game", "race", "rank", "rrank"].indexOf(r) >= 0) return hasCat("voca");
   if (r === "rec") return !payPart();
   return false;
 }
@@ -109,7 +109,7 @@ function viewPick() {
 // 비회원 30일권: 수강권에 없는 메뉴(A급 · VOCA · 게임 · 실전 테스트 등)는 화면에서 숨김
 function payLockSel() {
   var a = [];
-  if (!hasCat("voca")) a.push('[data-go^="#/game"]', '[data-go^="#/race"]', '[data-go^="#/reel"]', 'a[href*="/voca/"]', '[data-go="#/v"]', '[data-go^="#/w"]');
+  if (!hasCat("voca")) a.push('[data-go^="#/game"]', '[data-go^="#/race"]', 'a[href*="/voca/"]', '[data-go="#/v"]', '[data-go^="#/w"]');
   if (!hasCat("agrade")) a.push('[data-aser]', '[data-go="#/a"]', '[data-go^="#/alec"]');
   if (!hasCat("rcbook")) a.push('[data-go="#/mock"]');
   if (payPart()) a.push('[data-go="#/rec"]');

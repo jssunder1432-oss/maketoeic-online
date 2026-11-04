@@ -75,7 +75,7 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 1) 기능 함수
 ["function lecturesOf(sec) {\n", FN + "\n"],
 // 2) LC 학습실 메뉴 박스에 "교재 강의" 줄
-["      (reelList().length ? roomRow(\"#/reels\"", "      (tblOf(ser).length ? roomRow(\"#/tbl\", \"교재\", \"📘 교재 강의\", ({ 1: \"교재1\", 2: \"교재2\", 3: \"통합 교재\" })[ser] + \" · PART 2 · PART 3·4 · 강의 \" + tblOf(ser).reduce(function (a, c) { return a + c.l.length; }, 0) + \"개\",\"linear-gradient(125deg,#0E6E5C,#1BA37F)\") : \"\") +\n      (reelList().length ? roomRow(\"#/reels\""],
+["      (\"lcrow\", \"\")", "      (tblOf(ser).length ? roomRow(\"#/tbl\", \"교재\", \"📘 교재 강의\", ({ 1: \"교재1\", 2: \"교재2\", 3: \"통합 교재\" })[ser] + \" · PART 2 · PART 3·4 · 강의 \" + tblOf(ser).reduce(function (a, c) { return a + c.l.length; }, 0) + \"개\",\"linear-gradient(125deg,#0E6E5C,#1BA37F)\") : \"\") +\n      (\"lcrow\", \"\")"],
 // 4) 삭제한 문제(평서문 6번 정답 오류, 부정·부가의문문 35번 음원 오류)는 학습실 문제 목록에서도 뺀다
 ["S.catalog = x[0] || { sections: [] };", "S.catalog = x[0] || { sections: [] }; (S.catalog.sections || []).forEach(function (s) { if (s.keys) s.keys = s.keys.filter(function (k) { return MKST_DROP.indexOf(k) < 0; }); });"],
 // 4-2) 단원 문제 목록(itemsOf)에서도 뺀다 — 풀기·실전 모드·오답·약점 모두 여기서 문항을 가져온다
