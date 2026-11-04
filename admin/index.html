@@ -346,6 +346,13 @@ function report(s) {
     var nb = document.createElement("div"); nb.style.marginTop = "14px";
     nb.innerHTML = '<p class="grp">A급 과제 · OT 오답노트</p><div id="r-on" class="note">불러오는 중…</div>';
     m.querySelector(".card").appendChild(nb); onoteList(s, nb.querySelector("#r-on"));
+    var hb = document.createElement("div"); hb.style.marginTop = "14px"; hb.innerHTML = '<p class="grp">📮 A급 과제 제출 · 오답노트</p><div class="note">불러오는 중…</div>'; m.querySelector(".card").insertBefore(hb, nb);
+    rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }).then(function (p) {
+      var L = Object.keys(p || {}).map(function (k) { var x = k.match(/^hw:(\d)-(\d+):(\d{4})(\d{2})(\d{2})$/); if (!x) return null; var v = +p[k][0] || 0, hm = v % 10000; return { d: x[3] + "-" + x[4] + "-" + x[5], t: x[4] * 1 + "/" + x[5] * 1 + " " + String(Math.floor(hm / 100)).padStart(2, "0") + ":" + String(hm % 100).padStart(2, "0"), ser: +x[1], n: x[2], c: Math.floor(v / 10000) }; }).filter(Boolean).sort(function (a, b) { return b.d.localeCompare(a.d); });
+      var box = hb.querySelector(".note");
+      box.innerHTML = L.length ? '<table><tr><th>제출</th><th>과제</th><th>푼 문제</th><th></th></tr>' + L.map(function (x, i) { return "<tr><td><b>" + esc(x.t) + "</b></td><td>" + x.n + "회 <span class=\"tag full\">S" + x.ser + "</span></td><td>" + x.c + "문제</td><td><button class=\"btn navy sm\" data-rhw=\"" + i + "\">📄 오답노트</button></td></tr>"; }).join("") + "</table>" : "아직 제출한 과제가 없어요.";
+      box.querySelectorAll("[data-rhw]").forEach(function (b) { b.onclick = function () { var x = L[+b.dataset.rhw]; HW.day = x.d; hwNote(s, x.ser, x.n, b); }; });
+    }).catch(function () { hb.querySelector(".note").textContent = "불러오지 못했어요."; });
   }).catch(function (e) { m.querySelector(".card").innerHTML = '<div class="msg err">' + esc(e.message) + '</div><button class="btn ghost" onclick="this.closest(\'.modal\').remove()">닫기</button>'; });
 }
 
@@ -421,7 +428,7 @@ function viewHw(day, quiet) {
     var m0 = day.slice(0, 8) + "01", m1 = (function () { var d = new Date(day.slice(0, 4), +day.slice(5, 7), 0); return ymd(d); })();
     var act = L.filter(function (s) { return (!s.start_date || String(s.start_date) <= m1) && (!s.end_date || String(s.end_date) >= m0); });
     HW.mon = (+day.slice(5, 7)) + "월";
-    return Promise.all(act.map(function (s) { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "hw:" }).then(function (p) { return [s, p || {}]; }).catch(function () { return [s, {}]; }); }));
+    return Promise.all(act.map(function (s) { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }).then(function (p) { return [s, p || {}]; }).catch(function () { return [s, {}]; }); }));
   }).then(function (rows) {
     var key = day.replace(/-/g, ""), sub = [], not = [], days = {};
     rows.forEach(function (r) {
