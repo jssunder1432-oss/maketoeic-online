@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psN").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psO").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psN").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psO").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -320,7 +320,7 @@ function ebCamFloat(fn) {
 }
 // 한 단어 여러 품사: 이 문장에서 쓰인 용도를 맨 위(우선)로, 다른 쓰임은 아래에
 var EB_ALT = null;
-function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psN").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
+function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psO").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
 function ebAltShow(pop, word, g) {
   var k = String(word || "").toLowerCase().replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
   ebAlt().then(function (A) {
@@ -404,6 +404,24 @@ function ebDraw(m, d) {
   ov.innerHTML = W.map(function (w, i) {
     return `<span class="eb-w${w[5] >= 0 ? " au" : ""}" data-i="${i}" style="left:${w[0] * 100}%;top:${w[1] * 100}%;width:${w[2] * 100}%;height:${w[3] * 100}%"></span>`;
   }).join("");
+  // 예문 음원이 있는 쪽(파트2 이론·표현 정리 등): 쪽 예문 전체 듣기 · 음원 받기
+  if (!(d.t || []).length && !(d.ft || []).length) {
+    var ex = [], ek = {};
+    W.forEach(function (w) { var a = A[w[5]]; if (w[5] < 0 || !a) return; var k = a.join("|"); if (ek[k]) return; ek[k] = 1; ex.push(a); });
+    ex = ex.filter(function (a, i) { return !ex.some(function (b, j) { return j !== i && b[0] === a[0] && b[1] <= a[1] && b[2] >= a[2] && (b[2] - b[1] > a[2] - a[1]); }); });
+    var tk2 = app.querySelector("#eb-trk");
+    if (ex.length && tk2) {
+      tk2.style.display = "block";
+      tk2.innerHTML = `<div class="eb-tt"><button id="eb-xall">▶ 이 쪽 예문 전체 듣기 (${ex.length}문장)</button><button id="eb-xstop">■ 멈춤</button><button id="eb-xdl" style="border-color:#1E8E5A;color:#1E8E5A">⬇ 예문 음원 받기</button></div>`;
+      var xr = 0;
+      tk2.querySelector("#eb-xall").onclick = function () {
+        var r = ++xr, i = 0; EBP.stop++; stopPlay();
+        (function nx() { if (r !== xr || i >= ex.length) return; ebPlay(m, ex[i++], function () { setTimeout(function () { if (r === xr) nx(); }, 600); }); })();
+      };
+      tk2.querySelector("#eb-xstop").onclick = function () { xr++; EBP.stop++; stopPlay(); };
+      tk2.querySelector("#eb-xdl").onclick = function () { ebAudDl(m, ex, this); };
+    }
+  }
   if ((d.ft || []).length && !(d.t || []).length) {
     var tk1 = app.querySelector("#eb-trk");
     if (tk1) { tk1.style.display = "block"; var db = document.createElement("button"); db.className = "eb-ft in"; db.style.background = "#1E8E5A"; db.textContent = "⬇ 이 쪽 음원 받기"; db.onclick = function () { ebAudDl(m, d.ft.map(function (f) { return A[f[1]]; }), db); }; tk1.appendChild(db); }
