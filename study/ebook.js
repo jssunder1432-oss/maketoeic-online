@@ -77,7 +77,7 @@ function ebStyle() { if (!document.getElementById("eb-css")) { var s = document.
 // 목차 보기: #/eb  (지금 학습실 LC/RC 파트만)
 function ebRoomBox() {
   var al = allowedSeries().slice().sort(), cur = curSer(), rows = [];
-  [cur].concat(al.filter(function (n) { return n !== cur; })).forEach(function (n) {
+  [cur].forEach(function (n) {
     ebBooks(n).forEach(function (b) {
       rows.push(`<button class="row" data-go="#/eb/all/${n}" style="${n === cur ? "background:linear-gradient(125deg,#5B2A86,#8E4FD1);color:#fff;border:0" : ""}"><span class="pill" style="background:${n === cur ? "#fff" : "#5B2A86"};color:${n === cur ? "#5B2A86" : "#fff"}">S${n}</span><span class="t"><b style="${n === cur ? "color:#fff" : ""}">📖 ${esc(b.nm)}</b><small style="${n === cur ? "color:#fff" : ""}">Season ${n} 교재 · LC · RC 전체${n === cur ? " · 지금 Season" : ""}</small></span>›</button>`);
     });
