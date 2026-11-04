@@ -150,25 +150,26 @@ function viewDG() {
       row("📖", "단어 암기 · VOCA DAY " + String(vd).padStart(2, "0"), "단어 외우기 → 카드 → 단어 시험까지", '<button class="btn sm" data-go="#/v/' + vd + '">열기</button>', false, "", "") +
       (p2t.length ? row("🎧", "PART 2 듣기 · " + esc(p2.u.nm), "교재 진도 · 오늘 " + p2t.length + "챕터", '<div style="display:grid;gap:6px">' + p2t.map(function (o) { return '<button class="btn sm" data-go="#/s/' + encodeURIComponent(o.x.id) + '">' + esc(o.x.title.replace(/ 의문[사문]$/, "")) + '</button>'; }).join("") + '</div>', p2t.every(function (o) { return o.t.total && o.t.done >= o.t.total; }), p2t.map(function (o) { return esc(o.x.title.replace(/ 의문[사문]$/, "")) + " " + o.t.done + " / " + o.t.total; }).join(" · "), "p." + p2.u.pg + " (정답 패턴 → 기출 → 마킹 시트)") : "") +
       row("✏️", "PART 5 · " + s5.n + "문제", basic ? "교재 단원 ‘" + esc(u5[0]) + "’ 문제 + 같은 유형 연습" : (tw5.length ? "집중 유형: " + esc(tw5.join(", ")) + " (A급 과제 변형 문제)" : "문법 · 어휘 골고루"), qbtn(5, s5), s5.done, s5.k + " / " + s5.n, "p." + u5[2] + " " + u5[0] + (basic ? " 풀고 오기" : " 복습")) +
-      '<div class="card" id="dg-on" style="border:2px solid #172844;display:grid;gap:8px"></div>' +
+      '<div id="dg-on5" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
       row("📄", "PART 6 · 지문 1개 (" + s6.n + "문제)", tw6.length ? "집중 유형: " + esc(tw6.join(", ")) : "문법 · 어휘 · 접속부사 · 문장 고르기", qbtn(6, s6), s6.done, s6.k + " / " + s6.n, "") +
+      '<div id="dg-on6" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
       row("📰", "PART 7 · 지문 " + (basic ? 1 : 2) + "개 (" + s7.n + "문제)", tw7.length ? "집중 유형: " + esc(tw7.join(", ")) : "세부 사항 · 사실 확인 · 추론 등", qbtn(7, s7), s7.done, s7.k + " / " + s7.n, "p." + p7pg + " 지문 1세트" + (day === 1 ? " · p.98 유형별 풀이법 먼저" : "")) +
+      '<div id="dg-on7" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
       '<div class="card" style="font-size:13.5px;color:#3A4250">📘 표시는 메이크토익 교재 쪽수예요. 교재로 먼저 풀고 학습실 문제로 확인하세요. 틀린 문제는 해설의 ‘의식의 흐름’을 소리 내 읽고, 다음 날 시작 전에 한 번 더 보세요.</div>');
     bindCommon();
     // 오늘 푼 RC에서 틀린 유형별 추가 50문제 + 오답노트 (A급 과제와 같은 방식)
     var ymd = dgYmd(new Date()), parts = [5, 6, 7].map(function (p) {
       return { part: p, title: "매일 과제 Day " + day, list: L[p].filter(function (x) { return S.prog[x.key]; }).map(function (x) { var g = S.prog[x.key]; return { key: x.key, q: x.q, set: x.set, mine: g[0], ok: !!g[1], type: x.q.qtype || (x.sec && x.sec.qtype) || onGuess(x.q, x.set, p) }; }) };
     }).filter(function (p) { return p.list.length; });
-    var box = document.getElementById("dg-on");
-    if (box) {
-      if (!parts.length) box.innerHTML = '<b>🎯 틀린 유형 50문제 · 📄 오답노트</b><p style="margin:0;font-size:14px;color:#5B6573">PART 5만 풀어도 바로 열려요. 문제를 풀면 틀린 유형으로 추가 50문제와 오답노트가 생겨요.</p>';
-      else {
-        var wb = onWrongBy(parts); ON_CTX = "dg" + ymd; parts.forEach(function (p) { ON_SID[p.part] = "dg" + ymd + "-" + p.part; });
-        var btns = parts.map(function (p) { return onPracBtn(p.part, wb[p.part]); }).join("");
-        box.innerHTML = '<b style="font-size:16px">🎯 틀린 유형 50문제 · 📄 오답노트</b><p style="margin:0;font-size:14px;color:#5B6573">오늘 푼 PART에서 틀린 유형만 골라 50문제를 더 풀어요. (PART 5만 풀어도 바로 열려요)</p>' + (btns || '<p style="margin:0;font-size:14px">오늘 푼 문제는 전부 맞혔어요! 👏</p>') + '<button class="btn ghost" data-onnote="1">📄 오늘 오답노트 출력 · PDF 저장</button>' + onLastBtns(parts.map(function (p) { return p.part; }));
-        onBind(box, wb, "#/dg", { title: "매일 과제 Day " + day + " (" + (d.getMonth() + 1) + "/" + d.getDate() + ")", parts: parts }); onLastBind(box);
-      }
-    }
+    // 파트별로: 그 PART를 풀면 바로 아래에 틀린 유형 50문제 + 그 PART 오답노트
+    ON_CTX = "dg" + ymd;
+    parts.forEach(function (p) {
+      var box = document.getElementById("dg-on" + p.part); if (!box) return;
+      var wb = onWrongBy([p]); ON_SID[p.part] = "dg" + ymd + "-" + p.part;
+      box.innerHTML = (onPracBtn(p.part, wb[p.part]) || '<div class="card" style="margin:0;padding:12px;font-size:14px">PART ' + p.part + ' 푼 문제는 전부 맞혔어요! 👏</div>') +
+        '<button class="btn ghost" data-onnote="1">📄 PART ' + p.part + ' 오답노트 출력 · PDF 저장</button>' + onLastBtns([p.part]);
+      onBind(box, wb, "#/dg", { title: "매일 과제 Day " + day + " (" + (d.getMonth() + 1) + "/" + d.getDate() + ") · PART " + p.part, parts: [p] }); onLastBind(box);
+    });
     app.querySelectorAll("[data-dg]").forEach(function (b) { b.onclick = function () {
       var p = +b.dataset.dg, list = L[p].filter(function (x) { return !S.prog[x.key]; });
       if (!list.length) list = L[p];
