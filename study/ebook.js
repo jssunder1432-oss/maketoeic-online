@@ -8,7 +8,7 @@
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
 var FN = T(function () {/*// 교재 전자책 — study/ebook.js
 var EB_BASE = "/study/eb/";
-var EB_BOOKS = { 2: [{ id: "b2", nm: "교재2", sub: "문제 교재" }] };
+var EB_BOOKS = { 2: [{ id: "b2", nm: "교재2", sub: "문제 교재" }], 3: [{ id: "b3", nm: "통합 교재", sub: "문제 교재" }] };
 var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
