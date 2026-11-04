@@ -168,7 +168,10 @@ function stTag(s) { return s.days_left < 0 ? '<span class="tag end">만료</span
 var CATS = [["lcmock", "LC 실전 모의고사 · 해설강의"], ["lcp2", "LC Part 2 유형별"], ["rcbook", "RC 교재 문제 · 실전 테스트"], ["agrade", "A급 과제 · 해설강의"], ["voca", "VOCA · 단어 게임"]];
 var PLAN_CATS = { lc: ["lcmock"], rc: ["rcbook"], lcrc: ["lcmock", "rcbook"] };
 var PLAN_NM = { lc: "LC 30일권", rc: "RC 30일권", lcrc: "LC+RC 30일권" };
-function kindTag(s) { return (PLAN_NM[s.plan] ? '<span class="tag lc">' + PLAN_NM[s.plan] + '</span>' : '<span class="tag full">수강생</span>') + (PLAN_NM[s.plan] && s.member ? ' <span class="tag full">수업 들은 학생</span>' : ''); }
+var ONL_MK = "[온라인]";
+function ONL(s) { return String(s.memo || "").indexOf(ONL_MK) === 0; }
+function memoTxt(s) { return String(s.memo || "").replace(ONL_MK, "").trim(); }
+function kindTag(s) { if (ONL(s)) return '<span class="tag lc">온라인 수강생</span>'; return (PLAN_NM[s.plan] ? '<span class="tag lc">' + PLAN_NM[s.plan] + '</span>' : '<span class="tag full">수강생</span>') + (PLAN_NM[s.plan] && s.member ? ' <span class="tag full">수업 들은 학생</span>' : ''); }
 function draw() {
   if (view !== "list") return;
   var on = students.filter(function (s) { return s.days_left >= 0; });
@@ -181,16 +184,17 @@ function draw() {
     if (fil === "end" && s.days_left >= 0) return false;
     if (fil === "idle" && (s.days_left < 0 || s.week)) return false;
     if (fil === "lc" && !PLAN_NM[s.plan]) return false;
+    if (fil === "onl" && !ONL(s)) return false;
     return !k || (s.name + s.phone + (s.memo || "")).toLowerCase().indexOf(k) >= 0;
   });
   render(head() + `<div class="card"><div class="stat"><div><b>${on.length}</b>이용 중</div><div><b>${soon}</b>7일 내 만료</div><div><b>${idle}</b>이번 주 미학습</div><div><b>${students.length - on.length}</b>만료</div></div></div>
   <div class="card">
     <button class="btn" id="ad-add" style="width:100%;padding:14px;font-size:17px">+ 수강생 등록</button>
     <input class="in" id="ad-q" placeholder="이름 · 번호 · 메모 검색" value="${esc(q)}" style="margin-top:10px">
-    <div class="chips">${[["on", "이용 중"], ["idle", "이번 주 미학습"], ["lc", "비회원 30일권"], ["end", "만료"], ["all", "전체"]].map(function (c) { return `<button data-f="${c[0]}" class="${fil === c[0] ? "on" : ""}">${c[1]}</button>`; }).join("")}</div>
+    <div class="chips">${[["on", "이용 중"], ["idle", "이번 주 미학습"], ["onl", "온라인 수강생"], ["lc", "비회원 30일권"], ["end", "만료"], ["all", "전체"]].map(function (c) { return `<button data-f="${c[0]}" class="${fil === c[0] ? "on" : ""}">${c[1]}</button>`; }).join("")}</div>
     ${rows.map(function (s) {
       var rate = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
-      return `<div class="st"><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${s.memo ? `<div class="info">메모: ${esc(s.memo)}</div>` : ""}</div>${stTag(s)}</div>
+      return `<div class="st"><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${memoTxt(s) ? `<div class="info">메모: ${esc(memoTxt(s))}</div>` : ""}</div>${stTag(s)}</div>
         <div class="prog"><span>푼 문제 ${s.solved}</span><span>정답률 ${rate}%</span><span>최근 7일 ${s.week}문제</span><span>마지막 학습 ${ago(s.last_at)}</span><span>마지막 접속 ${ago(s.last_login)}</span></div>
         <div class="acts"><button class="btn navy sm" data-rep="${s.id}">진도 보기</button>${s.days_left < 0 ? `<button class="btn sm" data-renew="${s.id}">재등록</button>` : `<button class="btn sm" data-ext="${s.id}">+1개월</button>`}<button class="btn ghost sm" data-edit="${s.id}">수정</button></div></div>`;
     }).join("") || '<p class="note">해당하는 수강생이 없어요.</p>'}
@@ -227,16 +231,17 @@ function renewCopy(s) {
   c.end_date = monthEnd(t); c.member = true;
   return c;
 }
-function editForm(s, renew) {
+function editForm(s, renew, tpl) {
   var isNew = !s;
   if (renew) s = renewCopy(s);
-  s = s || { name: "", phone: "", level: "기초", start_date: today(), end_date: monthEnd(today()), memo: "", plan: null };
+  s = s || tpl || { name: "", phone: "", level: "기초", start_date: today(), end_date: monthEnd(today()), memo: "", plan: null };
   var m = modal(`<h2>${isNew ? "수강생 등록" : renew ? "수강생 재등록" : "수강생 수정"}</h2>${renew ? '<div class="msg ok">지난 등록 기록이 있는 학생이에요. 새로 만들지 않고 <b>기간만 이번 달로 바꿔 저장</b>해요 (학습 기록 유지). 연속 등록이면 시작일은 그대로 둬요.</div>' : ""}
     <p class="note" style="margin:0">학생은 <b>이름 + 휴대폰 번호 뒤 4자리</b>로 학습실에 들어가요.</p>
     <label>이름</label><input class="in" id="f-name" value="${esc(s.name)}">
     <label>휴대폰 번호</label><input class="in" id="f-phone" inputmode="numeric" value="${esc(s.phone)}" placeholder="01012345678">
     <label>구분</label><select class="in" id="f-plan"><option value="">수강생 (학습실 전체: LC·RC·A급·VOCA)</option><option value="lc" ${s.plan === "lc" ? "selected" : ""}>비회원 LC 30일권 (이번 달 LC 모의고사)</option><option value="rc" ${s.plan === "rc" ? "selected" : ""}>비회원 RC 30일권 (이번 달 Season RC 문제)</option><option value="lcrc" ${s.plan === "lcrc" ? "selected" : ""}>비회원 LC+RC 30일권 (둘 다)</option></select>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px"><input type="checkbox" id="f-mem" ${isNew || s.member ? "checked" : ""} style="width:20px;height:20px">수업 들은 학생 (결제할 때 수강생 가격 적용)</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px"><input type="checkbox" id="f-onl" ${ONL(s) ? "checked" : ""} style="width:20px;height:20px">온라인 수강생 (온라인 정규반 · 따로 모아 보기)</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px"><input type="checkbox" id="f-mem" ${(isNew && !tpl) || s.member ? "checked" : ""} style="width:20px;height:20px">수업 들은 학생 (결제할 때 수강생 가격 적용)</label>
     <div class="grid"><div><label>시작일</label><input class="in" type="date" id="f-start" value="${esc(s.start_date)}"></div>
       <div><label>종료일</label><input class="in" type="date" id="f-end" value="${esc(s.end_date)}"></div></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn ghost sm" data-dur="me">이번 달 말까지</button>${[1, 2, 3].map(function (n) { return `<button class="btn ghost sm" data-dur="${n}">${n}개월</button>`; }).join("")}</div>
@@ -246,7 +251,7 @@ function editForm(s, renew) {
     <div id="f-cats" style="display:grid;gap:6px">${CATS.map(function (c) { return `<label style="margin:0;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:15px;font-weight:700;cursor:pointer"><input type="checkbox" value="${c[0]}" ${(s.cats || []).indexOf(c[0]) >= 0 ? "checked" : ""} style="width:20px;height:20px">${c[1]}</label>`; }).join("")}</div>
     <div class="msg ok" id="f-sea" style="margin-top:10px"></div>
     <label>레벨</label><select class="in" id="f-level">${["기초", "중급", "고급"].map(function (l) { return `<option ${s.level === l ? "selected" : ""}>${l}</option>`; }).join("")}</select>
-    <label>메모 (반 · 입금 등)</label><input class="in" id="f-memo" value="${esc(s.memo || "")}">
+    <label>메모 (반 · 입금 등)</label><input class="in" id="f-memo" value="${esc(memoTxt(s))}">
     <div id="f-msg"></div>
     <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" id="f-save" style="flex:1;padding:14px">저장</button><button class="btn ghost" id="f-cancel">취소</button></div>
     ${isNew ? "" : '<div style="margin-top:18px;text-align:right"><button class="btn red sm" id="f-del">수강생 삭제</button></div>'}`);
@@ -281,7 +286,7 @@ function editForm(s, renew) {
   m.querySelector("#f-save").onclick = function () {
     var v = { p_id: s.id || null, p_name: m.querySelector("#f-name").value.trim(), p_phone: m.querySelector("#f-phone").value.replace(/\D/g, ""),
       p_level: m.querySelector("#f-level").value, p_start: m.querySelector("#f-start").value, p_end: m.querySelector("#f-end").value,
-      p_memo: m.querySelector("#f-memo").value.trim(), p_plan: m.querySelector("#f-plan").value || null };
+      p_memo: ((m.querySelector("#f-onl").checked ? ONL_MK + " " : "") + m.querySelector("#f-memo").value.replace(ONL_MK, "").trim()).trim(), p_plan: m.querySelector("#f-plan").value || null };
     var msg = m.querySelector("#f-msg");
     if (!v.p_name || v.p_phone.length < 10) { msg.innerHTML = '<div class="msg err">이름과 휴대폰 번호(10~11자리)를 넣어 주세요.</div>'; return; }
     if (!v.p_start || !v.p_end || v.p_end < v.p_start) { msg.innerHTML = '<div class="msg err">시작일·종료일을 확인해 주세요.</div>'; return; }
@@ -442,13 +447,18 @@ function viewLog() {
           ${x.paid_at ? "" : `<div class="acts"><a class="btn ghost sm" href="sms:${esc(x.phone)}?body=${encodeURIComponent(x.name + "님, 메이크토익입니다. 학습실 30일 수강권 결제가 아직 완료되지 않았어요. 이어서 결제하려면: https://maketoeic.kr/pay/?p=" + (x.kind || "lc"))}" style="text-decoration:none">문자 보내기</a></div>`}</div>`;
         }).join("") : '<p class="note">아직 등록한 비회원이 없어요.</p>')
       : (O.length ? `<div style="overflow-x:auto"><table><tr><th>일시</th><th>이름</th><th>상품</th><th>금액</th><th>상태</th></tr>${O.map(function (o) {
-          return `<tr><td style="white-space:nowrap">${dt(o.approved_at || o.created_at)}</td><td>${esc(o.name)}<div style="font-size:12.5px">${esc(phoneFmt(o.phone))}</div></td><td>${esc(o.product || "")}</td><td style="white-space:nowrap">${(o.amount || 0).toLocaleString()}원</td><td>${ST[o.status] || esc(o.status)}${o.method ? '<div style="font-size:12.5px">' + esc(o.method) + '</div>' : ''}</td></tr>`;
+          return `<tr><td style="white-space:nowrap">${dt(o.approved_at || o.created_at)}</td><td>${esc(o.name)}<div style="font-size:12.5px">${esc(phoneFmt(o.phone))}</div></td><td>${esc(o.product || "")}</td><td style="white-space:nowrap">${(o.amount || 0).toLocaleString()}원</td><td>${ST[o.status] || esc(o.status)}${o.method ? '<div style="font-size:12.5px">' + esc(o.method) + '</div>' : ''}${o.status === "done" && (o.kind === "pass" || /정규반|이용권/.test(o.product || "")) ? `<button class="btn sm" style="margin-top:6px" data-onl="${esc(o.name)}|${esc(o.phone)}">온라인 수강생 등록</button>` : ""}</td></tr>`;
         }).join("")}</table></div>` : '<p class="note">아직 결제 기록이 없어요.</p>');
     render(head() + `<div class="card"><div class="stat"><div><b>${L.length}</b>등록한 비회원</div><div><b>${paid}</b>결제한 사람</div><div><b>${L.length - paid}</b>미결제</div><div><b>${sum.toLocaleString()}</b>결제 금액(원)</div></div></div>
       <div class="card"><div class="chips"><button data-lt="leads" class="${logTab === "leads" ? "on" : ""}">비회원 등록 (${L.length})</button><button data-lt="orders" class="${logTab === "orders" ? "on" : ""}">결제 내역 (${O.length})</button></div>
       <p class="note" style="margin-top:0">${logTab === "leads" ? "결제 화면에서 이름 · 휴대폰을 등록한 사람이에요. 미결제인 사람에게는 문자 보내기로 결제를 안내할 수 있어요." : "결제 화면에서 결제 버튼을 누른 기록이에요. '결제 안 함'은 결제창을 열었다가 끝내지 않은 경우예요."}</p>${body}</div>`);
     bindHead();
     app.querySelectorAll("[data-lt]").forEach(function (b) { b.onclick = function () { logTab = b.dataset.lt; viewLog(); }; });
+    app.querySelectorAll("[data-onl]").forEach(function (b) { b.onclick = function () {
+      var a = b.dataset.onl.split("|"), st = today(), p = st.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]); d.setMonth(d.getMonth() + 1); d.setDate(d.getDate() - 1);
+      function go() { editForm(null, false, { name: a[0], phone: String(a[1] || "").replace(/\D/g, ""), level: "기초", start_date: st, end_date: ymd(d), memo: ONL_MK + " 온라인 정규반 결제", plan: null, member: false }); }
+      students.length ? go() : rpc("admin_list_students").then(function (x) { students = x || []; go(); }).catch(go);
+    }; });
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
 }
 
