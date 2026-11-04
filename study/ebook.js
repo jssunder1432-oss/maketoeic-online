@@ -59,7 +59,7 @@ var EB_CSS = `
 .mkst .eb-qo button.bad{background:#D2453B;border-color:#D2453B;color:#fff}
 .mkst .eb-pop .sv{margin-left:auto}.mkst .eb-pop .sv.on{background:#FFE9A8 !important;color:#7A5200 !important;border-color:#E8B500 !important}
 .mkst .eb-camf{position:fixed;left:14px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147482980;width:62px;height:62px;border-radius:50%;border:2px solid #fff;background:#E95721;color:#fff;font-size:24px;line-height:1;box-shadow:0 8px 22px rgba(233,87,33,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
-.mkst .eb-camf small{font-size:11px;font-weight:900;margin-top:2px}.mkst .eb-audf{position:fixed;left:86px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147482980;width:62px;height:62px;border-radius:50%;border:2px solid #fff;background:#172844;color:#fff;font-size:24px;line-height:1;box-shadow:0 8px 22px rgba(23,40,68,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}.mkst .eb-audf small{font-size:11px;font-weight:900;margin-top:2px}.mkst .eb-audf.on{background:#E95721}.mkst .eb-auds{position:fixed;left:0;right:0;bottom:0;z-index:2147482990;max-height:62vh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -8px 28px rgba(0,0,0,.22);padding:12px 14px calc(16px + env(safe-area-inset-bottom));width:100vw;box-sizing:border-box}.mkst .eb-audh{display:flex;justify-content:space-between;align-items:center;font-size:17px;margin-bottom:10px;color:#172844}.mkst .eb-audh .x{border:0;background:#EEF1F5;border-radius:50%;width:34px;height:34px;font-size:16px}.mkst .eb-audt{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.mkst .eb-audt button{flex:1 1 40%;border:1.5px solid #172844;background:#fff;border-radius:12px;padding:12px 8px;font-weight:900;font-size:15px;color:#172844}.mkst .eb-audt button:first-child{background:#E95721;border-color:#E95721;color:#fff}.mkst .eb-audl{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.mkst .eb-audl button{border:1px solid #D5DAE1;background:#F7F8FA;border-radius:10px;padding:11px 6px;font-weight:800;font-size:14px;color:#172844;text-align:left}.mkst .eb-audt button.on,.mkst .eb-audl button.on{background:#172844;border-color:#172844;color:#fff}
+.mkst .eb-camf small{font-size:11px;font-weight:900;margin-top:2px}.mkst .eb-ink{position:absolute;left:0;top:0;width:100%;height:100%;z-index:6;pointer-events:none}.mkst .eb-ink.on{pointer-events:auto;touch-action:none;cursor:crosshair;outline:3px solid rgba(31,95,214,.35);outline-offset:-3px}.mkst .eb-inkt{position:absolute;z-index:7;min-width:120px;background:rgba(255,255,255,.85);border:1.5px dashed #1F5FD6;border-radius:6px;padding:2px 4px;font-weight:700;font-family:inherit;line-height:1.25;resize:none;outline:0;transform:translateY(-2px)}.mkst .eb-inkf{position:fixed;left:158px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147482980;width:62px;height:62px;border-radius:50%;border:2px solid #fff;background:#1F5FD6;color:#fff;font-size:24px;line-height:1;box-shadow:0 8px 22px rgba(31,95,214,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}.mkst .eb-inkf small{font-size:11px;font-weight:900;margin-top:2px}.mkst.eb-inking .eb-camf,.mkst.eb-inking .eb-audf,.mkst.eb-inking .eb-inkf,.mkst.eb-inking .eb-auds{display:none}.mkst .eb-bar .eb-inkb.on{background:#1F5FD6!important;color:#fff}.mkst .eb-inkbar{position:fixed;left:0;right:0;bottom:0;width:100vw;box-sizing:border-box;z-index:2147482995;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.2);padding:8px 8px calc(10px + env(safe-area-inset-bottom))}.mkst .eb-inkbar .r1,.mkst .eb-inkbar .r2{display:flex;gap:5px;align-items:center}.mkst .eb-inkbar .r2{margin-top:7px;flex-wrap:wrap}.mkst .eb-inkbar .r1 button{flex:1;min-width:0;border:1.5px solid #D5DAE1;background:#F7F8FA;border-radius:12px;padding:6px 0 5px;font-size:20px;line-height:1.1;display:flex;flex-direction:column;align-items:center}.mkst .eb-inkbar .r1 button small{font-size:11px;font-weight:900;color:#172844;margin-top:2px;white-space:nowrap}.mkst .eb-inkbar .r1 button.on{background:#172844;border-color:#172844}.mkst .eb-inkbar .r1 button.on small{color:#fff}.mkst .eb-inkbar .dot{flex:0 0 30px;width:30px;height:30px!important;min-height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #D5DAE1;padding:0}.mkst .eb-inkbar .dot.on{box-shadow:0 0 0 3px #172844}.mkst .eb-inkbar .wd{flex:0 0 34px;width:34px;height:30px!important;min-height:30px;border:1.5px solid #D5DAE1;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0 6px}.mkst .eb-inkbar .wd i{display:block;width:100%;background:#172844;border-radius:3px}.mkst .eb-inkbar .wd.on{border-color:#172844;background:#EEF1F5}.mkst .eb-inkbar .r2>button:not(.dot):not(.wd){height:32px;border:1.5px solid #D5DAE1;border-radius:8px;background:#fff;font-size:16px;padding:0 10px;font-weight:900;color:#172844}.mkst .eb-inkbar .r2 .done{margin-left:auto;background:#E95721!important;border-color:#E95721!important;color:#fff!important}.mkst .eb-inkbar .tip{font-size:12px;color:#172844;font-weight:700;margin:6px 2px 0}.mkst .eb-inkbar .r2 .tip{margin:0 4px;flex:1}.mkst .eb-audf{position:fixed;left:86px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147482980;width:62px;height:62px;border-radius:50%;border:2px solid #fff;background:#172844;color:#fff;font-size:24px;line-height:1;box-shadow:0 8px 22px rgba(23,40,68,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}.mkst .eb-audf small{font-size:11px;font-weight:900;margin-top:2px}.mkst .eb-audf.on{background:#E95721}.mkst .eb-auds{position:fixed;left:0;right:0;bottom:0;z-index:2147482990;max-height:62vh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -8px 28px rgba(0,0,0,.22);padding:12px 14px calc(16px + env(safe-area-inset-bottom));width:100vw;box-sizing:border-box}.mkst .eb-audh{display:flex;justify-content:space-between;align-items:center;font-size:17px;margin-bottom:10px;color:#172844}.mkst .eb-audh .x{border:0;background:#EEF1F5;border-radius:50%;width:34px;height:34px;font-size:16px}.mkst .eb-audt{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.mkst .eb-audt button{flex:1 1 40%;border:1.5px solid #172844;background:#fff;border-radius:12px;padding:12px 8px;font-weight:900;font-size:15px;color:#172844}.mkst .eb-audt button:first-child{background:#E95721;border-color:#E95721;color:#fff}.mkst .eb-audl{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.mkst .eb-audl button{border:1px solid #D5DAE1;background:#F7F8FA;border-radius:10px;padding:11px 6px;font-weight:800;font-size:14px;color:#172844;text-align:left}.mkst .eb-audt button.on,.mkst .eb-audl button.on{background:#172844;border-color:#172844;color:#fff}
 .mkst .eb-no1{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#E95721;color:#fff;font-size:13px;font-weight:900;margin-right:6px;vertical-align:2px}
 .mkst .eb-alt{margin-top:8px;padding-top:8px;border-top:1px dashed #C9D2DE}
 .mkst .eb-alt .h{font-size:12.5px;color:#33404F;margin-bottom:4px}
@@ -184,7 +184,7 @@ function viewEbPage(id, n) {
     var ch = (m.toc || []).filter(function (c) { return n >= c.p && n <= c.e; })[0];
     var opts = []; for (var i = 1; i <= m.n; i++) opts.push(i);
     render(topbar(bk.nm + " · " + n + "쪽") + (ch ? `<p class="eb-tip" style="margin-top:-6px"><b>${esc(ch.t)}</b></p>` : "") +
-      `<div class="eb-bar"><button data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀</button><select id="eb-sel">${opts.map(function (i) { return `<option value="${i}" ${i === n ? "selected" : ""}>${i} / ${m.n}쪽</option>`; }).join("")}</select><button data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>▶</button><button id="eb-zo">－</button><button id="eb-zi">＋</button><button id="eb-cap" title="화면 캡처 → 필기 노트" style="background:#FFF4EC;border-color:#E95721">📸</button></div>
+      `<div class="eb-bar"><button data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀</button><select id="eb-sel">${opts.map(function (i) { return `<option value="${i}" ${i === n ? "selected" : ""}>${i} / ${m.n}쪽</option>`; }).join("")}</select><button data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>▶</button><button id="eb-zo">－</button><button id="eb-zi">＋</button><button id="eb-cap" title="화면 캡처 → 필기 노트" style="background:#FFF4EC;border-color:#E95721">📸</button><button class="eb-inkb" id="eb-inkb" title="필기" style="background:#EEF4FF;border-color:#1F5FD6">✏️</button></div>
       <div id="eb-trk" class="eb-trk" style="display:none"></div>
       <div class="eb-scroll" id="eb-sc"><div class="eb-pg" id="eb-pg" style="width:${z * 100}%"><img id="eb-img" alt="${n}쪽" src="${EB_BASE + id}/i/${n}.webp?v=${m.v || 1}"><div id="eb-ov"></div></div></div>
       <div id="eb-psbox"></div>
@@ -203,6 +203,7 @@ function viewEbPage(id, n) {
     app.querySelector("#eb-zi").onclick = function () { zoom(0.5); };
     app.querySelector("#eb-cap").onclick = function () { ebCapture(bk, n, sc, pg); };
     ebCamFloat(function () { ebCapture(bk, n, sc, pg); });
+    ebInk(id, n, sc, pg); app.querySelector("#eb-inkb").onclick = function () { ebInkToggle(); };
     EB.cur = { nm: bk.nm, n: n, id: id };
     ebPage(id, n).then(function (d) { ebDraw(m, d); ebPs(d); ebQuiz(id, n, d); ebAudFloat(); });
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
@@ -306,6 +307,9 @@ function ebCamFloat(fn) {
   var old = document.querySelector(".mkst .eb-camf"); if (old) old.remove();
   var b = document.createElement("button"); b.className = "eb-camf"; b.innerHTML = "📸<small>캡처</small>"; b.onclick = fn;
   (document.querySelector(".mkst") || document.body).appendChild(b);
+  var old2 = document.querySelector(".mkst .eb-inkf"); if (old2) old2.remove();
+  var bi = document.createElement("button"); bi.className = "eb-inkf eb-inkb"; bi.innerHTML = "✏️<small>필기</small>"; bi.onclick = function () { ebInkToggle(); };
+  (document.querySelector(".mkst") || document.body).appendChild(bi); ebFollow(bi, 158, 96);
   var V = window.visualViewport;
   function place() {
     if (!b.isConnected || !/^#\/eb\/b/.test(location.hash)) { b.remove(); if (V) { V.removeEventListener("resize", place); V.removeEventListener("scroll", place); } return; }
@@ -357,6 +361,104 @@ function ebAudFloat() {
     ebFollow(sh, 0, 0);
   };
 }
+// ✏️ 전자책 필기: 볼펜·연필·형광펜·지우개·줄자(곧은 줄)·글자 입력 — 쪽마다 이 기기에 저장, 애플펜슬이면 손가락은 화면 넘기기
+var EBI = { on: false, tool: "pen", c: { pen: "#1F2A44", pencil: "#4A4A4A", hl: "#FFE14D", text: "#E0322B" }, w: { pen: 1, pencil: 1, hl: 1, text: 1 }, ruler: false, S: [], key: "", hist: [], pen: false };
+var EBI_W = { pen: [0.0016, 0.0026, 0.004], pencil: [0.0014, 0.0022, 0.0034], hl: [0.012, 0.018, 0.026], text: [0.014, 0.019, 0.026], er: 0.014 };
+function ebInkDB() { return new Promise(function (res, rej) { try { var q = indexedDB.open("mkst-ebink", 1); q.onupgradeneeded = function () { q.result.createObjectStore("p"); }; q.onsuccess = function () { res(q.result); }; q.onerror = function () { rej(q.error); }; } catch (e) { rej(e); } }); }
+function ebInkGet(k) { return ebInkDB().then(function (db) { return new Promise(function (res) { var r = db.transaction("p").objectStore("p").get(k); r.onsuccess = function () { res(r.result || []); }; r.onerror = function () { res([]); }; }); }).catch(function () { try { return JSON.parse(localStorage.getItem("ebink:" + k) || "[]"); } catch (e) { return []; } }); }
+function ebInkPut(k, v) { return ebInkDB().then(function (db) { return new Promise(function (res) { var tx = db.transaction("p", "readwrite"); if (v.length) tx.objectStore("p").put(v, k); else tx.objectStore("p").delete(k); tx.oncomplete = res; tx.onerror = res; }); }).catch(function () { try { localStorage.setItem("ebink:" + k, JSON.stringify(v)); } catch (e) { } }); }
+function ebInkPaint(cv, S, cur) {
+  var x = cv.getContext("2d"), W = cv.width, H = cv.height; x.clearRect(0, 0, W, H);
+  (cur ? S.concat([cur]) : S).forEach(function (s) {
+    if (s.t === "text") { x.globalAlpha = 1; x.fillStyle = s.c; x.font = "700 " + Math.round(s.s * W) + "px 'Pretendard','Apple SD Gothic Neo',sans-serif"; x.textBaseline = "top"; String(s.txt).split("\n").forEach(function (l, i) { x.fillText(l, s.x * W, s.y * H + i * s.s * W * 1.25); }); return; }
+    var p = s.p; if (!p || !p.length) return;
+    x.strokeStyle = s.c; x.lineCap = s.t === "hl" ? "butt" : "round"; x.lineJoin = "round"; x.lineWidth = Math.max(1, s.w * W);
+    x.globalAlpha = s.t === "hl" ? 0.38 : s.t === "pencil" ? 0.72 : 1;
+    x.beginPath(); x.moveTo(p[0][0] * W, p[0][1] * H);
+    if (p.length === 1) x.lineTo(p[0][0] * W + 0.1, p[0][1] * H);
+    for (var i = 1; i < p.length - 1; i++) { var mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2; x.quadraticCurveTo(p[i][0] * W, p[i][1] * H, mx * W, my * H); }
+    if (p.length > 1) x.lineTo(p[p.length - 1][0] * W, p[p.length - 1][1] * H);
+    x.stroke();
+    if (s.t === "pencil") { x.globalAlpha = 0.25; x.lineWidth = Math.max(1, s.w * W * 0.5); x.save(); x.translate(0.6, 0.5); x.stroke(); x.restore(); }
+  });
+  x.globalAlpha = 1;
+}
+function ebInk(bid, n, sc, pg) {
+  EBI.on = false; EBI.key = bid + ":" + n; EBI.S = []; EBI.hist = [];
+  var cv = document.createElement("canvas"); cv.id = "eb-ink"; cv.className = "eb-ink"; pg.appendChild(cv);
+  var key = EBI.key, cur = null, raf = 0;
+  function size() { var d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(pg.offsetWidth * d), h = Math.round(pg.offsetHeight * d); if (w && h && (cv.width !== w || cv.height !== h)) { cv.width = w; cv.height = h; paint(); } }
+  function paint() { ebInkPaint(cv, EBI.S, cur); }
+  function save() { if (key === EBI.key) ebInkPut(key, EBI.S); }
+  if (window.ResizeObserver) new ResizeObserver(size).observe(pg); var im = app.querySelector("#eb-img"); if (im) im.addEventListener("load", size); size();
+  ebInkGet(key).then(function (v) { if (key !== EBI.key) return; EBI.S = v || []; size(); paint(); });
+  function pt(e) { var r = cv.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * 10000) / 10000, Math.round((e.clientY - r.top) / r.height * 10000) / 10000]; }
+  function snap(a, b) { var r = cv.getBoundingClientRect(), dx = (b[0] - a[0]) * r.width, dy = (b[1] - a[1]) * r.height, ang = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI); if (ang < 6 || ang > 174) return [b[0], a[1]]; if (Math.abs(ang - 90) < 6) return [a[0], b[1]]; return b; }
+  function erase(p) { var r = cv.getBoundingClientRect(), rad = EBI_W.er * r.width, hit = false; EBI.S = EBI.S.filter(function (s) { var near = s.t === "text" ? (p[0] >= s.x - 0.005 && p[0] <= s.x + s.s * String(s.txt).length * 0.9 && p[1] >= s.y - 0.005 && p[1] <= s.y + s.s * r.width / r.height * 1.3 * String(s.txt).split("\n").length) : s.p.some(function (q) { return Math.hypot((q[0] - p[0]) * r.width, (q[1] - p[1]) * r.height) < rad + s.w * r.width / 2; }); if (near) hit = true; return !near; }); if (hit) paint(); return hit; }
+  function textAt(p, old) {
+    var r = cv.getBoundingClientRect(), ta = document.createElement("textarea"), s = old ? old.s : EBI_W.text[EBI.w.text], c = old ? old.c : EBI.c.text;
+    ta.className = "eb-inkt"; ta.value = old ? old.txt : ""; ta.style.left = p[0] * 100 + "%"; ta.style.top = p[1] * 100 + "%"; ta.style.fontSize = s * pg.offsetWidth + "px"; ta.style.color = c; ta.rows = Math.max(1, (ta.value.match(/\n/g) || []).length + 1);
+    pg.appendChild(ta); setTimeout(function () { ta.focus(); }, 30);
+    ta.oninput = function () { ta.rows = Math.max(1, (ta.value.match(/\n/g) || []).length + 1); };
+    ta.onblur = function () { var v = ta.value.replace(/\s+$/, ""); ta.remove(); if (v) { EBI.hist.push(EBI.S.slice()); EBI.S.push({ t: "text", c: c, s: s, x: p[0], y: p[1], txt: v }); } paint(); save(); };
+  }
+  var sx = 0, sy = 0, scrolling = false;
+  cv.addEventListener("pointerdown", function (e) {
+    if (!EBI.on) return;
+    if (e.pointerType === "pen") EBI.pen = true;
+    if (e.pointerType === "touch" && EBI.pen) { scrolling = true; sx = e.clientX; sy = e.clientY; cv.setPointerCapture(e.pointerId); return; }
+    e.preventDefault(); cv.setPointerCapture(e.pointerId); var p = pt(e);
+    if (EBI.tool === "er") { EBI.hist.push(EBI.S.slice()); cur = { er: 1 }; erase(p); return; }
+    if (EBI.tool === "text") {
+      var r = cv.getBoundingClientRect(), hitT = EBI.S.filter(function (s) { return s.t === "text" && p[0] >= s.x - 0.01 && p[0] <= s.x + s.s * String(s.txt).length * 0.9 && p[1] >= s.y - 0.01 && p[1] <= s.y + s.s * r.width / r.height * 1.3 * String(s.txt).split("\n").length; })[0];
+      if (hitT) { EBI.hist.push(EBI.S.slice()); EBI.S.splice(EBI.S.indexOf(hitT), 1); paint(); textAt([hitT.x, hitT.y], hitT); } else textAt(p); return;
+    }
+    cur = { t: EBI.tool, c: EBI.c[EBI.tool], w: EBI_W[EBI.tool][EBI.w[EBI.tool]] * (e.pointerType === "pen" && e.pressure && EBI.tool !== "hl" ? 0.7 + e.pressure * 0.6 : 1), p: [p] };
+    if (EBI.ruler || EBI.tool === "hl" && EBI.ruler) cur.r = 1;
+    paint();
+  });
+  cv.addEventListener("pointermove", function (e) {
+    if (scrolling) { sc.scrollLeft -= e.clientX - sx; sc.scrollTop -= e.clientY - sy; sx = e.clientX; sy = e.clientY; return; }
+    if (!cur) return; e.preventDefault();
+    if (cur.er) { erase(pt(e)); return; }
+    var ev = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; if (!ev.length) ev = [e];
+    if (cur.r) cur.p = [cur.p[0], snap(cur.p[0], pt(ev[ev.length - 1]))];
+    else ev.forEach(function (q) { var p = pt(q), l = cur.p[cur.p.length - 1]; if (Math.abs(p[0] - l[0]) + Math.abs(p[1] - l[1]) > 0.0008) cur.p.push(p); });
+    if (!raf) raf = requestAnimationFrame(function () { raf = 0; paint(); });
+  });
+  function up() { if (scrolling) { scrolling = false; return; } if (!cur) return; if (cur.er) { cur = null; save(); return; } EBI.hist.push(EBI.S.slice()); EBI.S.push(cur); cur = null; paint(); save(); }
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  EBI.paint = paint; EBI.save = save; EBI.cv = cv;
+}
+function ebInkToggle(on) {
+  EBI.on = on === undefined ? !EBI.on : on;
+  var cv = app.querySelector("#eb-ink"), host = document.querySelector(".mkst") || document.body;
+  if (cv) cv.classList.toggle("on", EBI.on);
+  host.classList.toggle("eb-inking", EBI.on);
+  app.querySelectorAll(".eb-inkb").forEach(function (b) { b.classList.toggle("on", EBI.on); });
+  var old = document.querySelector(".mkst .eb-inkbar"); if (old) old.remove();
+  if (!EBI.on) { app.querySelectorAll(".eb-inkt").forEach(function (t) { t.blur(); }); return; }
+  ebHide(); var bar = document.createElement("div"); bar.className = "eb-inkbar"; host.appendChild(bar);
+  var COL = { pen: ["#1F2A44", "#E0322B", "#1F5FD6", "#0E9F6E"], pencil: ["#4A4A4A", "#E0322B", "#1F5FD6", "#8A5A2B"], hl: ["#FFE14D", "#8BE38B", "#FF9AD5", "#7FD3FF"], text: ["#E0322B", "#1F2A44", "#1F5FD6", "#0E9F6E"] };
+  function draw() {
+    var t = EBI.tool, cols = COL[t] || [];
+    bar.innerHTML = '<div class="r1">' + [["pen", "🖊️", "볼펜"], ["pencil", "✏️", "연필"], ["hl", "🖍️", "형광펜"], ["er", "🧽", "지우개"], ["text", "🔤", "글자"]].map(function (a) { return '<button data-it="' + a[0] + '" class="' + (t === a[0] ? "on" : "") + '">' + a[1] + "<small>" + a[2] + "</small></button>"; }).join("") +
+      '<button data-ir class="' + (EBI.ruler ? "on" : "") + '">📏<small>줄자 ' + (EBI.ruler ? "켜짐" : "꺼짐") + "</small></button></div>" +
+      '<div class="r2">' + (cols.length ? cols.map(function (c) { return '<button data-ic="' + c + '" class="dot' + (EBI.c[t] === c ? " on" : "") + '" style="background:' + c + '"></button>'; }).join("") +
+      [0, 1, 2].map(function (k) { return '<button data-iw="' + k + '" class="wd' + (EBI.w[t] === k ? " on" : "") + '"><i style="height:' + (t === "hl" ? 6 + k * 4 : 2 + k * 2) + 'px"></i></button>'; }).join("") : '<span class="tip">지울 곳을 문지르면 그 줄이 지워져요</span>') +
+      '<button data-iu>↶</button><button data-ix>🗑</button><button data-id class="done">완료</button></div>' +
+      (EBI.ruler && t !== "er" && t !== "text" ? '<p class="tip">줄자: 누른 곳에서 뗀 곳까지 곧은 줄 (가로·세로는 자동으로 반듯하게)</p>' : t === "text" ? '<p class="tip">쓰고 싶은 곳을 누르면 글자를 칠 수 있어요 · 쓴 글자를 누르면 고쳐요</p>' : "");
+    bar.querySelectorAll("[data-it]").forEach(function (b) { b.onclick = function () { EBI.tool = b.dataset.it; draw(); }; });
+    bar.querySelector("[data-ir]").onclick = function () { EBI.ruler = !EBI.ruler; if (EBI.tool === "er" || EBI.tool === "text") EBI.tool = "pen"; draw(); };
+    bar.querySelectorAll("[data-ic]").forEach(function (b) { b.onclick = function () { EBI.c[t] = b.dataset.ic; draw(); }; });
+    bar.querySelectorAll("[data-iw]").forEach(function (b) { b.onclick = function () { EBI.w[t] = +b.dataset.iw; draw(); }; });
+    bar.querySelector("[data-iu]").onclick = function () { if (!EBI.hist.length) return; EBI.S = EBI.hist.pop(); EBI.paint && EBI.paint(); EBI.save && EBI.save(); };
+    bar.querySelector("[data-ix]").onclick = function () { if (!EBI.S.length || !confirm("이 쪽 필기를 모두 지울까요?")) return; EBI.hist.push(EBI.S.slice()); EBI.S = []; EBI.paint && EBI.paint(); EBI.save && EBI.save(); };
+    bar.querySelector("[data-id]").onclick = function () { ebInkToggle(false); };
+  }
+  draw(); ebFollow(bar, 0, 0);
+}
+window.addEventListener("hashchange", function () { if (EBI.on) { EBI.on = false; var b = document.querySelector(".mkst .eb-inkbar"); if (b) b.remove(); var h = document.querySelector(".mkst"); if (h) h.classList.remove("eb-inking"); } });
 // 한 단어 여러 품사: 이 문장에서 쓰인 용도를 맨 위(우선)로, 다른 쓰임은 아래에
 var EB_ALT = null;
 function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psP").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
@@ -598,6 +700,7 @@ function ebCapture(bk, n, sc, pg) {
   var cv = document.createElement("canvas"); cv.width = Math.round(cw * sc2); cv.height = Math.round(ch * sc2);
   var x = cv.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, cv.width, cv.height);
   x.drawImage(img, x0 * k, y0 * k, cw, ch, 0, 0, cv.width, cv.height);
+  var ic = app.querySelector("#eb-ink"); if (ic && ic.width) { var ir = ic.width / W; x.drawImage(ic, x0 * ir, y0 * ir, (x1 - x0) * ir, (y1 - y0) * ir, 0, 0, cv.width, cv.height); }
   // 지금 표시 중인 단어(주황 칸)도 같이 남김
   app.querySelectorAll(".eb-w.on").forEach(function (e) { var r = e.getBoundingClientRect(), pr = pg.getBoundingClientRect(); var ex = (r.left - pr.left - x0) * k * sc2, ey = (r.top - pr.top - y0) * k * sc2; x.fillStyle = "rgba(255,145,60,.35)"; x.fillRect(ex, ey, r.width * k * sc2, r.height * k * sc2); });
   var flash = document.createElement("div"); flash.className = "eb-flash"; sc.appendChild(flash); setTimeout(function () { flash.remove(); }, 450);
