@@ -152,8 +152,23 @@ function viewDG() {
       row("✏️", "PART 5 · " + s5.n + "문제", basic ? "교재 단원 ‘" + esc(u5[0]) + "’ 문제 + 같은 유형 연습" : (tw5.length ? "집중 유형: " + esc(tw5.join(", ")) + " (A급 과제 변형 문제)" : "문법 · 어휘 골고루"), qbtn(5, s5), s5.done, s5.k + " / " + s5.n, "p." + u5[2] + " " + u5[0] + (basic ? " 풀고 오기" : " 복습")) +
       row("📄", "PART 6 · 지문 1개 (" + s6.n + "문제)", tw6.length ? "집중 유형: " + esc(tw6.join(", ")) : "문법 · 어휘 · 접속부사 · 문장 고르기", qbtn(6, s6), s6.done, s6.k + " / " + s6.n, "") +
       row("📰", "PART 7 · 지문 " + (basic ? 1 : 2) + "개 (" + s7.n + "문제)", tw7.length ? "집중 유형: " + esc(tw7.join(", ")) : "세부 사항 · 사실 확인 · 추론 등", qbtn(7, s7), s7.done, s7.k + " / " + s7.n, "p." + p7pg + " 지문 1세트" + (day === 1 ? " · p.98 유형별 풀이법 먼저" : "")) +
+      '<div class="card" id="dg-on" style="border:2px solid #172844;display:grid;gap:8px"></div>' +
       '<div class="card" style="font-size:13.5px;color:#3A4250">📘 표시는 메이크토익 교재 쪽수예요. 교재로 먼저 풀고 학습실 문제로 확인하세요. 틀린 문제는 해설의 ‘의식의 흐름’을 소리 내 읽고, 다음 날 시작 전에 한 번 더 보세요.</div>');
     bindCommon();
+    // 오늘 푼 RC에서 틀린 유형별 추가 50문제 + 오답노트 (A급 과제와 같은 방식)
+    var ymd = dgYmd(new Date()), parts = [5, 6, 7].map(function (p) {
+      return { part: p, title: "매일 과제 Day " + day, list: L[p].filter(function (x) { return S.prog[x.key]; }).map(function (x) { var g = S.prog[x.key]; return { key: x.key, q: x.q, set: x.set, mine: g[0], ok: !!g[1], type: x.q.qtype || (x.sec && x.sec.qtype) || onGuess(x.q, x.set, p) }; }) };
+    }).filter(function (p) { return p.list.length; });
+    var box = document.getElementById("dg-on");
+    if (box) {
+      if (!parts.length) box.innerHTML = '<b>🎯 틀린 유형 50문제 · 📄 오답노트</b><p style="margin:0;font-size:14px;color:#5B6573">PART 5 · 6 · 7 문제를 풀면 틀린 유형으로 추가 50문제와 오답노트가 열려요.</p>';
+      else {
+        var wb = onWrongBy(parts); ON_CTX = "dg" + ymd; parts.forEach(function (p) { ON_SID[p.part] = "dg" + ymd + "-" + p.part; });
+        var btns = parts.map(function (p) { return onPracBtn(p.part, wb[p.part]); }).join("");
+        box.innerHTML = '<b style="font-size:16px">🎯 틀린 유형 50문제 · 📄 오답노트</b><p style="margin:0;font-size:14px;color:#5B6573">오늘 푼 문제에서 틀린 유형만 골라 PART별로 50문제를 더 풀어요.</p>' + (btns || '<p style="margin:0;font-size:14px">오늘 푼 문제는 전부 맞혔어요! 👏</p>') + '<button class="btn ghost" data-onnote="1">📄 오늘 오답노트 출력 · PDF 저장</button>' + onLastBtns(parts.map(function (p) { return p.part; }));
+        onBind(box, wb, "#/dg", { title: "매일 과제 Day " + day + " (" + (d.getMonth() + 1) + "/" + d.getDate() + ")", parts: parts }); onLastBind(box);
+      }
+    }
     app.querySelectorAll("[data-dg]").forEach(function (b) { b.onclick = function () {
       var p = +b.dataset.dg, list = L[p].filter(function (x) { return !S.prog[x.key]; });
       if (!list.length) list = L[p];
