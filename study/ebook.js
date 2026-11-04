@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psH").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psI").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psH").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psI").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -59,6 +59,12 @@ var EB_CSS = `
 .mkst .eb-pop .sv{margin-left:auto}.mkst .eb-pop .sv.on{background:#FFE9A8 !important;color:#7A5200 !important;border-color:#E8B500 !important}
 .mkst .eb-camf{position:fixed;left:14px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147482980;width:62px;height:62px;border-radius:50%;border:2px solid #fff;background:#E95721;color:#fff;font-size:24px;line-height:1;box-shadow:0 8px 22px rgba(233,87,33,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
 .mkst .eb-camf small{font-size:11px;font-weight:900;margin-top:2px}
+.mkst .eb-no1{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#E95721;color:#fff;font-size:13px;font-weight:900;margin-right:6px;vertical-align:2px}
+.mkst .eb-alt{margin-top:8px;padding-top:8px;border-top:1px dashed #C9D2DE}
+.mkst .eb-alt .h{font-size:12.5px;color:#33404F;margin-bottom:4px}
+.mkst .eb-alt .r{display:flex;align-items:baseline;gap:6px;padding:3px 0;font-size:14.5px;color:#172844}
+.mkst .eb-alt .n{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:#E3E8EF;color:#172844;font-size:12px;font-weight:900;display:inline-flex;align-items:center;justify-content:center}
+.mkst .eb-alt .p{flex:0 0 auto;font-weight:800;color:#5B2A86;font-size:13px}
 .mkst .eb-toast{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translateX(-50%);z-index:2147483001;background:#172844;color:#fff;border-radius:14px;padding:12px 16px;font-weight:800;font-size:14.5px;box-shadow:0 10px 26px rgba(23,40,68,.3);transition:opacity .4s}
 .mkst .eb-toast.out{opacity:0}
 .mkst .eb-flash{position:absolute;inset:0;background:#fff;opacity:.7;pointer-events:none;animation:ebfl .45s ease-out forwards;z-index:9}
@@ -312,6 +318,22 @@ function ebCamFloat(fn) {
   window.addEventListener("hashchange", function h() { if (!/^#\/eb\/b/.test(location.hash)) { b.remove(); window.removeEventListener("hashchange", h); } });
   place();
 }
+// 한 단어 여러 품사: 이 문장에서 쓰인 용도를 맨 위(우선)로, 다른 쓰임은 아래에
+var EB_ALT = null;
+function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psI").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
+function ebAltShow(pop, word, g) {
+  var k = String(word || "").toLowerCase().replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
+  ebAlt().then(function (A) {
+    var L = A[k]; if (!L || !pop.isConnected) return;
+    var base = function (p) { return String(p).replace(/\(.*$/, ""); };
+    var rest = L.filter(function (r) { return base(r[0]) !== base(g[0]) && r[0] !== g[0]; });
+    if (!rest.length) return;
+    var box = document.createElement("div"); box.className = "eb-alt";
+    box.innerHTML = `<div class="h">이 문장에서는 <b>${esc(g[0])}</b> · 다른 쓰임</div>` + rest.map(function (r, i) { return `<div class="r"><span class="n">${i + 2}</span><span class="p">${esc(r[0])}</span><span class="m">${esc(r[1])}</span></div>`; }).join("");
+    var mn = pop.querySelector(".mn"); if (mn) { mn.insertAdjacentHTML("afterbegin", '<span class="eb-no1">1</span>'); mn.after(box); } else pop.appendChild(box);
+    if (pop.style.transform) ebPopFollow(pop);
+  });
+}
 function ebPopFollow(pop) {
   var V = window.visualViewport; if (!V) return;
   function place() {
@@ -393,6 +415,7 @@ function ebDraw(m, d) {
       (g ? `<div><span class="wd">${esc(g[4] ? g[3] : word)}</span><span class="ps">${esc(g[0])}</span>${g[2] ? `<span class="bs">원형 ${esc(g[2])}</span>` : ""}</div><div class="mn">${esc(g[1])}</div>` : `<div><span class="wd">${esc(word)}</span></div>`) +
       `<div class="pl">${a ? `<button data-p="1">▶ 이 문장 다시 듣기</button><button class="g" data-p="0">■ 멈춤</button>` : ""}${g ? `<button class="g sv" data-sv="1">☆ 단어장 저장</button>` : ""}</div>`;
     app.appendChild(pop); ebPopFollow(pop);
+    if (g && !g[4]) ebAltShow(pop, word, g);
     var vw = g ? { w: g[4] ? (/^(동사\(|5형식)/.test(g[0]) ? g[3] : (g[2] || g[3])) : (w[6] || g[3]), ps: g[0], mn: g[1], bs: g[2] || "", b: (EB.cur || {}).nm || "", p: (EB.cur || {}).n || 0 } : null;
     var svb = pop.querySelector("[data-sv]");
     function svDraw() { var on = ebVocHas(vw); svb.classList.toggle("on", on); svb.textContent = on ? "★ 저장됨 (단어장)" : "☆ 단어장 저장"; }
