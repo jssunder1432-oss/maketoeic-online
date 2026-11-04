@@ -8,17 +8,22 @@
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
 var FN = T(function () {/*// 교재 전자책 — study/ebook.js
 var EB_BASE = "/study/eb/";
+var EB_PDF = { 1: [["s1_book", "교재1 원본 PDF", "MAKETOEIC_Season1_교재1.pdf", "9MB"], ["s1_ans", "교재1 해설지 PDF", "MAKETOEIC_Season1_해설지.pdf", "6MB"]], 2: [["s2_book", "교재2 원본 PDF", "MAKETOEIC_Season2_교재2.pdf", "29MB"], ["s2_ans", "교재2 해설지 PDF", "MAKETOEIC_Season2_해설지.pdf", "20MB"]], 3: [["s3_book", "통합 교재 원본 PDF", "MAKETOEIC_Season3_통합교재.pdf", "8MB"], ["s3_ans", "통합 교재 해설지 PDF", "MAKETOEIC_Season3_해설지.pdf", "20MB"]] };
+function ebPdfFolder(ser) {
+  var F = EB_PDF[ser] || []; if (!F.length) return "";
+  return `<div class="eb-fd"><b>📁 원본 PDF 받기 <small>Season ${ser}</small></b>${F.map(function (f) { return `<a class="row" href="${EB_BASE}files/${f[0]}.pdf" download="${esc(f[2])}" target="_blank" rel="noopener"><span class="pill" style="background:${/ans/.test(f[0]) ? "#1E8E5A" : "#172844"};color:#fff">${/ans/.test(f[0]) ? "해설" : "교재"}</span><span class="t"><b>${esc(f[1])}</b><small>${f[3]} · 누르면 내려받아요</small></span>⬇</a>`; }).join("")}</div>`;
+}
 var EB_BOOKS = { 1: [{ id: "b1", nm: "교재1", sub: "문제 교재" }], 2: [{ id: "b2", nm: "교재2", sub: "문제 교재" }], 3: [{ id: "b3", nm: "통합 교재", sub: "문제 교재" }] };
 var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1)).then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps2").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1)).then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps2").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -72,6 +77,24 @@ var EB_CSS = `
 .mkst .eb-qr .ex{margin-top:8px;background:#F7F9FC;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14.5px;line-height:1.65;white-space:pre-wrap;color:#172844}
 .mkst .eb-score{margin:8px 0 0;padding:12px;border-radius:12px;background:#FFF4EC;font-weight:900;font-size:16px;color:#C2410C;text-align:center}
 .mkst .eb-tip{font-size:13px;color:#33404F;margin:0 2px 8px}
+.mkst .eb-fd{border:2px solid #172844;border-radius:16px;padding:12px 12px 4px;margin:12px 0 10px;background:#fff}
+.mkst .eb-fd>b{display:block;font-size:16px;color:#172844;margin:2px 4px 10px}.mkst .eb-fd>b small{color:#5B6573;font-size:12.5px;margin-left:4px}
+.mkst .eb-fd a.row{text-decoration:none}
+.mkst .eb-ps{margin-top:10px;padding:14px 16px}
+.mkst .eb-ps h3{margin:0 0 4px;font-size:17px}
+.mkst .eb-pr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);padding:10px 0}
+.mkst .eb-pr .no{flex:1;min-width:130px;font-weight:900;color:#172844;font-size:14.5px}
+.mkst .eb-pr button{border:1.5px solid #172844;background:#fff;color:#172844;border-radius:10px;padding:8px 12px;font-weight:900;font-size:14px}
+.mkst .eb-pr button.an{background:#5B2A86;border-color:#5B2A86;color:#fff}
+.mkst .eb-side{position:fixed;top:0;right:0;bottom:0;z-index:2147482990;width:min(460px,92vw);background:#fff;border-left:2px solid #172844;box-shadow:-10px 0 30px rgba(23,40,68,.22);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.mkst .eb-side .hd{display:flex;align-items:center;gap:6px;padding:12px 12px 10px 16px;border-bottom:1px solid var(--line)}
+.mkst .eb-side .hd b{flex:1;font-size:16px;color:#172844}
+.mkst .eb-side .hd button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;font-weight:800;font-size:13.5px;color:#172844}
+.mkst .eb-side .hd button.on{background:#172844;color:#fff;border-color:#172844}
+.mkst .eb-side .bd{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(20px + env(safe-area-inset-bottom));font-size:15px;line-height:1.75;white-space:pre-wrap;color:#172844}
+.mkst .eb-side .bd .sh{display:block;margin:12px 0 4px;font-weight:900;color:#5B2A86}
+.mkst .eb-side .bd .qh{display:block;margin:14px 0 2px;font-weight:900;color:#C2410C}
+@media (min-width:900px){.mkst.eb-sideon .wrap,.mkst.eb-sideon main{margin-right:470px}}
 `;
 function ebStyle() { if (!document.getElementById("eb-css")) { var s = document.createElement("style"); s.id = "eb-css"; s.textContent = EB_CSS; document.head.appendChild(s); } }
 // 목차 보기: #/eb  (지금 학습실 LC/RC 파트만)
@@ -81,6 +104,7 @@ function ebRoomBox() {
     ebBooks(n).forEach(function (b) {
       rows.push(`<button class="row" data-go="#/eb/all/${n}" style="${n === cur ? "background:linear-gradient(125deg,#5B2A86,#8E4FD1);color:#fff;border:0" : ""}"><span class="pill" style="background:${n === cur ? "#fff" : "#5B2A86"};color:${n === cur ? "#5B2A86" : "#fff"}">S${n}</span><span class="t"><b style="${n === cur ? "color:#fff" : ""}">📖 ${esc(b.nm)}</b><small style="${n === cur ? "color:#fff" : ""}">Season ${n} 교재 · LC · RC 전체${n === cur ? " · 지금 Season" : ""}</small></span>›</button>`);
     });
+    if ((EB_PDF[n] || []).length) rows.push(`<button class="row" data-go="#/eb/all/${n}" style="border:1.5px dashed #172844"><span class="pill" style="background:#172844;color:#fff">PDF</span><span class="t"><b>📁 원본 PDF 받기</b><small>교재 PDF · 해설지 PDF 내려받기 (목차 맨 아래)</small></span>›</button>`);
   });
   if (!rows.length) return "";
   return `<div style="border:2px solid #5B2A86;border-radius:18px;padding:12px 12px 2px;margin:0 0 14px;background:#fff"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:2px 4px 10px"><b style="font-size:17px;color:#172844">📚 교재 전자책</b><small style="color:#33404F;font-size:13px">단어 누르면 품사·뜻 · LC 지문 누르면 원본 음원 · 정답 매기기</small></div>${rows.join("")}</div>`;
@@ -101,7 +125,7 @@ function viewEb(all) {
       (chs.length ? chs.map(function (c) {
         return `<div class="eb-ch"><b>${all ? `<span class="pill ${c.area === "LC" ? "n" : "o"}" style="margin-right:6px">${c.area}</span>` : ""}${esc(c.t)} <small style="color:#5B6573;font-weight:700">${c.p}~${c.e}쪽</small></b><div class="eb-sub">${(c.s && c.s.length ? c.s : [{ t: "처음부터", p: c.p }]).map(function (x) { return `<button data-go="#/eb/${bk.id}/${x.p}">${esc(x.t)}<small>${x.p}쪽</small></button>`; }).join("")}</div></div>`;
       }).join("") : `<div class="empty">이 책에는 ${S.area} 파트가 없어요.</div>`) +
-      `<button class="row" id="eb-pdf" data-ebook="${bk.id}" style="border:2px dashed #5B2A86"><span class="pill" style="background:#5B2A86;color:#fff">PDF</span><span class="t"><b>📄 쪽 골라 PDF로 저장</b><small>당일 수업 필기 쪽 번호를 적으면 그 쪽들만 PDF 파일로 만들어요</small></span>›</button><p class="eb-tip">💡 휴대폰은 가로로 돌리면 더 크게 보여요. 페이지 안에서 두 손가락으로 확대할 수 있어요.</p>`);
+      `<button class="row" id="eb-pdf" data-ebook="${bk.id}" style="border:2px dashed #5B2A86"><span class="pill" style="background:#5B2A86;color:#fff">PDF</span><span class="t"><b>📄 쪽 골라 PDF로 저장</b><small>당일 수업 필기 쪽 번호를 적으면 그 쪽들만 PDF 파일로 만들어요</small></span>›</button>${ebPdfFolder(ser)}<p class="eb-tip">💡 휴대폰은 가로로 돌리면 더 크게 보여요. 페이지 안에서 두 손가락으로 확대할 수 있어요.</p>`);
     bindCommon();
     app.querySelectorAll("[data-ebt]").forEach(function (b) { b.onclick = function () { ls("ebtab", b.dataset.ebt); viewEb(all); }; });
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
@@ -120,20 +144,21 @@ function viewEbPage(id, n) {
       `<div class="eb-bar"><button data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀</button><select id="eb-sel">${opts.map(function (i) { return `<option value="${i}" ${i === n ? "selected" : ""}>${i} / ${m.n}쪽</option>`; }).join("")}</select><button data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>▶</button><button id="eb-zo">－</button><button id="eb-zi">＋</button></div>
       <div id="eb-trk" class="eb-trk" style="display:none"></div>
       <div class="eb-scroll" id="eb-sc"><div class="eb-pg" id="eb-pg" style="width:${z * 100}%"><img id="eb-img" alt="${n}쪽" src="${EB_BASE + id}/i/${n}.webp?v=${m.v || 1}"><div id="eb-ov"></div></div></div>
+      <div id="eb-psbox"></div>
       <div id="eb-qbox"></div>
       <div class="eb-nav"><button class="btn ghost" data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀ 이전 쪽</button><button class="btn navy" data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>다음 쪽 ▶</button></div>
       <div style="display:grid;gap:8px;margin-top:8px"><button class="btn ghost" id="eb-pdf" data-ebook="${id}" data-cur="${n}">📄 쪽 골라 PDF로 저장</button><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">목차로</button></div>
       <audio id="eb-au" preload="none"></audio>`);
     bindCommon();
     if (n < m.n) { var pre = new Image(); pre.src = EB_BASE + id + "/i/" + (n + 1) + ".webp?v=" + (m.v || 1); }
-    function goP(p) { if (p >= 1 && p <= m.n) { ebHide(); go("#/eb/" + id + "/" + p); } }
+    function goP(p) { if (p >= 1 && p <= m.n) { ebHide(); ebSideClose(); go("#/eb/" + id + "/" + p); } }
     app.querySelectorAll("[data-ebn]").forEach(function (b) { b.onclick = function () { goP(+b.dataset.ebn); }; });
     app.querySelector("#eb-sel").onchange = function () { goP(+this.value); };
     var pg = app.querySelector("#eb-pg"), sc = app.querySelector("#eb-sc");
     function zoom(d) { var nz = Math.max(1, Math.min(4, z + d)); if (nz === z) return; var cx = (sc.scrollLeft + sc.clientWidth / 2) / pg.offsetWidth, cy = (sc.scrollTop + sc.clientHeight / 2) / pg.offsetHeight; z = nz; ls("ebz", z); pg.style.width = z * 100 + "%"; sc.scrollLeft = cx * pg.offsetWidth - sc.clientWidth / 2; sc.scrollTop = cy * pg.offsetHeight - sc.clientHeight / 2; }
     app.querySelector("#eb-zo").onclick = function () { zoom(-0.5); };
     app.querySelector("#eb-zi").onclick = function () { zoom(0.5); };
-    ebPage(id, n).then(function (d) { ebDraw(m, d); ebQuiz(id, n, d); });
+    ebPage(id, n).then(function (d) { ebDraw(m, d); ebPs(d); ebQuiz(id, n, d); });
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
 }
 var EBP = { stop: 0, cur: null };
@@ -209,6 +234,26 @@ function ebPlay(m, a, onEnd) {
   au.onended = function () { if (run === EBP.stop && onEnd) onEnd(); };
   if (au.dataset.src !== src) { au.dataset.src = src; au.src = src; au.preload = "auto"; au.onloadedmetadata = function () { if (run === EBP.stop) seekPlay(); }; au.load(); var p = au.play(); if (p && p.catch) p.catch(function () { }); }
   else seekPlay();
+}
+function ebSideClose() { var x = document.querySelector(".mkst .eb-side"); if (x) x.remove(); var r = document.querySelector(".mkst"); if (r) r.classList.remove("eb-sideon"); }
+window.addEventListener("hashchange", function () { if (!/^#\/eb\//.test(location.hash)) ebSideClose(); });
+function ebFmt(t) {
+  return esc(t || "").replace(/^(▶ [^\n]+)$/gm, '<span class="sh">$1</span>').replace(/^(■ [^\n]+)$/gm, '<span class="sh" style="margin-top:0;font-size:16px;color:#172844">$1</span>').replace(/^(\d{3}번 · [^\n]+)$/gm, '<span class="qh">$1</span>').replace(/^(\[지문 \d\])/gm, '<b style="color:#5B2A86">$1</b>').replace(/\n{2,}/g, "\n").replace(/<\/span>\n/g, "</span>").replace(/\n(<span class="(?:sh|qh)")/g, "$1");
+}
+// 지문마다 해석 · 지문 분석 (옆에 펼침)
+function ebPs(d) {
+  var box = app.querySelector("#eb-psbox"), P = d.ps || []; ebSideClose(); if (!box || !P.length) return;
+  box.innerHTML = `<div class="card eb-ps"><h3>📖 지문 해석 · 🔍 지문 분석</h3><p class="eb-tip" style="margin:0 0 4px">버튼을 누르면 옆에 펼쳐져요. 교재를 보면서 같이 읽으세요.</p>` +
+    P.map(function (p, i) { return `<div class="eb-pr"><span class="no">${esc(p.h)}</span>${p.tr ? `<button data-pst="${i}" data-k="tr">📖 해석</button>` : ""}${p.an ? `<button class="an" data-pst="${i}" data-k="an">🔍 지문 분석</button>` : ""}</div>`; }).join("") + `</div>`;
+  function open(i, k) {
+    ebSideClose(); ebHide();
+    var p = P[i], sd = document.createElement("div"); sd.className = "eb-side";
+    sd.innerHTML = `<div class="hd"><b>${esc(p.h)}</b>${p.tr ? `<button data-sk="tr" class="${k === "tr" ? "on" : ""}">해석</button>` : ""}${p.an ? `<button data-sk="an" class="${k === "an" ? "on" : ""}">분석</button>` : ""}<button data-sx="1" aria-label="닫기">✕</button></div><div class="bd">${ebFmt(k === "tr" ? p.tr : p.an)}</div>`;
+    var root = document.querySelector(".mkst") || document.body; root.appendChild(sd); root.classList.add("eb-sideon");
+    sd.querySelector("[data-sx]").onclick = ebSideClose;
+    sd.querySelectorAll("[data-sk]").forEach(function (b) { b.onclick = function () { open(i, b.dataset.sk); }; });
+  }
+  box.querySelectorAll("[data-pst]").forEach(function (b) { b.onclick = function () { open(+b.dataset.pst, b.dataset.k); }; });
 }
 function ebHide() { var p = document.querySelector(".mkst .eb-pop"); if (p) p.remove(); app.querySelectorAll(".eb-w.on,.eb-w.play").forEach(function (x) { x.classList.remove("on"); x.classList.remove("play"); }); }
 function ebDraw(m, d) {
