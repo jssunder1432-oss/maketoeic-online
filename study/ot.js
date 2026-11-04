@@ -7,13 +7,13 @@ function otSecs(o) { return [5, 6, 7].map(function (p) { return { id: o.id + "-p
 function otGet(o) { return Promise.all(otSecs(o).map(function (m) { return load("sec:" + m.id).catch(function () { return null; }); })); }
 function otDone(full) { var n = 0, t = 0; full.forEach(function (s) { if (s) itemsOf(s).forEach(function (x) { t++; if (S.prog[x.key]) n++; }); }); return t && n >= t; }
 function otCard() {
-  return '<button class="row" data-go="#/ot" style="border:2px solid #172844;background:#F3F6FB"><span class="pill n">OT</span><span class="t"><b>📝 OT 오답노트</b><small>수업 첫날 푼 RC 답을 입력하면 채점·약점 분석·오답노트가 나와요</small></span><span style="font-size:18px;color:#172844">›</span></button>';
+  return '<button class="row" data-go="#/ot" style="padding:26px 20px;background:linear-gradient(125deg,#1F6B4F,#2FA374);color:#fff;border:0"><span class="pill" style="background:#fff;color:#1F6B4F;font-size:15px;padding:6px 14px">OT</span><span class="t"><b style="color:#fff;font-size:21px">📝 OT 오답노트</b><small style="color:#fff">수업 첫날 푼 RC 답 입력 · 채점 · 약점 분석 · 오답노트</small></span><span style="font-size:22px;color:#fff">›</span></button>';
 }
 function otInject(html) {
-  // 시즌 선택·학습실 선택 화면(앱 첫 화면)에도 OT 버튼
-  if (!/시즌을 선택하세요|어느 학습실로 들어갈까요/.test(html) || app.querySelector('[data-go="#/ot"]')) return;
-  var h = app.querySelector(".card"); if (!h) return;
-  h.insertAdjacentHTML("afterend", otCard());
+  // 첫 화면(학습실 선택): LC · RC · 당일 수업 녹화 아래에 OT
+  if (!/어느 학습실로 들어갈까요/.test(html) || app.querySelector('[data-go="#/ot"]')) return;
+  var rec = app.querySelector('[data-go="#/rec"]'), rc = app.querySelector('[data-room="RC"]'), at = rec || rc; if (!at) return;
+  at.insertAdjacentHTML("afterend", otCard());
   var b = app.querySelector('[data-go="#/ot"]'); if (b) b.onclick = function () { go("#/ot"); };
 }
 function viewOT(id) {
@@ -85,7 +85,6 @@ function otResult(o, full) {
 }
 function viewARound(n) {
 `],
-["  ${todayCard()}", "  ${otCard()}\n  ${todayCard()}"],
 ["function render(html) { app.innerHTML = html; }", "function render(html) { app.innerHTML = html; otInject(html); }"],
 ['  if (h[0] === "rank") return viewRank(h[1] ? +h[1] : 0);', '  if (h[0] === "ot") return viewOT(h[1] || "");\n  if (h[0] === "rank") return viewRank(h[1] ? +h[1] : 0);']
 ]);
