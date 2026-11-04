@@ -346,11 +346,6 @@ function report(s) {
     var nb = document.createElement("div"); nb.style.marginTop = "14px";
     nb.innerHTML = '<p class="grp">A급 과제 · OT 오답노트</p><div id="r-on" class="note">불러오는 중…</div>';
     m.querySelector(".card").appendChild(nb); onoteList(s, nb.querySelector("#r-on"));
-    var hb = document.createElement("div"); hb.style.marginTop = "14px"; hb.innerHTML = '<p class="grp">📮 A급 과제 제출 기록</p><div class="note">불러오는 중…</div>'; m.querySelector(".card").appendChild(hb);
-    rpc("admin_student_progress", { p_id: s.id, p_prefix: "hw:" }).then(function (p) {
-      var L = Object.keys(p || {}).map(function (k) { var x = k.match(/^hw:(\d)-(\d+):(\d{4})(\d{2})(\d{2})$/); if (!x) return null; var v = +p[k][0] || 0, hm = v % 10000; return { d: x[3] + "-" + x[4] + "-" + x[5], t: x[4] * 1 + "/" + x[5] * 1 + " " + String(Math.floor(hm / 100)).padStart(2, "0") + ":" + String(hm % 100).padStart(2, "0"), r: x[2] + "회 S" + x[1], c: Math.floor(v / 10000) }; }).filter(Boolean).sort(function (a, b) { return b.d.localeCompare(a.d); });
-      hb.querySelector(".note").innerHTML = L.length ? L.map(function (x) { return "<b>" + esc(x.t) + "</b> A급 과제 " + esc(x.r) + " (" + x.c + "문제)"; }).join("<br>") : "아직 제출한 과제가 없어요.";
-    }).catch(function () { hb.querySelector(".note").textContent = "불러오지 못했어요."; });
   }).catch(function (e) { m.querySelector(".card").innerHTML = '<div class="msg err">' + esc(e.message) + '</div><button class="btn ghost" onclick="this.closest(\'.modal\').remove()">닫기</button>'; });
 }
 
@@ -399,9 +394,10 @@ function onoteList(s, box) {
 
 /* ---------- A급 과제 날짜별 제출 현황 (학생이 학습실 A급 과제 회차 화면에서 '과제 제출'을 누른 기록) ---------- */
 var HW = {};
-function viewHw(day) {
+function hwTick() { clearInterval(HW.t); if (HW.live) HW.t = setInterval(function () { if (view !== "hw" || !document.getElementById("hw-live")) { clearInterval(HW.t); return; } viewHw(HW.day, true); }, 20000); }
+function viewHw(day, quiet) {
   day = day || HW.day || today(); HW.day = day;
-  render(head() + '<div class="card">불러오는 중…</div>'); bindHead();
+  if (!quiet) { render(head() + '<div class="card">불러오는 중…</div>'); bindHead(); }
   (students.length ? Promise.resolve(students) : rpc("admin_list_students").then(function (x) { students = x || []; return students; })).then(function (L) {
     var act = L.filter(function (s) { return !s.end_date || String(s.end_date) >= today(-30); });
     return Promise.all(act.map(function (s) { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "hw:" }).then(function (p) { return [s, p || {}]; }).catch(function () { return [s, {}]; }); }));
@@ -413,7 +409,7 @@ function viewHw(day) {
       if (mine.length) sub.push([s, mine]); else not.push(s);
     });
     var strip = []; for (var i = 13; i >= 0; i--) { var d = today(-i); strip.push(d); }
-    render(head() + `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="in" type="date" id="hw-d" value="${esc(day)}" style="max-width:180px"><button class="btn ghost sm" id="hw-p">◀ 전날</button><button class="btn ghost sm" id="hw-n">다음날 ▶</button><button class="btn ghost sm" id="hw-t">오늘</button></div>
+    render(head() + `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="in" type="date" id="hw-d" value="${esc(day)}" style="max-width:180px"><button class="btn ghost sm" id="hw-p">◀ 전날</button><button class="btn ghost sm" id="hw-n">다음날 ▶</button><button class="btn ghost sm" id="hw-t">오늘</button><span style="flex:1"></span><button class="btn ${HW.live ? "" : "ghost"} sm" id="hw-live">${HW.live ? "⏱ 실시간 켜짐 (20초마다)" : "⏱ 실시간 보기"}</button><button class="btn ghost sm" id="hw-r">🔄 새로고침</button></div><p class="note" style="margin:6px 0 0">마지막 확인 ${new Date().toLocaleTimeString("ko-KR")} · 학생이 '과제 제출'을 누르면 ${HW.live ? "20초 안에 자동으로" : "새로고침하면"} 여기에 나와요.</p>
       <div style="display:flex;gap:4px;margin-top:10px;overflow-x:auto">${strip.map(function (d) { var n = days[d.replace(/-/g, "")] || 0; return `<button class="btn ${d === day ? "" : "ghost"} sm" data-hd="${d}" style="min-width:52px;padding:6px 4px;line-height:1.2">${md(d)}<br><b>${n}명</b></button>`; }).join("")}</div></div>
       <div class="card"><p class="sec">✅ 제출 ${sub.length}명 · ${md(day)}</p>${sub.length ? '<table><tr><th>학생</th><th>제출한 과제</th><th>푼 문제</th><th>제출 시각</th></tr>' + sub.map(function (r) { return r[1].map(function (x, k) { return `<tr>${k ? "<td></td>" : `<td><b>${esc(r[0].name)}</b></td>`}<td>A급 과제 ${x.n}회 <span class="tag full">S${x.ser}</span></td><td>${x.cnt}문제</td><td>${x.tm}</td></tr>`; }).join(""); }).join("") + "</table>" : '<p class="note">이 날 제출한 학생이 없어요.</p>'}</div>
       <div class="card"><p class="sec">⬜ 미제출 ${not.length}명</p><p class="note" style="margin:0">${not.map(function (s) { return esc(s.name); }).join(" · ") || "모두 제출했어요 👏"}</p></div>`);
@@ -424,6 +420,9 @@ function viewHw(day) {
     document.getElementById("hw-n").onclick = function () { var d = new Date(day); d.setDate(d.getDate() + 1); goD(ymd(d)); };
     document.getElementById("hw-t").onclick = function () { goD(today()); };
     app.querySelectorAll("[data-hd]").forEach(function (b) { b.onclick = function () { goD(b.dataset.hd); }; });
+    document.getElementById("hw-r").onclick = function () { viewHw(day); };
+    document.getElementById("hw-live").onclick = function () { HW.live = !HW.live; hwTick(); viewHw(day, true); };
+    hwTick();
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message || e) + "</div>"); bindHead(); });
 }
 
