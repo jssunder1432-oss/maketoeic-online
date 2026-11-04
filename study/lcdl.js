@@ -13,6 +13,11 @@ function lcdlRow(g, list) {
     + '<button class="btn" data-lcdl="' + id + '" style="width:100%">⬇ 회차 전체 한 파일 (' + parts.length + '개 단원)</button>'
     + (parts.length > 1 ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' + parts.map(function (s) { return '<button class="btn ghost sm" data-lcdl="' + id + '" data-lcs="' + esc(s.id) + '" style="flex:1 1 45%;padding:9px 6px;font-size:13.5px">⬇ ' + esc(String(s.title || "").replace(/\s*\(.*\)$/, "")) + '</button>'; }).join("") + "</div>" : "") + "</div>";
 }
+function lcdlBtn(g, list) {
+  if (!list.length) return "";
+  var id = "lcdl" + Object.keys(LCDL).length; LCDL[id] = { g: String(g).replace(/^\d+\|/, ""), list: list };
+  return '<button class="btn ghost sm" data-lcdl="' + id + '" style="width:100%;margin:-4px 0 10px;border:1.5px dashed #172844">🎧 ' + esc(LCDL[id].g) + ' 원음 전체 MP3 받기</button>';
+}
 function lcdlStrip(u8) {
   var a = 0, b = u8.length;
   if (u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) { a = 10 + ((u8[6] & 127) << 21 | (u8[7] & 127) << 14 | (u8[8] & 127) << 7 | (u8[9] & 127)); if (u8[5] & 16) a += 10; }

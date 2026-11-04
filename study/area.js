@@ -113,7 +113,7 @@ function viewFullList() {
     (gs.length ? gs.map(function (g) {
       var secs = fullSecs(ser, g), tt = 0, dd = 0; secs.forEach(function (s) { var t = secStats(s); tt += t.total; dd += t.done; });
       var sv = exGet("full:" + ser + ":" + g);
-      return `<button class="row" data-go="#/full/${ser}/${encodeURIComponent(g)}"><span class="pill o">${fullRound(g)}회</span><span class="t"><b>${esc(g)} 전체</b><small>PART 1~4 · ${tt}문항${sv.ans ? " · 풀던 중 (이어서 풀기)" : dd ? " · " + dd + "문항 푼 적 있음" : ""}</small></span>›</button>`;
+      return `<button class="row" data-go="#/full/${ser}/${encodeURIComponent(g)}"><span class="pill o">${fullRound(g)}회</span><span class="t"><b>${esc(g)} 전체</b><small>PART 1~4 · ${tt}문항${sv.ans ? " · 풀던 중 (이어서 풀기)" : dd ? " · " + dd + "문항 푼 적 있음" : ""}</small></span>›</button>` + (typeof lcdlBtn === "function" ? lcdlBtn(g, secs) : "");
     }).join("") : '<div class="empty">이 Series의 실전 모의고사를 준비 중이에요.</div>'));
   bindCommon();
 }
