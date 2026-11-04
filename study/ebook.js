@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps9").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psA").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps9").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psA").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -47,6 +47,12 @@ var EB_CSS = `
 .mkst .eb-pg{container-type:inline-size}
 .mkst .eb-qo{position:absolute;z-index:4;display:flex;gap:4%;transform:translateY(-6%)}
 .mkst .eb-qo button{flex:1;aspect-ratio:1;min-width:0;padding:0;border:1.5px solid #5B2A86;border-radius:50%;background:rgba(255,255,255,.92);color:#5B2A86;font-weight:900;font-size:max(9px,1.15cqw);line-height:1;box-shadow:0 1px 4px rgba(91,42,134,.25)}
+.mkst .eb-qc{position:absolute;z-index:4;transform:translate(-50%,-50%);aspect-ratio:1;padding:0;border:1.5px solid rgba(91,42,134,.55);border-radius:50%;background:rgba(255,255,255,.01);color:transparent;font-weight:900;font-size:max(7px,.9cqw);line-height:1}
+.mkst .eb-qc.on{background:#5B2A86;border-color:#5B2A86;color:#fff}
+.mkst .eb-qc.ok{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
+.mkst .eb-qc.bad{background:#D2453B;border-color:#D2453B;color:#fff}
+.mkst .eb-qo .lb{flex:0 0 auto;align-self:center;font-weight:900;color:#5B2A86;font-size:max(9px,1.1cqw);margin-right:2%;white-space:nowrap}
+.mkst .eb-qo.lbd{background:rgba(247,243,252,.95);border:1px solid #D9C8EE;border-radius:999px;padding:.3% .6%}
 .mkst .eb-qo button.on{background:#5B2A86;color:#fff}
 .mkst .eb-qo button.ok{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
 .mkst .eb-qo button.bad{background:#D2453B;border-color:#D2453B;color:#fff}
@@ -273,6 +279,20 @@ function ebPs(d) {
   }
   box.querySelectorAll("[data-pst]").forEach(function (b) { b.onclick = function () { open(+b.dataset.pst, b.dataset.k); }; });
 }
+function ebPopFollow(pop) {
+  var V = window.visualViewport; if (!V) return;
+  function place() {
+    if (!pop.isConnected) { V.removeEventListener("resize", place); V.removeEventListener("scroll", place); return; }
+    var sc = V.scale || 1;
+    if (sc <= 1.01) { pop.style.cssText = ""; return; }
+    var w = Math.min(560, V.width * sc - 20);
+    pop.style.left = "0"; pop.style.top = "0"; pop.style.bottom = "auto"; pop.style.width = w + "px"; pop.style.transformOrigin = "0 0";
+    var h = pop.offsetHeight;
+    var x = V.offsetLeft + (V.width - w / sc) / 2, y = V.offsetTop + V.height - (h + 12) / sc;
+    pop.style.transform = "translate(" + x + "px," + y + "px) scale(" + 1 / sc + ")";
+  }
+  V.addEventListener("resize", place); V.addEventListener("scroll", place); place();
+}
 function ebHide() { var p = document.querySelector(".mkst .eb-pop"); if (p) p.remove(); document.querySelectorAll(".mkst .eb-ft.on").forEach(function (x) { x.classList.remove("on"); x.textContent = x.textContent.replace(/^■ /, "▶ ").replace(/ 멈춤$/, ""); }); app.querySelectorAll(".eb-w.on,.eb-w.play").forEach(function (x) { x.classList.remove("on"); x.classList.remove("play"); }); }
 function ebDraw(m, d) {
   var ov = app.querySelector("#eb-ov"); if (!ov) return;
@@ -339,7 +359,7 @@ function ebDraw(m, d) {
     pop.innerHTML = `<button class="x" aria-label="닫기">×</button>` +
       (g ? `<div><span class="wd">${esc(g[4] ? g[3] : word)}</span><span class="ps">${esc(g[0])}</span>${g[2] ? `<span class="bs">원형 ${esc(g[2])}</span>` : ""}</div><div class="mn">${esc(g[1])}</div>` : `<div><span class="wd">${esc(word)}</span></div>`) +
       `<div class="pl">${a ? `<button data-p="1">▶ 이 문장 다시 듣기</button><button class="g" data-p="0">■ 멈춤</button>` : ""}${g ? `<button class="g sv" data-sv="1">☆ 단어장 저장</button>` : ""}</div>`;
-    app.appendChild(pop);
+    app.appendChild(pop); ebPopFollow(pop);
     var vw = g ? { w: g[4] ? (g[2] || g[3]) : (w[6] || g[3]), ps: g[0], mn: g[1], bs: g[2] || "", b: (EB.cur || {}).nm || "", p: (EB.cur || {}).n || 0 } : null;
     var svb = pop.querySelector("[data-sv]");
     function svDraw() { var on = ebVocHas(vw); svb.classList.toggle("on", on); svb.textContent = on ? "★ 저장됨 (단어장)" : "☆ 단어장 저장"; }
@@ -449,12 +469,24 @@ function ebQuiz(id, n, d) {
     // 쪽 위 문제 옆 정답 칸 (같은 답과 연결)
     var ov = app.querySelector("#eb-ov"), QP = d.qp || [];
     if (ov) {
-      ov.querySelectorAll(".eb-qo").forEach(function (x) { x.remove(); });
+      ov.querySelectorAll(".eb-qo,.eb-qc").forEach(function (x) { x.remove(); });
       Q.forEach(function (q, i) {
         var P = QP[i]; if (!P) return;
-        var k = q.k || 4, p = st.p[i], g = st.g, el = document.createElement("div"); el.className = "eb-qo";
-        el.style.left = P[0] * 100 + "%"; el.style.top = P[1] * 100 + "%"; el.style.width = Math.min(k * 3.1, (P[2] - P[0] - 0.01) * 100) + "%";
-        el.innerHTML = LT.slice(0, k).split("").map(function (L, j) {
+        var k = q.k || 4, p = st.p[i], g = st.g, el;
+        if (P.c) {
+          P.c.forEach(function (c, j) {
+            var b = document.createElement("button"), cls = g ? (j === q.a ? "ok" : (p === j ? "bad" : "")) : (p === j ? "on" : "");
+            b.className = "eb-qc " + cls; b.textContent = LT[j];
+            b.style.left = c[0] * 100 + "%"; b.style.top = c[1] * 100 + "%"; b.style.width = (P.s || 0.014) * 100 + "%";
+            b.onclick = function (e) { e.stopPropagation(); if (st.g) return; st.p[i] = st.p[i] === j ? null : j; save(); draw(); };
+            ov.appendChild(b);
+          });
+          return;
+        }
+        el = document.createElement("div"); el.className = "eb-qo";
+        el.style.left = P[0] * 100 + "%"; el.style.top = P[1] * 100 + "%"; el.style.width = Math.min(k * 3.1 + (P[3] ? 7 : 0), (P[2] - P[0] - 0.01) * 100) + "%";
+        if (P[3]) el.classList.add("lbd");
+        el.innerHTML = (P[3] ? `<span class="lb">${esc(q.n)}</span>` : "") + LT.slice(0, k).split("").map(function (L, j) {
           var c = g ? (j === q.a ? "ok" : (p === j ? "bad" : "")) : (p === j ? "on" : "");
           return `<button data-oi="${i}" data-oj="${j}" class="${c}">${L}</button>`; }).join("");
         el.onclick = function (e) {
