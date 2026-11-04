@@ -70,25 +70,29 @@ var EB_CSS = `
 `;
 function ebStyle() { if (!document.getElementById("eb-css")) { var s = document.createElement("style"); s.id = "eb-css"; s.textContent = EB_CSS; document.head.appendChild(s); } }
 // 목차 보기: #/eb  (지금 학습실 LC/RC 파트만)
-function viewEb() {
-  ebStyle();
+function ebRoomBox() {
+  var B = ebBooks(curSer()); if (!B.length) return "";
+  return `<button class="row" data-go="#/eb/all" style="padding:26px 20px;background:linear-gradient(125deg,#5B2A86,#8E4FD1);color:#fff;border:0"><span class="pill" style="background:#fff;color:#5B2A86;font-size:15px;padding:6px 14px">교재</span><span class="t"><b style="color:#fff;font-size:21px">📖 ${esc(B[0].nm)} 전자책</b><small style="color:#fff">LC · RC 전체 · 단어 누르면 품사·뜻 · 지문 누르면 원본 음원 · 정답 매기기</small></span>›</button>`;
+}
+function viewEb(all) {
+  ebStyle(); ls("eball", all ? "1" : "0");
   var ser = curSer(), B = ebBooks(ser), lc = S.area === "LC";
   if (!B.length) { render(topbar("교재 전자책") + '<div class="empty">Season ' + ser + ' 교재 전자책은 곧 열려요.</div>'); bindCommon(); return; }
   var cur = ls("ebtab") === "1" && B[1] ? 1 : 0, bk = B[cur];
   render(topbar("교재 전자책") + '<div class="empty">불러오는 중…</div>'); bindCommon();
   ebMeta(bk.id).then(function (m) {
-    var chs = (m.toc || []).filter(function (c) { return c.area === S.area; });
+    var chs = (m.toc || []).filter(function (c) { return all || c.area === S.area; });
     var last = +(ls("ebp:" + bk.id) || 0);
     render(topbar("교재 전자책") +
-      `<div class="card hero"><span class="kicker">SEASON ${ser} · ${lc ? "🎧 LC" : "📖 RC"} 교재</span><h1>📖 ${esc(bk.nm)} 전자책</h1><p>${lc ? "지문·문제를 누르면 그 문장 원본 음원이 나오고, 단어 뜻도 함께 보여요." : "단어를 누르면 그 문장에 맞는 품사와 뜻이 나와요."} 문제를 풀고 쪽 아래 <b>정답 매기기</b>를 누르면 정답과 해설이 나와요.</p></div>` +
+      `<div class="card hero"><span class="kicker">SEASON ${ser} · ${all ? "LC · RC" : lc ? "🎧 LC" : "📖 RC"} 교재</span><h1>📖 ${esc(bk.nm)} 전자책</h1><p>${all ? "LC는 지문·문제를 누르면 원본 음원, RC는 단어를 누르면 품사와 뜻이 나와요." : lc ? "지문·문제를 누르면 그 문장 원본 음원이 나오고, 단어 뜻도 함께 보여요." : "단어를 누르면 그 문장에 맞는 품사와 뜻이 나와요."} 문제를 풀고 쪽 아래 <b>정답 매기기</b>를 누르면 정답과 해설이 나와요.</p></div>` +
       (B.length > 1 ? `<div class="eb-tabs">${B.map(function (b, i) { return `<button data-ebt="${i}" class="${i === cur ? "on" : ""}">${esc(b.nm)}<br><small style="font-weight:600">${esc(b.sub)}</small></button>`; }).join("")}</div>` : "") +
       (last ? `<button class="row" data-go="#/eb/${bk.id}/${last}" style="background:linear-gradient(125deg,#E95721,#FF8A3D);color:#fff;border:0"><span class="pill" style="background:#fff;color:#E95721">이어</span><span class="t"><b style="color:#fff">이어 보기 · ${last}쪽</b><small style="color:#fff">마지막으로 본 쪽</small></span>›</button>` : "") +
       (chs.length ? chs.map(function (c) {
-        return `<div class="eb-ch"><b>${esc(c.t)} <small style="color:#5B6573;font-weight:700">${c.p}~${c.e}쪽</small></b><div class="eb-sub">${(c.s && c.s.length ? c.s : [{ t: "처음부터", p: c.p }]).map(function (x) { return `<button data-go="#/eb/${bk.id}/${x.p}">${esc(x.t)}<small>${x.p}쪽</small></button>`; }).join("")}</div></div>`;
+        return `<div class="eb-ch"><b>${all ? `<span class="pill ${c.area === "LC" ? "n" : "o"}" style="margin-right:6px">${c.area}</span>` : ""}${esc(c.t)} <small style="color:#5B6573;font-weight:700">${c.p}~${c.e}쪽</small></b><div class="eb-sub">${(c.s && c.s.length ? c.s : [{ t: "처음부터", p: c.p }]).map(function (x) { return `<button data-go="#/eb/${bk.id}/${x.p}">${esc(x.t)}<small>${x.p}쪽</small></button>`; }).join("")}</div></div>`;
       }).join("") : `<div class="empty">이 책에는 ${S.area} 파트가 없어요.</div>`) +
       `<p class="eb-tip">💡 휴대폰은 가로로 돌리면 더 크게 보여요. 페이지 안에서 두 손가락으로 확대할 수 있어요.</p>`);
     bindCommon();
-    app.querySelectorAll("[data-ebt]").forEach(function (b) { b.onclick = function () { ls("ebtab", b.dataset.ebt); viewEb(); }; });
+    app.querySelectorAll("[data-ebt]").forEach(function (b) { b.onclick = function () { ls("ebtab", b.dataset.ebt); viewEb(all); }; });
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
 }
 // 페이지 보기: #/eb/<책>/<쪽>
@@ -107,7 +111,7 @@ function viewEbPage(id, n) {
       <div class="eb-scroll" id="eb-sc"><div class="eb-pg" id="eb-pg" style="width:${z * 100}%"><img id="eb-img" alt="${n}쪽" src="${EB_BASE + id}/i/${n}.webp?v=${m.v || 1}"><div id="eb-ov"></div></div></div>
       <div id="eb-qbox"></div>
       <div class="eb-nav"><button class="btn ghost" data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀ 이전 쪽</button><button class="btn navy" data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>다음 쪽 ▶</button></div>
-      <div style="display:grid;gap:8px;margin-top:8px"><button class="btn ghost" data-go="#/eb">목차로</button></div>
+      <div style="display:grid;gap:8px;margin-top:8px"><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">목차로</button></div>
       <audio id="eb-au" preload="none"></audio>`);
     bindCommon();
     if (n < m.n) { var pre = new Image(); pre.src = EB_BASE + id + "/i/" + (n + 1) + ".webp?v=" + (m.v || 1); }
@@ -212,7 +216,9 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["      (reelList().length ? roomRow(\"#/reels\"", "      (ebBooks(ser).length ? roomRow(\"#/eb\", \"교재\", \"📖 교재 전자책 · LC\", ebBooks(ser).map(function (b) { return b.nm; }).join(\" · \") + \" · 지문 누르면 원본 음원 · 단어 뜻\", \"linear-gradient(125deg,#5B2A86,#8E4FD1)\") : \"\") +\n      (reelList().length ? roomRow(\"#/reels\""],
 // 3) RC 학습실 메뉴 박스에 "교재 전자책"
 ["      roomRow(\"#/a\", \"A급\", \"A급 과제\",", "      (ebBooks(ser).length ? roomRow(\"#/eb\", \"교재\", \"📖 교재 전자책 · RC\", ebBooks(ser).map(function (b) { return b.nm; }).join(\" · \") + \" · 단어 누르면 품사 · 뜻\", \"linear-gradient(125deg,#5B2A86,#8E4FD1)\") : \"\") +\n      roomRow(\"#/a\", \"A급\", \"A급 과제\","],
-// 4) 주소 연결
-["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"eb\" && h[1]) return viewEbPage(h[1], +h[2] || 1);\n  if (h[0] === \"eb\") return viewEb();\n"]
+// 4) 학습실 고르는 첫 화면(LC·RC 선택)에 교재 전자책
+["    ${recBox()}", "    ${ebRoomBox()}${recBox()}"],
+// 5) 주소 연결
+["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"eb\" && h[1] === \"all\") return viewEb(true);\n  if (h[0] === \"eb\" && h[1]) return viewEbPage(h[1], +h[2] || 1);\n  if (h[0] === \"eb\") return viewEb();\n"]
 ]);
 })();
