@@ -44,11 +44,11 @@ function onSetLoad(part) {
   });
 }
 function onPractice(part, wrongTypes, back) {
-  render('<div class="empty">틀린 유형 문제를 모으는 중…</div>');
+  render('<div class="empty">유형별 강화 추가문제를 모으는 중…</div>');
   onPick(part, wrongTypes).then(function (pick) {
-    if (!pick) { render(topbar("틀린 유형 50문제") + '<div class="card peach">이 유형의 연습 문제를 준비 중이에요.</div><button class="btn" data-go="' + back + '">돌아가기</button>'); bindCommon(); return; }
+    if (!pick) { render(topbar("유형별 강화 추가문제") + '<div class="card peach">이 유형의 연습 문제를 준비 중이에요.</div><button class="btn" data-go="' + back + '">돌아가기</button>'); bindCommon(); return; }
     ON_LAST[part] = pick;
-    mixQuiz("PART " + part + " 틀린 유형 " + pick.length + "문제", "RC", pick, back);
+    mixQuiz("PART " + part + " 유형별 강화 추가문제 " + pick.length + "문제", "RC", pick, back);
   });
 }
 function onPick(part, wrongTypes) {
@@ -139,7 +139,7 @@ function onSetPdf(parts, wrongBy, title, btn) {
     sets.forEach(function (pick, i) { if (pick && pick.length) out.push({ part: ps[i], list: pick.map(function (x) { return { key: x.key, q: x.q, set: x.set, type: x.q.qtype || (x.sec && x.sec.qtype) || rct[x.key] || onGuess(x.q, x.set, ps[i]) }; }) }); });
     if (!out.length) { alert("추가 문제를 준비 중이에요."); return; }
     var d = new Date();
-    window.MKONOTE.openSet({ name: (S.profile || {}).name || "", title: title + " · 틀린 유형 추가 문제", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: out });
+    window.MKONOTE.openSet({ name: (S.profile || {}).name || "", title: title + " · 유형별 강화 추가문제", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: out });
   }).catch(function () { alert("문제를 불러오지 못했어요. 다시 눌러 주세요."); }).then(function () { btn.disabled = false; btn.textContent = old; });
 }
 function onWrongBy(parts) {
@@ -147,7 +147,7 @@ function onWrongBy(parts) {
 }
 function onPracBtn(p, w) {
   var ks = Object.keys(w || {}); if (!ks.length) return "";
-  return '<button class="btn navy" data-onp="' + p + '" style="text-align:left;line-height:1.35">🎯 PART ' + p + ' 틀린 유형 50문제 더 풀기<br><small style="font-weight:600;opacity:.85">' + ks.map(function (t) { return esc(t.replace(/^PART \d · /, "")) + " " + w[t]; }).join(" · ") + "</small></button>";
+  return '<button class="btn navy" data-onp="' + p + '" style="text-align:left;line-height:1.35">🎯 PART ' + p + ' 유형별 강화 추가문제<br><small style="font-weight:600;opacity:.85">' + ks.map(function (t) { return esc(t.replace(/^PART \d · /, "")) + " " + w[t]; }).join(" · ") + "</small></button>";
 }
 function onBind(box, wrongBy, back, note) {
   if (note && note.parts) note.parts.forEach(function (p) { ON_PL[p.part] = p.list; });
@@ -156,14 +156,14 @@ function onBind(box, wrongBy, back, note) {
 }
 function onLastBtns(parts) {
   return parts.filter(function (p) { return ON_LAST[p] && ON_LAST[p].some(function (x) { return S.prog[x.key]; }); }).map(function (p) {
-    return '<button class="btn ghost" data-onlast="' + p + '">📄 방금 푼 PART ' + p + ' 50문제 오답노트</button>';
+    return '<button class="btn ghost" data-onlast="' + p + '">📄 방금 푼 PART ' + p + ' 유형별 강화 추가문제 오답노트</button>';
   }).join("");
 }
 function onLastBind(box) {
   box.querySelectorAll("[data-onlast]").forEach(function (b) { b.onclick = function () {
     var p = +b.dataset.onlast, rct = ON_RCT || {}, d = new Date();
     var list = ON_LAST[p].filter(function (x) { return S.prog[x.key]; }).map(function (x) { var g = S.prog[x.key]; return { key: x.key, q: x.q, set: x.set, mine: g[0], ok: !!g[1], type: x.q.qtype || rct[x.key] || onGuess(x.q, x.set, p) }; });
-    window.MKONOTE.open({ name: (S.profile || {}).name || "", title: "PART " + p + " 틀린 유형 연습 " + list.length + "문제", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: [{ part: p, title: "틀린 유형 연습", list: list }] });
+    window.MKONOTE.open({ name: (S.profile || {}).name || "", title: "PART " + p + " 유형별 강화 추가문제 " + list.length + "문제", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: [{ part: p, title: "유형별 강화 추가문제", list: list }] });
   }; });
 }
 function onoteRound(secs, ser, n) {
@@ -172,19 +172,19 @@ function onoteRound(secs, ser, n) {
   var fin = secs.filter(function (s) { var t = secStats(s); return t.total && t.done >= t.total; });
   var box = document.createElement("div"); box.className = "card"; box.style.cssText = "margin-top:6px;border:2px solid #172844";
   if (!fin.length) {
-    box.innerHTML = '<b>📄 RC 오답노트 · 🎯 틀린 유형 50문제</b><p style="margin:6px 0 0;font-size:14px;color:#5B6573">PART를 하나 다 풀면 그 PART의 틀린 유형 50문제와 오답노트가 열려요.</p>';
+    box.innerHTML = '<b>📄 RC 오답노트 · 🎯 유형별 강화 추가문제</b><p style="margin:6px 0 0;font-size:14px;color:#5B6573">PART를 하나 다 풀면 그 PART의 유형별 강화 추가문제와 오답노트가 열려요.</p>';
     app.appendChild(box); return;
   }
   var back = location.hash || "#/a"; ON_CTX = "r" + ser + "-" + n; fin.forEach(function (s) { ON_SID[s.part] = s.id; });
   var rest = secs.filter(function (s) { return fin.indexOf(s) < 0; }).map(function (s) { return s.part; });
-  box.innerHTML = '<b style="font-size:16px">📄 오답노트 · 🎯 틀린 유형 50문제</b><p style="margin:4px 0 10px;font-size:14px;color:#5B6573">다 푼 PART ' + fin.map(function (s) { return s.part; }).join("·") + '의 틀린 문제로 만들어요.' + (rest.length ? " (PART " + rest.join("·") + "도 다 풀면 추가돼요)" : "") + '</p>'
-    + '<button class="btn" data-onnote="1" style="width:100%">📄 오답노트 출력 · PDF 저장</button><div class="on-prac" style="display:grid;gap:8px;margin-top:8px"><div class="empty" style="padding:8px">틀린 유형 확인 중…</div></div>';
+  box.innerHTML = '<b style="font-size:16px">📄 오답노트 · 🎯 유형별 강화 추가문제</b><p style="margin:4px 0 10px;font-size:14px;color:#5B6573">다 푼 PART ' + fin.map(function (s) { return s.part; }).join("·") + '의 틀린 문제로 만들어요.' + (rest.length ? " (PART " + rest.join("·") + "도 다 풀면 추가돼요)" : "") + '</p>'
+    + '<button class="btn" data-onnote="1" style="width:100%">📄 오답노트 출력 · PDF 저장</button><div class="on-prac" style="display:grid;gap:8px;margin-top:8px"><div class="empty" style="padding:8px">유형별 강화 추가문제 준비 중…</div></div>';
   app.appendChild(box);
   onTypes().then(function (rct) { return onCollect(fin, rct); }).then(function (parts) {
     var w = onWrongBy(parts), pr = box.querySelector(".on-prac"); if (!pr) return;
     var fp = fin.map(function (s) { return s.part; }), hasW = fp.some(function (p) { return w[p] && Object.keys(w[p]).length; });
     pr.innerHTML = (fin.map(function (s) { return onPracBtn(s.part, w[s.part]); }).join("") || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + onLastBtns(fp)
-      + (hasW ? '<button class="btn ghost" data-onset="1" style="border:2px solid #FF581F;text-align:left;line-height:1.35">📥 이 회차 추가 문제 전체 PDF 받기<br><small style="font-weight:600">PART ' + fp.filter(function (p) { return w[p]; }).join("·") + ' 틀린 유형 문제 + 정답·해설까지 한 파일로</small></button>' : "");
+      + (hasW ? '<button class="btn ghost" data-onset="1" style="border:2px solid #FF581F;text-align:left;line-height:1.35">📥 이 회차 추가 문제 전체 PDF 받기<br><small style="font-weight:600">PART ' + fp.filter(function (p) { return w[p]; }).join("·") + ' 유형별 강화 추가문제 + 정답·해설까지 한 파일로</small></button>' : "");
     onBind(box, w, back, { title: onTitle(ser, n), parts: parts }); onLastBind(box);
     var sb = box.querySelector("[data-onset]"); if (sb) sb.onclick = function () { onSetPdf(fp, w, onTitle(ser, n), sb); };
   });
