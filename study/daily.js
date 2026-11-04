@@ -1,7 +1,7 @@
 /* 매일 과제 (2026-11-05): 첫 화면 폴더 → 오늘의 단어 · PART 2 듣기 · PART 5 · PART 6 · PART 7
    - 날마다 자동으로 바뀐다(처음 연 날 = Day 1). 같은 날에는 같은 문제(기기 안에 저장).
    - 교재(메이크토익_교재_최종) 진도와 페이지를 함께 적는다: PART 2 하루 2챕터 / PART 5 하루 1단원 / PART 7 하루 1쪽
-   - OT 결과로 과정을 나눈다: PART 5가 낮으면 '기초 다지기', 그 밖은 '실전 다지기'(학생 화면엔 기준 점수를 적지 않는다)
+   - OT 결과로 과정을 나눈다: PART 5가 낮으면 '기초 다지기'(OT 안 본 학생 포함), 그 밖은 '실전 다지기'(학생 화면엔 기준 점수를 적지 않는다)
    - OT를 봤으면 OT에서 틀린 유형 위주로 고른다. 문제은행: tp5/tp6/tp7(유형 연습) + v5/v6/v7(A급 과제 변형) */
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["function viewARound(n) {\n", String.raw`
@@ -55,7 +55,7 @@ function dgWeak() {
       var p = S.prog[x.key]; if (!p) return; w.ot = true; if (part === 5) { w.n5++; if (p[1]) w.ok5++; }
       if (!p[1]) { var t = x.q.qtype || onGuess(x.q, x.set, part); if (t) w[part][t] = (w[part][t] || 0) + 1; }
     }); });
-    w.basic = w.ot && w.n5 >= 20 && w.ok5 < DG_CUT;
+    w.basic = !w.ot || w.ok5 < DG_CUT; // OT를 안 본 학생도 기초 다지기
     DG_WEAK = w; return w;
   });
 }
