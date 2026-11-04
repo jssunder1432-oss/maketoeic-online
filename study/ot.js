@@ -9,6 +9,13 @@ function otDone(full) { var n = 0, t = 0; full.forEach(function (s) { if (s) ite
 function otCard() {
   return '<button class="row" data-go="#/ot" style="border:2px solid #172844;background:#F3F6FB"><span class="pill n">OT</span><span class="t"><b>📝 OT 오답노트</b><small>수업 첫날 푼 RC 답을 입력하면 채점·약점 분석·오답노트가 나와요</small></span><span style="font-size:18px;color:#172844">›</span></button>';
 }
+function otInject(html) {
+  // 시즌 선택·학습실 선택 화면(앱 첫 화면)에도 OT 버튼
+  if (!/시즌을 선택하세요|어느 학습실로 들어갈까요/.test(html) || app.querySelector('[data-go="#/ot"]')) return;
+  var h = app.querySelector(".card"); if (!h) return;
+  h.insertAdjacentHTML("afterend", otCard());
+  var b = app.querySelector('[data-go="#/ot"]'); if (b) b.onclick = function () { go("#/ot"); };
+}
 function viewOT(id) {
   var o = OT_LIST.filter(function (x) { return x.id === id; })[0];
   if (!o && OT_LIST.length === 1) o = OT_LIST[0];
@@ -79,5 +86,6 @@ function otResult(o, full) {
 function viewARound(n) {
 `],
 ["  ${todayCard()}", "  ${otCard()}\n  ${todayCard()}"],
+["function render(html) { app.innerHTML = html; }", "function render(html) { app.innerHTML = html; otInject(html); }"],
 ['  if (h[0] === "rank") return viewRank(h[1] ? +h[1] : 0);', '  if (h[0] === "ot") return viewOT(h[1] || "");\n  if (h[0] === "rank") return viewRank(h[1] ? +h[1] : 0);']
 ]);
