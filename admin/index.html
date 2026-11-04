@@ -177,18 +177,12 @@ var SUBM = null, SUBM_ING = false;
 function loadSubm() {
   if (SUBM_ING) return; SUBM_ING = true;
   var L = students.filter(function (s) { return s.days_left >= -31; });
-  Promise.all([ON_CAT ? ON_CAT : rpc("admin_get_content", { p_key: "catalog" })].concat(L.map(function (s) { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }).then(function (p) { return [s.id, p || {}]; }).catch(function () { return [s.id, {}]; }); }))).then(function (x) {
-    ON_CAT = x[0]; var K = {};
-    ((ON_CAT || {}).sections || []).forEach(function (c) { if (c.group === "A급 과제" && c.area !== "LC" && c.part >= 5) (c.keys || []).forEach(function (k) { K[k] = [+(c.series || 3), String(c.round)]; }); });
+  Promise.all(L.map(function (s) { return stuInfo(s).then(function (o) { return [s.id, o]; }); })).then(function (x) {
     var out = {};
-    x.slice(1).forEach(function (r) {
-      var p = r[1], o = { hwD: "", hwN: 0, aN: 0, rd: {} };
-      Object.keys(p).forEach(function (k) {
-        var m = k.match(/^hw:(\d)-(\d+):(\d{4})(\d{2})(\d{2})$/);
-        if (m) { o.hwN++; var d = m[3] + "-" + m[4] + "-" + m[5]; if (d > o.hwD) { o.hwD = d; o.hwSer = +m[1]; o.hwR = m[2]; } return; }
-        if (K[k]) { o.aN++; var id = K[k][0] + "|" + K[k][1]; o.rd[id] = (o.rd[id] || 0) + 1; }
-      });
-      if (!o.hwD && o.aN) { var best = Object.keys(o.rd).sort(function (a, b) { return o.rd[b] - o.rd[a]; })[0].split("|"); o.aSer = +best[0]; o.aR = best[1]; }
+    x.forEach(function (r) {
+      var o = r[1], hd = Object.keys(o.hw).sort().pop() || "", ad = Object.keys(o.act).sort().pop() || "";
+      o.hwD = hd; if (hd) { var h = o.hw[hd][0]; o.hwSer = h.ser; o.hwR = h.n; }
+      o.aD = ad; if (ad) { var k = Object.keys(o.act[ad])[0], e = o.act[ad][k]; o.aOt = e.ot; o.aSer = e.ser; o.aR = e.n; o.aLab = hwLabel(e).replace(/<[^>]+>/g, ""); }
       out[r[0]] = o;
     });
     SUBM = out; SUBM_ING = false; draw();
@@ -211,7 +205,7 @@ function draw() {
     if (fil === "sub" && !(SUBM && SUBM[s.id] && (SUBM[s.id].hwN || SUBM[s.id].aN))) return false;
     return !k || (s.name + s.phone + (s.memo || "")).toLowerCase().indexOf(k) >= 0;
   });
-  if (SUBM) rows.sort(function (a, b) { var x = SUBM[a.id] || {}, y = SUBM[b.id] || {}; return String(y.hwD || "").localeCompare(String(x.hwD || "")) || ((y.aN ? 1 : 0) - (x.aN ? 1 : 0)); });
+  if (SUBM) rows.sort(function (a, b) { var x = SUBM[a.id] || {}, y = SUBM[b.id] || {}; return String(y.last || "").localeCompare(String(x.last || "")) || ((y.aN ? 1 : 0) - (x.aN ? 1 : 0)); });
   var nSub = SUBM ? Object.keys(SUBM).filter(function (k) { return SUBM[k].hwN || SUBM[k].aN; }).length : 0;
   render(head() + `<div class="card"><div class="stat"><div><b>${on.length}</b>이용 중</div><div><b>${soon}</b>7일 내 만료</div><div><b>${idle}</b>이번 주 미학습</div><div><b>${students.length - on.length}</b>만료</div></div></div>
   <div class="card">
@@ -220,7 +214,7 @@ function draw() {
     <div class="chips">${[["on", "이용 중"], ["sub", "📮 제출·오답노트 " + (SUBM ? nSub + "명" : "확인 중…")], ["idle", "이번 주 미학습"], ["onl", "온라인 수강생"], ["lc", "비회원 30일권"], ["end", "만료"], ["all", "전체"]].map(function (c) { return `<button data-f="${c[0]}" class="${fil === c[0] ? "on" : ""}">${c[1]}</button>`; }).join("")}</div>
     ${rows.map(function (s) {
       var rate = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
-      var sb = SUBM && SUBM[s.id], sbH = sb && (sb.hwN || sb.aN) ? `<div class="info" style="margin-top:4px">${sb.hwD ? `<span class="tag full" style="background:#FFE6D6;color:#B33F0B">📮 ${md(sb.hwD)} 과제 제출 (${sb.hwR}회 S${sb.hwSer}) · 총 ${sb.hwN}번</span> ` : ""}${sb.aN ? `<span class="tag full">📄 오답노트 ${sb.aN}문제</span> ` : ""}<button class="btn navy sm" data-subn="${s.id}" style="padding:4px 10px">📄 오답노트 열기</button></div>` : "";
+      var sb = SUBM && SUBM[s.id], sbH = sb && (sb.hwN || sb.aN) ? `<div class="info" style="margin-top:4px">${sb.hwD ? `<span class="tag full" style="background:#FFE6D6;color:#B33F0B">📮 ${md(sb.hwD)} 과제 제출 (${sb.hwR}회 S${sb.hwSer}) · 총 ${sb.hwN}번</span> ` : ""}${sb.aD ? `<span class="tag full">✏️ ${md(sb.aD)} ${esc(sb.aLab)} 풀이</span> ` : ""}${sb.aN ? `<span class="tag full">📄 오답노트 ${sb.aN}문제</span> ` : ""}<button class="btn navy sm" data-subn="${s.id}" style="padding:4px 10px">📄 오답노트 열기</button></div>` : "";
       return `<div class="st"${sbH ? ' style="border-left:4px solid #E95721"' : ""}><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}${sbH}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${memoTxt(s) ? `<div class="info">메모: ${esc(memoTxt(s))}</div>` : ""}</div>${stTag(s)}</div>
         <div class="prog"><span>푼 문제 ${s.solved}</span><span>정답률 ${rate}%</span><span>최근 7일 ${s.week}문제</span><span>마지막 학습 ${ago(s.last_at)}</span><span>마지막 접속 ${ago(s.last_login)}</span></div>
         <div class="acts"><button class="btn navy sm" data-rep="${s.id}">진도 보기</button>${s.days_left < 0 ? `<button class="btn sm" data-renew="${s.id}">재등록</button>` : `<button class="btn sm" data-ext="${s.id}">+1개월</button>`}<button class="btn ghost sm" data-edit="${s.id}">수정</button></div></div>`;
@@ -240,7 +234,7 @@ function draw() {
     };
   });
   app.querySelectorAll("[data-edit]").forEach(function (b) { b.onclick = function () { editForm(find(b.dataset.edit)); }; });
-  app.querySelectorAll("[data-subn]").forEach(function (b) { b.onclick = function () { var st = find(b.dataset.subn), o = SUBM[st.id] || {}; if (o.hwD) HW.day = o.hwD; hwNote(st, o.hwD ? o.hwSer : o.aSer, o.hwD ? o.hwR : o.aR, b); }; });
+  app.querySelectorAll("[data-subn]").forEach(function (b) { b.onclick = function () { var st = find(b.dataset.subn), o = SUBM[st.id] || {}; var useH = o.hwD && o.hwD >= (o.aD || ""); HW.day = useH ? o.hwD : o.aD; hwNote(st, useH ? o.hwSer : o.aSer, useH ? o.hwR : o.aR, b, useH ? "" : o.aOt); }; });
   app.querySelectorAll("[data-renew]").forEach(function (b) { b.onclick = function () { editForm(find(b.dataset.renew), true); }; });
   app.querySelectorAll("[data-rep]").forEach(function (b) { b.onclick = function () { report(find(b.dataset.rep)); }; });
 }
@@ -428,13 +422,39 @@ function onoteList(s, box) {
 }
 
 /* ---------- A급 과제 날짜별 제출 현황 (학생이 학습실 A급 과제 회차 화면에서 '과제 제출'을 누른 기록) ---------- */
+
+/* 학생 한 명의 과제 제출(hw:) + A급 과제·OT RC 풀이(오답노트) 날짜별 정리 */
+function stuInfo(s) {
+  return Promise.all([rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }).catch(function () { return {}; }), rpc("admin_student_report", { p_id: s.id }).catch(function () { return {}; })]).then(function (x) {
+    var p = x[0] || {}, rep = x[1] || {}, o = { hw: {}, act: {}, hwN: 0, aN: 0, last: "" };
+    Object.keys(p).forEach(function (k) {
+      var m = k.match(/^hw:(\d)-(\d+):(\d{4})(\d{2})(\d{2})$/); if (!m) return;
+      var d = m[3] + "-" + m[4] + "-" + m[5], v = +p[k][0] || 0, hm = v % 10000; o.hwN++;
+      (o.hw[d] = o.hw[d] || []).push({ ser: +m[1], n: m[2], cnt: Math.floor(v / 10000), tm: String(Math.floor(hm / 100)).padStart(2, "0") + ":" + String(hm % 100).padStart(2, "0") });
+      if (d > o.last) o.last = d;
+    });
+    (rep.sections || []).forEach(function (c) {
+      var id = String(c.id || c.title || ""), ot = /^ot-\d+/.test(id), a = c.group === "A급 과제" && c.area !== "LC" && +c.part >= 5;
+      if (!(ot || a) || !c.n) return;
+      o.aN += c.n;
+      var d = c.last ? ymd(new Date(c.last)) : ""; if (!d) return;
+      var key = ot ? id.replace(/-p\d+$/, "") : (+(c.season || c.series || 3)) + "-" + ((String(c.title || "").match(/(\d+)\s*회/) || [])[1] || c.round || "");
+      var L = o.act[d] = o.act[d] || {}, e = L[key] = L[key] || { ot: ot ? key : "", ser: ot ? 0 : +key.split("-")[0], n: ot ? "" : key.split("-")[1], cnt: 0, parts: [] };
+      e.cnt += c.n; e.parts.push(c.part || (id.match(/-p(\d)$/) || [])[1]);
+      if (d > o.last) o.last = d;
+    });
+    return o;
+  });
+}
+function hwLabel(e) { return e.ot ? "OT · " + e.ot.replace(/^ot-(\d\d)(\d\d)$/, "$1.$2") + " 정기토익 RC" : "A급 과제 " + e.n + "회 <span class=\"tag full\">S" + e.ser + "</span>"; }
 var HW = {};
-function hwNote(s, ser, n, b) {
+function hwNote(s, ser, n, b, ot) {
   var old = b.textContent; b.disabled = true; b.textContent = "여는 중…";
   Promise.all([ON_CAT ? ON_CAT : rpc("admin_get_content", { p_key: "catalog" }), rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }),
     ON_RCT ? ON_RCT : fetch("/study/rctypes.json?t=" + Date.now()).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; })]).then(function (x) {
     ON_CAT = x[0]; ON_RCT = x[2] || {}; var prog = x[1] || {};
-    var secs = ((ON_CAT || {}).sections || []).filter(function (c) { return c.group === "A급 과제" && c.area !== "LC" && c.part >= 5 && +(c.series || 3) === ser && String(c.round) === String(n) && (c.keys || []).some(function (k) { return prog[k]; }); });
+    var secs = ot ? [5, 6, 7].map(function (p) { return { id: ot + "-p" + p, part: p }; }) : ((ON_CAT || {}).sections || []).filter(function (c) { return c.group === "A급 과제" && c.area !== "LC" && c.part >= 5 && +(c.series || 3) === ser && String(c.round) === String(n) && (c.keys || []).some(function (k) { return prog[k]; }); });
+    if (ot) secs = secs.filter(function (c) { return Object.keys(prog).some(function (k) { return k.indexOf(c.id) === 0; }); });
     if (!secs.length) throw new Error("이 회차에서 푼 RC 문제가 아직 없어요.");
     return Promise.all(secs.sort(function (a, c) { return a.part - c.part; }).map(function (c) { return rpc("admin_get_content", { p_key: "sec:" + c.id }); })).then(function (full) {
       var parts = full.map(function (sec) {
@@ -443,7 +463,7 @@ function hwNote(s, ser, n, b) {
         }) };
       });
       var d = new Date(HW.day || today());
-      MKONOTE.open({ name: s.name, title: "A급 과제 " + n + "회 (Season " + ser + ")", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: parts });
+      MKONOTE.open({ name: s.name, title: ot ? "OT · " + ot.replace(/^ot-(\d\d)(\d\d)$/, "$1.$2") + " 정기토익 RC" : "A급 과제 " + n + "회 (Season " + ser + ")", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: parts });
     });
   }).then(function () { b.disabled = false; b.textContent = old; }).catch(function (e) { b.disabled = false; b.textContent = old; alert(e.message || e); });
 }
@@ -456,18 +476,20 @@ function viewHw(day, quiet) {
     var m0 = day.slice(0, 8) + "01", m1 = (function () { var d = new Date(day.slice(0, 4), +day.slice(5, 7), 0); return ymd(d); })();
     var act = L.filter(function (s) { return (!s.start_date || String(s.start_date) <= m1) && (!s.end_date || String(s.end_date) >= m0); });
     HW.mon = (+day.slice(5, 7)) + "월";
-    return Promise.all(act.map(function (s) { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }).then(function (p) { return [s, p || {}]; }).catch(function () { return [s, {}]; }); }));
+    return Promise.all(act.map(function (s) { return stuInfo(s).then(function (o) { return [s, o]; }); }));
   }).then(function (rows) {
-    var key = day.replace(/-/g, ""), sub = [], not = [], days = {};
+    var sub = [], not = [], days = {};
     rows.forEach(function (r) {
-      var s = r[0], p = r[1], mine = [];
-      Object.keys(p).forEach(function (k) { var m = k.match(/^hw:(\d)-(\d+):(\d{8})$/); if (!m) return; days[m[3]] = (days[m[3]] || 0) + 1; if (m[3] === key) { var v = +p[k][0] || 0, hm = v % 10000; mine.push({ ser: +m[1], n: +m[2], cnt: Math.floor(v / 10000), tm: String(Math.floor(hm / 100)).padStart(2, "0") + ":" + String(hm % 100).padStart(2, "0") }); } });
+      var s = r[0], o = r[1], mine = [];
+      var ds = {}; Object.keys(o.hw).concat(Object.keys(o.act)).forEach(function (d) { ds[d] = 1; }); Object.keys(ds).forEach(function (d) { days[d.replace(/-/g, "")] = (days[d.replace(/-/g, "")] || 0) + 1; });
+      (o.hw[day] || []).forEach(function (x) { mine.push({ kind: "hw", ser: x.ser, n: x.n, cnt: x.cnt, tm: x.tm }); });
+      var A = o.act[day] || {}; Object.keys(A).forEach(function (k) { var e = A[k]; if (!e.ot && mine.some(function (m) { return m.ser === e.ser && String(m.n) === String(e.n); })) return; mine.push({ kind: "act", ot: e.ot, ser: e.ser, n: e.n, cnt: e.cnt, tm: "PART " + e.parts.sort().join("·") }); });
       if (mine.length) sub.push([s, mine]); else not.push(s);
     });
     var strip = []; for (var i = 13; i >= 0; i--) { var d = today(-i); strip.push(d); }
     render(head() + `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="in" type="date" id="hw-d" value="${esc(day)}" style="max-width:180px"><button class="btn ghost sm" id="hw-p">◀ 전날</button><button class="btn ghost sm" id="hw-n">다음날 ▶</button><button class="btn ghost sm" id="hw-t">오늘</button><span style="flex:1"></span><button class="btn ${HW.live ? "" : "ghost"} sm" id="hw-live">${HW.live ? "⏱ 실시간 켜짐 (20초마다)" : "⏱ 실시간 보기"}</button><button class="btn ghost sm" id="hw-r">🔄 새로고침</button></div><p class="note" style="margin:6px 0 0">마지막 확인 ${new Date().toLocaleTimeString("ko-KR")} · 학생이 '과제 제출'을 누르면 ${HW.live ? "20초 안에 자동으로" : "새로고침하면"} 여기에 나와요.</p>
       <div style="display:flex;gap:4px;margin-top:10px;overflow-x:auto">${strip.map(function (d) { var n = days[d.replace(/-/g, "")] || 0; return `<button class="btn ${d === day ? "" : "ghost"} sm" data-hd="${d}" style="min-width:52px;padding:6px 4px;line-height:1.2">${md(d)}<br><b>${n}명</b></button>`; }).join("")}</div></div>
-      <div class="card"><p class="sec">✅ 제출 ${sub.length}명 · ${md(day)} <span class="note" style="font-weight:600">(${HW.mon} 수강생 ${sub.length + not.length}명 중)</span></p>${sub.length ? '<table><tr><th>학생</th><th>제출한 과제</th><th>푼 문제</th><th>제출 시각</th><th></th></tr>' + sub.map(function (r) { return r[1].map(function (x, k) { return `<tr>${k ? "<td></td>" : `<td><b>${esc(r[0].name)}</b></td>`}<td>A급 과제 ${x.n}회 <span class="tag full">S${x.ser}</span></td><td>${x.cnt}문제</td><td>${x.tm}</td><td><button class="btn navy sm" data-hwn="${esc(r[0].id)}|${x.ser}|${x.n}">📄 오답노트</button></td></tr>`; }).join(""); }).join("") + "</table>" : '<p class="note">이 날 제출한 학생이 없어요.</p>'}</div>
+      <div class="card"><p class="sec">✅ 제출·풀이 ${sub.length}명 · ${md(day)} <span class="note" style="font-weight:600">(${HW.mon} 수강생 ${sub.length + not.length}명 중)</span></p>${sub.length ? '<table><tr><th>학생</th><th>과제 · 오답노트</th><th>푼 문제</th><th>제출 시각</th><th></th></tr>' + sub.map(function (r) { return r[1].map(function (x, k) { return `<tr>${k ? "<td></td>" : `<td><b>${esc(r[0].name)}</b></td>`}<td>${x.kind === "hw" ? "📮 " : "✏️ "}${hwLabel(x)}</td><td>${x.cnt}문제</td><td>${x.kind === "hw" ? x.tm : `<span class="note">풀이 · ${esc(x.tm)}</span>`}</td><td><button class="btn navy sm" data-hwn="${esc(r[0].id)}|${x.ser}|${x.n}|${x.ot || ""}">📄 오답노트</button></td></tr>`; }).join(""); }).join("") + "</table>" : '<p class="note">이 날 제출한 학생이 없어요.</p>'}</div>
       <div class="card"><p class="sec">⬜ 미제출 ${not.length}명</p><p class="note" style="margin:0">${not.map(function (s) { return esc(s.name); }).join(" · ") || "모두 제출했어요 👏"}</p></div>`);
     bindHead();
     function goD(d) { viewHw(d); }
@@ -476,10 +498,11 @@ function viewHw(day, quiet) {
     document.getElementById("hw-n").onclick = function () { var d = new Date(day); d.setDate(d.getDate() + 1); goD(ymd(d)); };
     document.getElementById("hw-t").onclick = function () { goD(today()); };
     app.querySelectorAll("[data-hd]").forEach(function (b) { b.onclick = function () { goD(b.dataset.hd); }; });
-    app.querySelectorAll("[data-hwn]").forEach(function (b) { b.onclick = function () { var z = b.dataset.hwn.split("|"), st = students.filter(function (x) { return String(x.id) === z[0]; })[0]; if (st) hwNote(st, +z[1], z[2], b); }; });
+    app.querySelectorAll("[data-hwn]").forEach(function (b) { b.onclick = function () { var z = b.dataset.hwn.split("|"), st = students.filter(function (x) { return String(x.id) === z[0]; })[0]; if (st) hwNote(st, +z[1], z[2], b, z[3]); }; });
     document.getElementById("hw-r").onclick = function () { viewHw(day); };
     document.getElementById("hw-live").onclick = function () { HW.live = !HW.live; hwTick(); viewHw(day, true); };
     hwTick();
+    var hs = app.querySelector("[data-hd]"); if (hs && hs.parentNode) { var on = app.querySelector('[data-hd="' + day + '"]'); hs.parentNode.scrollLeft = on ? on.offsetLeft - 40 : 99999; }
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message || e) + "</div>"); bindHead(); });
 }
 
