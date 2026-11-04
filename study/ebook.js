@@ -101,7 +101,7 @@ function viewEb(all) {
       (chs.length ? chs.map(function (c) {
         return `<div class="eb-ch"><b>${all ? `<span class="pill ${c.area === "LC" ? "n" : "o"}" style="margin-right:6px">${c.area}</span>` : ""}${esc(c.t)} <small style="color:#5B6573;font-weight:700">${c.p}~${c.e}쪽</small></b><div class="eb-sub">${(c.s && c.s.length ? c.s : [{ t: "처음부터", p: c.p }]).map(function (x) { return `<button data-go="#/eb/${bk.id}/${x.p}">${esc(x.t)}<small>${x.p}쪽</small></button>`; }).join("")}</div></div>`;
       }).join("") : `<div class="empty">이 책에는 ${S.area} 파트가 없어요.</div>`) +
-      `<p class="eb-tip">💡 휴대폰은 가로로 돌리면 더 크게 보여요. 페이지 안에서 두 손가락으로 확대할 수 있어요.</p>`);
+      `<button class="row" id="eb-pdf" data-ebook="${bk.id}" style="border:2px dashed #5B2A86"><span class="pill" style="background:#5B2A86;color:#fff">PDF</span><span class="t"><b>📄 쪽 골라 PDF로 저장</b><small>당일 수업 필기 쪽 번호를 적으면 그 쪽들만 PDF 파일로 만들어요</small></span>›</button><p class="eb-tip">💡 휴대폰은 가로로 돌리면 더 크게 보여요. 페이지 안에서 두 손가락으로 확대할 수 있어요.</p>`);
     bindCommon();
     app.querySelectorAll("[data-ebt]").forEach(function (b) { b.onclick = function () { ls("ebtab", b.dataset.ebt); viewEb(all); }; });
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
@@ -122,7 +122,7 @@ function viewEbPage(id, n) {
       <div class="eb-scroll" id="eb-sc"><div class="eb-pg" id="eb-pg" style="width:${z * 100}%"><img id="eb-img" alt="${n}쪽" src="${EB_BASE + id}/i/${n}.webp?v=${m.v || 1}"><div id="eb-ov"></div></div></div>
       <div id="eb-qbox"></div>
       <div class="eb-nav"><button class="btn ghost" data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀ 이전 쪽</button><button class="btn navy" data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>다음 쪽 ▶</button></div>
-      <div style="display:grid;gap:8px;margin-top:8px"><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">목차로</button></div>
+      <div style="display:grid;gap:8px;margin-top:8px"><button class="btn ghost" id="eb-pdf" data-ebook="${id}" data-cur="${n}">📄 쪽 골라 PDF로 저장</button><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">목차로</button></div>
       <audio id="eb-au" preload="none"></audio>`);
     bindCommon();
     if (n < m.n) { var pre = new Image(); pre.src = EB_BASE + id + "/i/" + (n + 1) + ".webp?v=" + (m.v || 1); }
@@ -137,6 +137,67 @@ function viewEbPage(id, n) {
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
 }
 var EBP = { stop: 0, cur: null };
+// 쪽 골라 PDF로 저장 (당일 수업 필기 쪽) — 쪽 그림을 그대로 A4 가로 PDF로
+function ebPages(txt, max) {
+  var out = [];
+  String(txt || "").replace(/[~–—]/g, "-").split(/[,\s/]+/).forEach(function (p) {
+    var m = p.match(/^(\d+)(?:-(\d+))?$/); if (!m) return;
+    var a = +m[1], b = m[2] ? +m[2] : a; if (a > b) { var t = a; a = b; b = t; }
+    for (var i = a; i <= b && out.length < 120; i++) if (i >= 1 && i <= max && out.indexOf(i) < 0) out.push(i);
+  });
+  return out;
+}
+function ebLoadJsPDF() {
+  if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
+  return new Promise(function (res, rej) { var sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"; sc.onload = function () { res(window.jspdf.jsPDF); }; sc.onerror = rej; document.head.appendChild(sc); });
+}
+function ebImgJpeg(url) {
+  return new Promise(function (res, rej) {
+    var im = new Image(); im.crossOrigin = "anonymous";
+    im.onload = function () { var c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0); res({ d: c.toDataURL("image/jpeg", 0.85), w: c.width, h: c.height }); };
+    im.onerror = rej; im.src = url;
+  });
+}
+function ebPdfDialog(id, cur) {
+  ebMeta(id).then(function (m) {
+    var bk = null; Object.keys(EB_BOOKS).forEach(function (k) { EB_BOOKS[k].forEach(function (b) { if (b.id === id) bk = b; }); });
+    var last = ls("ebpdf:" + id) || (cur ? String(cur) : "");
+    var box = document.createElement("div"); box.className = "eb-pop"; box.style.bottom = "auto"; box.style.top = "18%";
+    box.innerHTML = `<button class="x" aria-label="닫기">×</button><div style="font-size:18px;font-weight:900;margin-bottom:6px">📄 쪽 골라 PDF로 저장</div>
+      <p class="eb-tip" style="margin:0 0 8px">${esc(bk ? bk.nm : "")} · 1~${m.n}쪽. 쪽 번호를 적어 주세요.<br>예) <b>32-35, 71, 88</b></p>
+      <input class="in" id="eb-pdfin" inputmode="text" value="${esc(last)}" placeholder="예: 32-35, 71" style="margin:0 0 10px">
+      <div id="eb-pdfmsg" class="eb-tip" style="min-height:20px"></div>
+      <div class="pl"><button id="eb-pdfgo">PDF 만들기</button><button class="g" id="eb-pdfx">닫기</button></div>`;
+    app.appendChild(box);
+    var inp = box.querySelector("#eb-pdfin"), msg = box.querySelector("#eb-pdfmsg");
+    box.querySelector(".x").onclick = box.querySelector("#eb-pdfx").onclick = function () { box.remove(); };
+    box.querySelector("#eb-pdfgo").onclick = function () {
+      var P = ebPages(inp.value, m.n);
+      if (!P.length) { msg.textContent = "쪽 번호를 확인해 주세요. 예) 32-35, 71"; return; }
+      ls("ebpdf:" + id, inp.value);
+      var btn = this; btn.disabled = true; msg.textContent = "PDF 만드는 중… 0 / " + P.length + "쪽";
+      ebLoadJsPDF().then(function (jsPDF) {
+        var doc = null, i = 0;
+        function nx() {
+          if (i >= P.length) {
+            var nm = (bk ? bk.nm : "교재") + "_" + inp.value.replace(/[^0-9,\-]+/g, "").replace(/,/g, "_") + "쪽.pdf";
+            doc.save(nm); msg.textContent = "✓ " + P.length + "쪽 PDF를 저장했어요. (다운로드 폴더 확인)"; btn.disabled = false; return;
+          }
+          var p = P[i++];
+          return ebImgJpeg(EB_BASE + id + "/i/" + p + ".webp?v=" + (m.v || 1)).then(function (im) {
+            var o = im.w >= im.h ? "l" : "p";
+            if (!doc) doc = new jsPDF({ orientation: o, unit: "mm", format: "a4", compress: true }); else doc.addPage("a4", o);
+            var W = o === "l" ? 297 : 210, H = o === "l" ? 210 : 297, r = Math.min(W / im.w, H / im.h), w = im.w * r, h = im.h * r;
+            doc.addImage(im.d, "JPEG", (W - w) / 2, (H - h) / 2, w, h, undefined, "FAST");
+            msg.textContent = "PDF 만드는 중… " + i + " / " + P.length + "쪽"; return nx();
+          });
+        }
+        return nx();
+      }).catch(function () { msg.textContent = "PDF를 만들지 못했어요. 잠시 뒤 다시 눌러 주세요."; btn.disabled = false; });
+    };
+  });
+}
+document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("#eb-pdf"); if (b) ebPdfDialog(b.dataset.ebook, +b.dataset.cur || 0); });
 function ebAudio() { return app.querySelector("#eb-au"); }
 function ebSrc(m, s) { return /^https?:/.test(s) ? s : (m.au || {})[s] || s; }
 function ebPlay(m, a, onEnd) {
