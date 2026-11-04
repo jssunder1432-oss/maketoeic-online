@@ -1,6 +1,6 @@
 /* A급 과제: 한 회차(PART 5·6·7)를 다 풀면 ① 오답노트 출력·PDF 저장 ② PART별 틀린 유형 50문제 풀기 (2026-11-03)
    - 틀린 문제 유형: /study/rctypes.json (문항 키 → 유형 이름), 없으면 보기·질문 모양으로 추정
-   - 50문제: 유형 연습 문제은행(tp5-*, tp6-*, tp7-*)에서 틀린 유형 비율대로 뽑는다 */
+   - 50문제: 틀린 유형 비율대로 — 이 회차 틀린 문제의 변형 → 이 회차 같은 유형 변형 → 다른 회차 같은 유형 변형(v5-*, v6-*, v7-*) → 모자라면 유형 연습 문제은행(tp*) */
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["function viewARound(n) {\n", String.raw`
 var ON_T5 = { "어휘 · 명사": "vocab-n", "어휘 · 동사": "vocab-v", "어휘 · 형용사": "vocab-adj", "어휘 · 부사": "vocab-adv", "품사 자리": "pos", "동사 태": "voice", "동사 시제·수일치": "tense", "준동사": "verbal", "대명사": "pronoun", "전치사 선택": "prep", "전치사 vs 접속사 vs 접속부사": "conj", "관계사 · 명사절": "relative", "비교 · 수량 · 한정사": "compare" };
@@ -32,7 +32,7 @@ function onFill(set, keepNo) {
   return c;
 }
 var ON_CTX = "", ON_SID = {};
-function onSetKey(part) { return "onset:" + (ON_SID[part] || ON_CTX) + ":" + part; }
+function onSetKey(part) { return "onset2:" + (ON_SID[part] || ON_CTX) + ":" + part; }
 function onSetLoad(part) {
   var keys; try { keys = JSON.parse(ls(onSetKey(part)) || "null"); } catch (e) { keys = null; }
   if (!keys || !keys.length) return Promise.resolve(null);
@@ -54,7 +54,46 @@ function onPractice(part, wrongTypes, back) {
 function onPick(part, wrongTypes) {
   return onSetLoad(part).then(function (got) { return got || onPickNew(part, wrongTypes); });
 }
+// 변형 문제: /study/vmap.json (A급 문항 키 → 그 문제를 변형한 문항 키들)
+var ON_VMAP = null, ON_PL = {};
+function onVmap() { if (ON_VMAP) return Promise.resolve(ON_VMAP); return fetch("/study/vmap.json?v=" + (window.BUILD || ""), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (j) { ON_VMAP = j || {}; return ON_VMAP; }); }
 function onPickNew(part, wrongTypes) {
+  var types = Object.keys(wrongTypes); if (!types.length) return Promise.resolve(null);
+  return Promise.all([onVmap(), onTypes()]).then(function (r) {
+    var vm = r[0] || {}, rct = r[1] || {}, list = ON_PL[part] || [];
+    var tot = types.reduce(function (a, t) { return a + wrongTypes[t]; }, 0), want = {};
+    types.forEach(function (t) { want[t] = Math.max(1, Math.round(50 * wrongTypes[t] / tot)); });
+    var inR = {}, cand = {}, used = {}, rank = {};
+    function sr(v) { var id = v.split(":")[0]; if (rank[id] == null) rank[id] = Math.random(); return rank[id]; }
+    function st(v) { var p = S.prog[v]; return !p ? 0 : !p[1] ? 1 : 2; }
+    function push(t, tier, v) { if (used[v]) return; used[v] = 1; (cand[t] = cand[t] || []).push({ v: v, tier: tier, st: st(v), r: Math.random(), s: sr(v) }); }
+    list.forEach(function (x) { inR[x.key] = 1; });
+    // ① 이 회차에서 틀린 문제의 변형 ② 이 회차의 같은 유형 문제 변형 ③ 다른 회차 같은 유형 변형
+    list.forEach(function (x) { if (!x.ok && wrongTypes[x.type]) (vm[x.key] || []).forEach(function (v) { push(x.type, 1, v); }); });
+    list.forEach(function (x) { if (x.ok && wrongTypes[x.type]) (vm[x.key] || []).forEach(function (v) { push(x.type, 2, v); }); });
+    for (var k in vm) if (!inR[k] && wrongTypes[rct[k]] && k.indexOf("-p" + part + ":") > 0) vm[k].forEach(function (v) { push(rct[k], 3, v); });
+    var pick = [], left = 50;
+    types.forEach(function (t) {
+      var c = cand[t] || []; c.sort(function (a, b) { return a.st - b.st || a.tier - b.tier || (a.tier === 3 ? a.s - b.s : 0) || a.r - b.r; }); cand[t] = c;
+    });
+    types.forEach(function (t) { var k = Math.min(want[t], cand[t].length, left); pick = pick.concat(cand[t].splice(0, k)); left -= k; });
+    var i = 0; while (left > 0 && types.some(function (t) { return cand[t].length; })) { var t = types[i++ % types.length]; if (cand[t].length) { pick.push(cand[t].shift()); left--; } }
+    var keys = pick.map(function (c) { return c.v; });
+    var ids = []; keys.forEach(function (k) { var id = k.split(":")[0]; if (ids.indexOf(id) < 0) ids.push(id); });
+    return Promise.all(ids.map(function (id) { return load("sec:" + id).catch(function () { return null; }); })).then(function (secs) {
+      var M = {}; secs.forEach(function (sec) { if (sec) itemsOf(sec).forEach(function (x) { x.sec = sec; if (part === 6 && x.set) x.set = onFill(x.set, x.q.no); M[x.key] = x; }); });
+      var out = keys.map(function (k) { return M[k]; }).filter(Boolean);
+      if (out.length >= 50) return out;
+      return onPickBank(part, wrongTypes).then(function (b) { return out.concat((b || []).slice(0, 50 - out.length)); });
+    });
+  }).then(function (pick) {
+    if (!pick || !pick.length) return null;
+    pick = shuffle(pick);
+    if (ON_CTX) ls(onSetKey(part), JSON.stringify(pick.map(function (x) { return x.key; })));
+    return pick;
+  });
+}
+function onPickBank(part, wrongTypes) {
   var types = Object.keys(wrongTypes); if (!types.length) return Promise.resolve(null);
   var tot = types.reduce(function (a, t) { return a + wrongTypes[t]; }, 0), want = {};
   types.forEach(function (t) { want[t] = Math.max(1, Math.round(50 * wrongTypes[t] / tot)); });
@@ -86,8 +125,6 @@ function onPickNew(part, wrongTypes) {
     });
     have.forEach(function (t) { var k = Math.min(want[t], pool[t].length, left); pick = pick.concat(pool[t].splice(0, k)); left -= k; });
     var i = 0; while (left > 0 && have.some(function (t) { return pool[t].length; })) { var t = have[i++ % have.length]; if (pool[t].length) { pick.push(pool[t].shift()); left--; } }
-    pick = shuffle(pick);
-    if (ON_CTX) ls(onSetKey(part), JSON.stringify(pick.map(function (x) { return x.key; })));
     return pick;
   });
 }
@@ -113,6 +150,7 @@ function onPracBtn(p, w) {
   return '<button class="btn navy" data-onp="' + p + '" style="text-align:left;line-height:1.35">🎯 PART ' + p + ' 틀린 유형 50문제 더 풀기<br><small style="font-weight:600;opacity:.85">' + ks.map(function (t) { return esc(t.replace(/^PART \d · /, "")) + " " + w[t]; }).join(" · ") + "</small></button>";
 }
 function onBind(box, wrongBy, back, note) {
+  if (note && note.parts) note.parts.forEach(function (p) { ON_PL[p.part] = p.list; });
   box.querySelectorAll("[data-onp]").forEach(function (b) { b.onclick = function () { onPractice(+b.dataset.onp, wrongBy[b.dataset.onp], back); }; });
   var nb = box.querySelector("[data-onnote]"); if (nb) nb.onclick = function () { if (!window.MKONOTE) return; var d = new Date(); window.MKONOTE.open({ name: (S.profile || {}).name || "", title: note.title, date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: note.parts }); };
 }
