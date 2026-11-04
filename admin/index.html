@@ -176,6 +176,7 @@ function draw() {
   var idle = on.filter(function (s) { return !s.week; }).length;
   var k = q.toLowerCase();
   var rows = students.filter(function (s) {
+    if (k) return (s.name + s.phone + (s.memo || "")).toLowerCase().indexOf(k) >= 0;
     if (fil === "on" && s.days_left < 0) return false;
     if (fil === "end" && s.days_left >= 0) return false;
     if (fil === "idle" && (s.days_left < 0 || s.week)) return false;
@@ -191,7 +192,7 @@ function draw() {
       var rate = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
       return `<div class="st"><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${s.memo ? `<div class="info">메모: ${esc(s.memo)}</div>` : ""}</div>${stTag(s)}</div>
         <div class="prog"><span>푼 문제 ${s.solved}</span><span>정답률 ${rate}%</span><span>최근 7일 ${s.week}문제</span><span>마지막 학습 ${ago(s.last_at)}</span><span>마지막 접속 ${ago(s.last_login)}</span></div>
-        <div class="acts"><button class="btn navy sm" data-rep="${s.id}">진도 보기</button><button class="btn sm" data-ext="${s.id}">+1개월</button><button class="btn ghost sm" data-edit="${s.id}">수정</button></div></div>`;
+        <div class="acts"><button class="btn navy sm" data-rep="${s.id}">진도 보기</button>${s.days_left < 0 ? `<button class="btn sm" data-renew="${s.id}">재등록</button>` : `<button class="btn sm" data-ext="${s.id}">+1개월</button>`}<button class="btn ghost sm" data-edit="${s.id}">수정</button></div></div>`;
     }).join("") || '<p class="note">해당하는 수강생이 없어요.</p>'}
   </div>`);
   bindHead();
@@ -208,14 +209,29 @@ function draw() {
     };
   });
   app.querySelectorAll("[data-edit]").forEach(function (b) { b.onclick = function () { editForm(find(b.dataset.edit)); }; });
+  app.querySelectorAll("[data-renew]").forEach(function (b) { b.onclick = function () { editForm(find(b.dataset.renew), true); }; });
   app.querySelectorAll("[data-rep]").forEach(function (b) { b.onclick = function () { report(find(b.dataset.rep)); }; });
 }
 
 /* ---------- 등록 / 수정 ---------- */
-function editForm(s) {
+function digits(x) { return String(x || "").replace(/\D/g, ""); }
+function findDup(name, phone, exceptId) {
+  var ph = digits(phone);
+  return students.find(function (x) { return x.id !== exceptId && digits(x.phone) === ph; }) ||
+    students.find(function (x) { return x.id !== exceptId && x.name === name && digits(x.phone).slice(-4) === ph.slice(-4); });
+}
+/* 재등록: 기존 학생 기록은 그대로 두고 기간만 이번 달로 바꾼다 (연속 등록이면 시작일 유지 → Season 누적) */
+function renewCopy(s) {
+  var c = Object.assign({}, s), t = today(), p = t.split("-"), prevFirst = ymd(new Date(+p[0], +p[1] - 2, 1));
+  if (!(s.end_date >= prevFirst)) c.start_date = t;
+  c.end_date = monthEnd(t); c.member = true;
+  return c;
+}
+function editForm(s, renew) {
   var isNew = !s;
+  if (renew) s = renewCopy(s);
   s = s || { name: "", phone: "", level: "기초", start_date: today(), end_date: monthEnd(today()), memo: "", plan: null };
-  var m = modal(`<h2>${isNew ? "수강생 등록" : "수강생 수정"}</h2>
+  var m = modal(`<h2>${isNew ? "수강생 등록" : renew ? "수강생 재등록" : "수강생 수정"}</h2>${renew ? '<div class="msg ok">지난 등록 기록이 있는 학생이에요. 새로 만들지 않고 <b>기간만 이번 달로 바꿔 저장</b>해요 (학습 기록 유지). 연속 등록이면 시작일은 그대로 둬요.</div>' : ""}
     <p class="note" style="margin:0">학생은 <b>이름 + 휴대폰 번호 뒤 4자리</b>로 학습실에 들어가요.</p>
     <label>이름</label><input class="in" id="f-name" value="${esc(s.name)}">
     <label>휴대폰 번호</label><input class="in" id="f-phone" inputmode="numeric" value="${esc(s.phone)}" placeholder="01012345678">
@@ -269,11 +285,28 @@ function editForm(s) {
     var msg = m.querySelector("#f-msg");
     if (!v.p_name || v.p_phone.length < 10) { msg.innerHTML = '<div class="msg err">이름과 휴대폰 번호(10~11자리)를 넣어 주세요.</div>'; return; }
     if (!v.p_start || !v.p_end || v.p_end < v.p_start) { msg.innerHTML = '<div class="msg err">시작일·종료일을 확인해 주세요.</div>'; return; }
-    var dup = students.find(function (x) { return x.id !== s.id && x.name === v.p_name && String(x.phone).slice(-4) === v.p_phone.slice(-4); });
-    if (dup && !confirm("같은 이름 · 같은 번호 뒤 4자리 학생이 이미 있어요 (" + dup.start_date + " ~ " + dup.end_date + ").\n새로 등록하지 말고 그 학생을 '수정'해서 기간을 바꾸는 게 좋아요.\n그래도 저장할까요?")) return;
+    var dup = findDup(v.p_name, v.p_phone, s.id);
+    if (dup) {
+      if (isNew) {
+        if (!confirm(dup.name + " 님은 이미 등록된 학생이에요 (" + dup.start_date + " ~ " + dup.end_date + ").\n새로 만들지 않고 이 학생 정보를 지금 입력한 내용으로 바꿔 저장할게요.\n(학습 기록은 그대로 남아요)")) return;
+        var rc = renewCopy(dup), keepStart = rc.start_date === dup.start_date && v.p_start >= dup.start_date;
+        v.p_id = dup.id; if (keepStart) v.p_start = dup.start_date; s = dup;
+      } else { msg.innerHTML = '<div class="msg err">같은 휴대폰 번호(또는 이름+뒤 4자리) 학생이 이미 있어요: ' + esc(dup.name) + " (" + esc(dup.start_date) + " ~ " + esc(dup.end_date) + ")</div>"; return; }
+    }
     var seas = [].map.call(m.querySelectorAll("#f-seas input:checked"), function (c) { return +c.value; });
     var cats = [].map.call(m.querySelectorAll("#f-cats input:checked"), function (c) { return c.value; });
-    rpc("admin_save_student", v).then(function (id) { id = id || s.id; return rpc("admin_set_seasons", { p_id: id, p_seasons: seas }).then(function () { return rpc("admin_set_cats", { p_id: id, p_cats: cats }); }).then(function () { return rpc("admin_set_member", { p_id: id, p_member: m.querySelector("#f-mem").checked }); }); }).then(function () { m.remove(); refresh(); }).catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
+    function saveSt() {
+      return rpc("admin_save_student", v).catch(function (e) {
+        var t = (e && (e.code + " " + e.message + " " + (e.details || ""))) || "";
+        if (v.p_id || !/23505|duplicate|중복|unique|already/i.test(t)) throw e;
+        return rpc("admin_list_students").then(function (d) {
+          students = d || []; var x = findDup(v.p_name, v.p_phone, null);
+          if (!x) throw e;
+          v.p_id = x.id; s = x; return rpc("admin_save_student", v);
+        });
+      });
+    }
+    saveSt().then(function (id) { id = id || s.id; return rpc("admin_set_seasons", { p_id: id, p_seasons: seas }).then(function () { return rpc("admin_set_cats", { p_id: id, p_cats: cats }); }).then(function () { return rpc("admin_set_member", { p_id: id, p_member: m.querySelector("#f-mem").checked }); }); }).then(function () { m.remove(); refresh(); }).catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
   };
 }
 
