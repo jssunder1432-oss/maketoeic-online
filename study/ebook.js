@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps6").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps7").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps6").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps7").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -44,6 +44,18 @@ var EB_CSS = `
 .mkst .eb-tt #eb-trep.on{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
 .mkst .eb-ft{position:absolute;z-index:3;border:0;border-radius:14px;padding:12px 18px;background:#E95721;color:#fff;font-weight:900;font-size:clamp(13px,2.2vw,17px);box-shadow:0 6px 16px rgba(233,87,33,.3);white-space:nowrap}
 .mkst .eb-ft.on{background:#172844}.mkst .eb-ft.in{position:static;margin:0 6px 6px 0}
+.mkst .eb-pg{container-type:inline-size}
+.mkst .eb-qo{position:absolute;z-index:4;display:flex;gap:4%;transform:translateY(-6%)}
+.mkst .eb-qo button{flex:1;aspect-ratio:1;min-width:0;padding:0;border:1.5px solid #5B2A86;border-radius:50%;background:rgba(255,255,255,.92);color:#5B2A86;font-weight:900;font-size:max(9px,1.15cqw);line-height:1;box-shadow:0 1px 4px rgba(91,42,134,.25)}
+.mkst .eb-qo button.on{background:#5B2A86;color:#fff}
+.mkst .eb-qo button.ok{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
+.mkst .eb-qo button.bad{background:#D2453B;border-color:#D2453B;color:#fff}
+.mkst .eb-pop .sv{margin-left:auto}.mkst .eb-pop .sv.on{background:#FFE9A8 !important;color:#7A5200 !important;border-color:#E8B500 !important}
+.mkst .eb-vt{width:100%;border-collapse:collapse;font-size:14.5px}
+.mkst .eb-vt td{border-top:1px solid var(--line);padding:9px 6px;vertical-align:top;color:#172844}
+.mkst .eb-vt td.w{font-family:Georgia,serif;font-size:17px;font-weight:700;white-space:nowrap}
+.mkst .eb-vt td.s{font-size:12.5px;color:#33404F;white-space:nowrap}
+.mkst .eb-vt button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 8px;font-size:13px;color:#D2453B}
 .mkst .eb-tog{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 6px;border:1.5px solid #172844;background:#fff;border-radius:12px;padding:11px 14px;font-weight:900;font-size:15px;color:#172844;text-align:left}
 .mkst .eb-tog span{font-size:13px;font-weight:700;color:#33404F}.mkst .eb-tog b{margin-left:auto;font-size:14px}
 .mkst .eb-tch{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;padding:2px 0 8px;max-height:46vh;overflow-y:auto}
@@ -129,6 +141,7 @@ function viewEb(all) {
       (chs.length ? chs.map(function (c) {
         return `<div class="eb-ch"><b>${all ? `<span class="pill ${c.area === "LC" ? "n" : "o"}" style="margin-right:6px">${c.area}</span>` : ""}${esc(c.t)} <small style="color:#5B6573;font-weight:700">${c.p}~${c.e}쪽</small></b><div class="eb-sub">${(c.s && c.s.length ? c.s : [{ t: "처음부터", p: c.p }]).map(function (x) { return `<button data-go="#/eb/${bk.id}/${x.p}">${esc(x.t)}<small>${x.p}쪽</small></button>`; }).join("")}</div></div>`;
       }).join("") : `<div class="empty">이 책에는 ${S.area} 파트가 없어요.</div>`) +
+      `<button class="row" data-go="#/eb/voc" style="border:2px solid #E8B500;background:#FFFBEA"><span class="pill" style="background:#E8B500;color:#fff">단어</span><span class="t"><b>⭐ 내 단어장 · ${ebVoc().length}개</b><small>모르는 단어를 눌러 ☆ 저장 → 모아서 PDF로 저장·보내기</small></span>›</button>` +
       `<button class="row" id="eb-pdf" data-ebook="${bk.id}" style="border:2px dashed #5B2A86"><span class="pill" style="background:#5B2A86;color:#fff">PDF</span><span class="t"><b>📄 쪽 골라 PDF로 저장</b><small>당일 수업 필기 쪽 번호를 적으면 그 쪽들만 PDF 파일로 만들어요</small></span>›</button>${ebPdfFolder(ser)}<p class="eb-tip">💡 휴대폰은 가로로 돌리면 더 크게 보여요. 페이지 안에서 두 손가락으로 확대할 수 있어요.</p>`);
     bindCommon();
     app.querySelectorAll("[data-ebt]").forEach(function (b) { b.onclick = function () { ls("ebtab", b.dataset.ebt); viewEb(all); }; });
@@ -151,7 +164,7 @@ function viewEbPage(id, n) {
       <div id="eb-psbox"></div>
       <div id="eb-qbox"></div>
       <div class="eb-nav"><button class="btn ghost" data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀ 이전 쪽</button><button class="btn navy" data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>다음 쪽 ▶</button></div>
-      <div style="display:grid;gap:8px;margin-top:8px"><button class="btn ghost" id="eb-pdf" data-ebook="${id}" data-cur="${n}">📄 쪽 골라 PDF로 저장</button><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">목차로</button></div>
+      <div style="display:grid;gap:8px;margin-top:8px"><button class="btn ghost" data-go="#/eb/voc">⭐ 내 단어장 (${ebVoc().length}개) · PDF로 보내기</button><button class="btn ghost" id="eb-pdf" data-ebook="${id}" data-cur="${n}">📄 쪽 골라 PDF로 저장</button><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">목차로</button></div>
       <audio id="eb-au" preload="none"></audio>`);
     bindCommon();
     if (n < m.n) { var pre = new Image(); pre.src = EB_BASE + id + "/i/" + (n + 1) + ".webp?v=" + (m.v || 1); }
@@ -162,6 +175,7 @@ function viewEbPage(id, n) {
     function zoom(d) { var nz = Math.max(1, Math.min(4, z + d)); if (nz === z) return; var cx = (sc.scrollLeft + sc.clientWidth / 2) / pg.offsetWidth, cy = (sc.scrollTop + sc.clientHeight / 2) / pg.offsetHeight; z = nz; ls("ebz", z); pg.style.width = z * 100 + "%"; sc.scrollLeft = cx * pg.offsetWidth - sc.clientWidth / 2; sc.scrollTop = cy * pg.offsetHeight - sc.clientHeight / 2; }
     app.querySelector("#eb-zo").onclick = function () { zoom(-0.5); };
     app.querySelector("#eb-zi").onclick = function () { zoom(0.5); };
+    EB.cur = { nm: bk.nm, n: n, id: id };
     ebPage(id, n).then(function (d) { ebDraw(m, d); ebPs(d); ebQuiz(id, n, d); });
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
 }
@@ -324,8 +338,12 @@ function ebDraw(m, d) {
     var pop = document.createElement("div"); pop.className = "eb-pop";
     pop.innerHTML = `<button class="x" aria-label="닫기">×</button>` +
       (g ? `<div><span class="wd">${esc(g[4] ? g[3] : word)}</span><span class="ps">${esc(g[0])}</span>${g[2] ? `<span class="bs">원형 ${esc(g[2])}</span>` : ""}</div><div class="mn">${esc(g[1])}</div>` : `<div><span class="wd">${esc(word)}</span></div>`) +
-      (a ? `<div class="pl"><button data-p="1">▶ 이 문장 다시 듣기</button><button class="g" data-p="0">■ 멈춤</button></div>` : "");
+      `<div class="pl">${a ? `<button data-p="1">▶ 이 문장 다시 듣기</button><button class="g" data-p="0">■ 멈춤</button>` : ""}${g ? `<button class="g sv" data-sv="1">☆ 단어장 저장</button>` : ""}</div>`;
     app.appendChild(pop);
+    var vw = g ? { w: g[4] ? g[3] : (w[6] || g[3]), ps: g[0], mn: g[1], bs: g[2] || "", b: (EB.cur || {}).nm || "", p: (EB.cur || {}).n || 0 } : null;
+    var svb = pop.querySelector("[data-sv]");
+    function svDraw() { var on = ebVocHas(vw); svb.classList.toggle("on", on); svb.textContent = on ? "★ 저장됨 (단어장)" : "☆ 단어장 저장"; }
+    if (svb) { svDraw(); svb.onclick = function () { ebVocToggle(vw); svDraw(); }; }
     pop.querySelector(".x").onclick = function () { ebHide(); stopPlay(); EBP.stop++; };
     if (a) {
       ebPlay(m, a);
@@ -333,6 +351,76 @@ function ebDraw(m, d) {
       pop.querySelector('[data-p="0"]').onclick = function () { stopPlay(); EBP.stop++; };
     }
   };
+}
+// 내 단어장 (모든 교재 공통, 이 기기에 저장)
+function ebVoc() { try { return JSON.parse(ls("ebvoc") || "[]") || []; } catch (e) { return []; } }
+function ebVocKey(v) { return (v.w || "").toLowerCase() + "|" + (v.mn || ""); }
+function ebVocHas(v) { if (!v) return false; var k = ebVocKey(v); return ebVoc().some(function (x) { return ebVocKey(x) === k; }); }
+function ebVocToggle(v) {
+  var L = ebVoc(), k = ebVocKey(v), i = -1;
+  L.forEach(function (x, j) { if (ebVocKey(x) === k) i = j; });
+  if (i >= 0) L.splice(i, 1); else { v.t = Date.now(); L.unshift(v); }
+  ls("ebvoc", JSON.stringify(L));
+}
+function viewEbVoc() {
+  ebStyle(); var L = ebVoc();
+  render(topbar("내 단어장") +
+    `<div class="card hero"><span class="kicker">교재 전자책 · 모든 교재</span><h1>⭐ 내 단어장 ${L.length}개</h1><p>교재에서 단어를 누르고 <b>☆ 단어장 저장</b>을 누르면 여기에 모여요. 다 모으면 PDF로 저장하거나 카톡·문자로 보낼 수 있어요.</p></div>` +
+    (L.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px"><button class="btn" id="eb-vsend">📤 PDF 보내기</button><button class="btn ghost" id="eb-vsave">📄 PDF 저장</button></div>
+      <div class="card" style="padding:6px 12px"><table class="eb-vt">${L.map(function (v, i) { return `<tr><td class="w">${esc(v.w)}</td><td><b style="color:#C2410C">${esc(v.ps)}</b> ${esc(v.mn)}${v.bs ? `<br><small style="color:#33404F">원형 ${esc(v.bs)}</small>` : ""}</td><td class="s">${esc(v.b)}<br>${v.p ? v.p + "쪽" : ""}</td><td><button data-vd="${i}">삭제</button></td></tr>`; }).join("")}</table></div>
+      <div style="display:grid;gap:8px;margin-top:10px"><button class="btn ghost" id="eb-vclr">단어장 비우기</button></div>`
+      : `<div class="empty">아직 저장한 단어가 없어요. 교재 쪽에서 모르는 단어를 눌러 보세요.</div>`) +
+    `<div style="display:grid;gap:8px;margin-top:10px"><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">교재 목차로</button></div>`);
+  bindCommon();
+  app.querySelectorAll("[data-vd]").forEach(function (b) { b.onclick = function () { var L2 = ebVoc(); L2.splice(+b.dataset.vd, 1); ls("ebvoc", JSON.stringify(L2)); viewEbVoc(); }; });
+  var c = app.querySelector("#eb-vclr"); if (c) c.onclick = function () { if (confirm("저장한 단어를 모두 지울까요?")) { ls("ebvoc", "[]"); viewEbVoc(); } };
+  var s1 = app.querySelector("#eb-vsave"), s2 = app.querySelector("#eb-vsend");
+  if (s1) s1.onclick = function () { ebVocPdf(false, s1); };
+  if (s2) s2.onclick = function () { ebVocPdf(true, s2); };
+}
+// 단어장 PDF: 글자를 그림(캔버스)으로 그려 A4 쪽마다 넣는다 → 한글 깨짐 없음
+function ebVocPdf(share, btn) {
+  var L = ebVoc(); if (!L.length) return;
+  var old = btn.textContent; btn.disabled = true; btn.textContent = "PDF 만드는 중…";
+  ebLoadJsPDF().then(function (jsPDF) {
+    var W = 1240, H = 1754, M = 80, rows = [], cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    var x = cv.getContext("2d"), F = "'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+    function wrap(t, w, font) { x.font = font; var out = [], cur = ""; String(t).split("").forEach(function (ch) { if (x.measureText(cur + ch).width > w && cur) { out.push(cur); cur = ch.trim() ? ch : ""; } else cur += ch; }); if (cur) out.push(cur); return out.length ? out : [""]; }
+    var C = [M, M + 70, M + 420, W - M - 210], pages = [], y = 0, doc = new jsPDF({ unit: "pt", format: "a4" });
+    function head(first) {
+      x.fillStyle = "#fff"; x.fillRect(0, 0, W, H);
+      x.fillStyle = "#172844"; x.font = "900 40px " + F; x.fillText(first ? "메이크토익 내 단어장" : "메이크토익 내 단어장 (이어서)", M, M + 30);
+      x.font = "600 22px " + F; x.fillStyle = "#33404F"; x.fillText(new Date().toLocaleDateString("ko-KR") + " · 단어 " + L.length + "개", M, M + 66);
+      x.fillStyle = "#172844"; x.fillRect(M, M + 86, W - 2 * M, 44); x.fillStyle = "#fff"; x.font = "800 22px " + F;
+      ["번호", "단어", "품사 · 뜻", "교재 · 쪽"].forEach(function (h, i) { x.fillText(h, C[i] + 8, M + 116); });
+      y = M + 150;
+    }
+    function flush() { pages.push(cv.toDataURL("image/jpeg", 0.9)); }
+    head(true);
+    L.forEach(function (v, i) {
+      var wl = wrap(v.w, 330, "700 28px Georgia,serif"), ml = wrap(v.ps + "  " + v.mn + (v.bs ? "  (원형 " + v.bs + ")" : ""), C[3] - C[2] - 20, "500 24px " + F), sl = wrap((v.b || "") + (v.p ? " " + v.p + "쪽" : ""), 190, "500 20px " + F);
+      var h = Math.max(wl.length * 36, ml.length * 34, sl.length * 28) + 22;
+      if (y + h > H - M) { flush(); head(false); }
+      if (i % 2) { x.fillStyle = "#F4F6FA"; x.fillRect(M, y - 4, W - 2 * M, h); }
+      x.fillStyle = "#33404F"; x.font = "700 22px " + F; x.fillText(String(i + 1), C[0] + 8, y + 28);
+      x.fillStyle = "#172844"; x.font = "700 28px Georgia,serif"; wl.forEach(function (t, k) { x.fillText(t, C[1] + 8, y + 30 + k * 36); });
+      x.font = "500 24px " + F; ml.forEach(function (t, k) { x.fillStyle = "#172844"; x.fillText(t, C[2] + 8, y + 29 + k * 34); });
+      x.fillStyle = "#33404F"; x.font = "500 20px " + F; sl.forEach(function (t, k) { x.fillText(t, C[3] + 8, y + 27 + k * 28); });
+      x.fillStyle = "#D5DCE6"; x.fillRect(M, y + h - 5, W - 2 * M, 1.5);
+      y += h;
+    });
+    flush();
+    pages.forEach(function (d, i) { if (i) doc.addPage(); doc.addImage(d, "JPEG", 0, 0, 595.28, 841.89); });
+    var name = "메이크토익_내단어장_" + new Date().toISOString().slice(0, 10) + ".pdf";
+    var blob = doc.output("blob"), file = null;
+    try { file = new File([blob], name, { type: "application/pdf" }); } catch (e) { }
+    if (share && file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "메이크토익 내 단어장" }).catch(function () { });
+    } else {
+      doc.save(name);
+      if (share) alert("이 기기에서는 바로 보내기가 안 돼서 PDF 파일로 저장했어요. 저장된 파일을 카톡이나 문자로 보내 주세요.");
+    }
+  }).catch(function () { alert("PDF를 만들지 못했어요. 인터넷 연결을 확인해 주세요."); }).then(function () { btn.disabled = false; btn.textContent = old; });
 }
 // 이 쪽 문제 풀기 → 정답 매기기 → 정답·해설
 function ebQuiz(id, n, d) {
@@ -358,6 +446,24 @@ function ebQuiz(id, n, d) {
     box.querySelectorAll("[data-qx]").forEach(function (b) { b.onclick = function () { var x = box.querySelector("#eb-x" + b.dataset.qx); x.style.display = x.style.display === "none" ? "block" : "none"; }; });
     var go2 = box.querySelector("#eb-qgo"); if (go2) go2.onclick = function () { if (done < Q.length && !confirm("아직 안 푼 문제가 " + (Q.length - done) + "개 있어요. 정답을 매길까요?")) return; st.g = 1; save(); draw(); };
     var re = box.querySelector("#eb-qre"); if (re) re.onclick = function () { st = { p: {} }; save(); draw(); };
+    // 쪽 위 문제 옆 정답 칸 (같은 답과 연결)
+    var ov = app.querySelector("#eb-ov"), QP = d.qp || [];
+    if (ov) {
+      ov.querySelectorAll(".eb-qo").forEach(function (x) { x.remove(); });
+      Q.forEach(function (q, i) {
+        var P = QP[i]; if (!P) return;
+        var k = q.k || 4, p = st.p[i], g = st.g, el = document.createElement("div"); el.className = "eb-qo";
+        el.style.left = P[0] * 100 + "%"; el.style.top = P[1] * 100 + "%"; el.style.width = Math.min(k * 3.1, (P[2] - P[0] - 0.01) * 100) + "%";
+        el.innerHTML = LT.slice(0, k).split("").map(function (L, j) {
+          var c = g ? (j === q.a ? "ok" : (p === j ? "bad" : "")) : (p === j ? "on" : "");
+          return `<button data-oi="${i}" data-oj="${j}" class="${c}">${L}</button>`; }).join("");
+        el.onclick = function (e) {
+          e.stopPropagation(); var b = e.target.closest("[data-oi]"); if (!b || st.g) return;
+          var j = +b.dataset.oj; st.p[i] = st.p[i] === j ? null : j; save(); draw();
+        };
+        ov.appendChild(el);
+      });
+    }
   }
   draw();
 }
@@ -369,6 +475,6 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 4) 학습실 고르는 첫 화면(LC·RC 선택)에 교재 전자책
 ["    ${recBox()}", "    ${ebRoomBox()}${recBox()}"],
 // 5) 주소 연결
-["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"eb\" && h[1] === \"all\") { if (h[2] && allowedSeries().indexOf(+h[2]) >= 0) ls(\"ser\", h[2]); return viewEb(true); }\n  if (h[0] === \"eb\" && h[1]) return viewEbPage(h[1], +h[2] || 1);\n  if (h[0] === \"eb\") return viewEb();\n"]
+["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"eb\" && h[1] === \"all\") { if (h[2] && allowedSeries().indexOf(+h[2]) >= 0) ls(\"ser\", h[2]); return viewEb(true); }\n  if (h[0] === \"eb\" && h[1] === \"voc\") return viewEbVoc();\n  if (h[0] === \"eb\" && h[1]) return viewEbPage(h[1], +h[2] || 1);\n  if (h[0] === \"eb\") return viewEb();\n"]
 ]);
 })();
