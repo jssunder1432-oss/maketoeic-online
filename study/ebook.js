@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psA").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psB").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psA").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psB").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -484,7 +484,7 @@ function ebQuiz(id, n, d) {
           return;
         }
         el = document.createElement("div"); el.className = "eb-qo";
-        el.style.left = P[0] * 100 + "%"; el.style.top = P[1] * 100 + "%"; el.style.width = Math.min(k * 3.1 + (P[3] ? 7 : 0), (P[2] - P[0] - 0.01) * 100) + "%";
+        el.style.left = P[0] * 100 + "%"; el.style.top = P[1] * 100 + "%"; el.style.width = Math.min(k * 3.1 + (P[3] ? 7 : 0), (P[2] - P[0] - 0.006) * 100) + "%";
         if (P[3]) el.classList.add("lbd");
         el.innerHTML = (P[3] ? `<span class="lb">${esc(q.n)}</span>` : "") + LT.slice(0, k).split("").map(function (L, j) {
           var c = g ? (j === q.a ? "ok" : (p === j ? "bad" : "")) : (p === j ? "on" : "");
