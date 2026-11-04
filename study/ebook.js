@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psB").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psC").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psB").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psC").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -360,7 +360,7 @@ function ebDraw(m, d) {
       (g ? `<div><span class="wd">${esc(g[4] ? g[3] : word)}</span><span class="ps">${esc(g[0])}</span>${g[2] ? `<span class="bs">원형 ${esc(g[2])}</span>` : ""}</div><div class="mn">${esc(g[1])}</div>` : `<div><span class="wd">${esc(word)}</span></div>`) +
       `<div class="pl">${a ? `<button data-p="1">▶ 이 문장 다시 듣기</button><button class="g" data-p="0">■ 멈춤</button>` : ""}${g ? `<button class="g sv" data-sv="1">☆ 단어장 저장</button>` : ""}</div>`;
     app.appendChild(pop); ebPopFollow(pop);
-    var vw = g ? { w: g[4] ? (g[2] || g[3]) : (w[6] || g[3]), ps: g[0], mn: g[1], bs: g[2] || "", b: (EB.cur || {}).nm || "", p: (EB.cur || {}).n || 0 } : null;
+    var vw = g ? { w: g[4] ? (/^(동사\(|5형식)/.test(g[0]) ? g[3] : (g[2] || g[3])) : (w[6] || g[3]), ps: g[0], mn: g[1], bs: g[2] || "", b: (EB.cur || {}).nm || "", p: (EB.cur || {}).n || 0 } : null;
     var svb = pop.querySelector("[data-sv]");
     function svDraw() { var on = ebVocHas(vw); svb.classList.toggle("on", on); svb.textContent = on ? "★ 저장됨 (단어장)" : "☆ 단어장 저장"; }
     if (svb) { svDraw(); svb.onclick = function () { ebVocToggle(vw); svDraw(); }; }
