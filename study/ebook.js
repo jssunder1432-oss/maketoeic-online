@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psE").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psF").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psE").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psF").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -57,6 +57,8 @@ var EB_CSS = `
 .mkst .eb-qo button.ok{background:#1E8E5A;border-color:#1E8E5A;color:#fff}
 .mkst .eb-qo button.bad{background:#D2453B;border-color:#D2453B;color:#fff}
 .mkst .eb-pop .sv{margin-left:auto}.mkst .eb-pop .sv.on{background:#FFE9A8 !important;color:#7A5200 !important;border-color:#E8B500 !important}
+.mkst .eb-camf{position:fixed;left:14px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147482980;width:62px;height:62px;border-radius:50%;border:2px solid #fff;background:#E95721;color:#fff;font-size:24px;line-height:1;box-shadow:0 8px 22px rgba(233,87,33,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
+.mkst .eb-camf small{font-size:11px;font-weight:900;margin-top:2px}
 .mkst .eb-toast{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translateX(-50%);z-index:2147483001;background:#172844;color:#fff;border-radius:14px;padding:12px 16px;font-weight:800;font-size:14.5px;box-shadow:0 10px 26px rgba(23,40,68,.3);transition:opacity .4s}
 .mkst .eb-toast.out{opacity:0}
 .mkst .eb-flash{position:absolute;inset:0;background:#fff;opacity:.7;pointer-events:none;animation:ebfl .45s ease-out forwards;z-index:9}
@@ -193,6 +195,7 @@ function viewEbPage(id, n) {
     app.querySelector("#eb-zo").onclick = function () { zoom(-0.5); };
     app.querySelector("#eb-zi").onclick = function () { zoom(0.5); };
     app.querySelector("#eb-cap").onclick = function () { ebCapture(bk, n, sc, pg); };
+    ebCamFloat(function () { ebCapture(bk, n, sc, pg); });
     EB.cur = { nm: bk.nm, n: n, id: id };
     ebPage(id, n).then(function (d) { ebDraw(m, d); ebPs(d); ebQuiz(id, n, d); });
   }).catch(function () { render(topbar("교재 전자책") + '<div class="empty">전자책을 불러오지 못했어요. 새로고침해 주세요.</div>'); bindCommon(); });
@@ -290,6 +293,24 @@ function ebPs(d) {
     sd.querySelectorAll("[data-sk]").forEach(function (b) { b.onclick = function () { open(i, b.dataset.sk); }; });
   }
   box.querySelectorAll("[data-pst]").forEach(function (b) { b.onclick = function () { open(+b.dataset.pst, b.dataset.k); }; });
+}
+// 화면을 두 손가락으로 확대해도 📸 버튼이 보이는 화면 왼쪽 아래에 따라옴
+function ebCamFloat(fn) {
+  var old = document.querySelector(".mkst .eb-camf"); if (old) old.remove();
+  var b = document.createElement("button"); b.className = "eb-camf"; b.innerHTML = "📸<small>캡처</small>"; b.onclick = fn;
+  (document.querySelector(".mkst") || document.body).appendChild(b);
+  var V = window.visualViewport;
+  function place() {
+    if (!b.isConnected || !/^#\/eb\/b/.test(location.hash)) { b.remove(); if (V) { V.removeEventListener("resize", place); V.removeEventListener("scroll", place); } return; }
+    var sc = V ? V.scale || 1 : 1;
+    if (sc <= 1.01) { b.style.transform = ""; b.style.left = ""; b.style.top = ""; b.style.bottom = ""; return; }
+    b.style.left = "0"; b.style.top = "0"; b.style.bottom = "auto"; b.style.transformOrigin = "0 0";
+    var x = V.offsetLeft + 14 / sc, y = V.offsetTop + V.height - (b.offsetHeight + 96) / sc;
+    b.style.transform = "translate(" + x + "px," + y + "px) scale(" + 1 / sc + ")";
+  }
+  if (V) { V.addEventListener("resize", place); V.addEventListener("scroll", place); }
+  window.addEventListener("hashchange", function h() { if (!/^#\/eb\/b/.test(location.hash)) { b.remove(); window.removeEventListener("hashchange", h); } });
+  place();
 }
 function ebPopFollow(pop) {
   var V = window.visualViewport; if (!V) return;
