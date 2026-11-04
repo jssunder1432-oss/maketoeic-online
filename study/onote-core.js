@@ -36,15 +36,19 @@
     var ex = String(q.explain || ""), a = q.answer, h = "";
     function seg(k) {
       var re = new RegExp("\\(" + L[k] + "\\)\\s*([^\\n]*?)(?=\\s+/\\s+\\([A-D]\\)|\\n|$)", "g"), m, r = "";
-      while ((m = re.exec(ex))) { var pre = ex.slice(Math.max(0, m.index - 4), m.index); if (/정답\s*$/.test(pre)) continue; r = m[1]; break; }
-      return r.replace(/^[^:：]{0,40}[:：]\s*/, function (x) { return /['"‘’]/.test(x) || x.length < 40 ? x : ""; }).trim();
+      var oi = ex.search(/오답(\s*분석)?\s*[:：\n]/), src = oi >= 0 ? ex.slice(oi) : ex;
+      function scan(t) { re.lastIndex = 0; while ((m = re.exec(t))) { var pre = t.slice(Math.max(0, m.index - 4), m.index); if (/정답\s*$/.test(pre)) continue; return m[1]; } return ""; }
+      var noTr = ex.replace(/^\s*보기 해석[^\n]*$/m, "");
+      r = scan(oi >= 0 ? noTr.slice(Math.max(0, noTr.search(/오답(\s*분석)?\s*[:：\n]/))) : noTr) || scan(noTr);
+      if (!r) { var tm = ex.match(/보기 해석[^\n]*/); var mm = tm && tm[0].match(new RegExp("\\(" + L[k] + "\\)\\s*([^/\\n]+)")); r = (mm ? "'" + mm[1].trim() + "' — " : "") + "지문의 정답 포인트와 맞지 않는 보기예요. 아래 정답 근거를 보세요."; }
+      return r.trim();
     }
     function point() {
       var m = ex.match(/(?:정답 근거|의식의 흐름|정답 포인트)\s*[:：—-]?\s*([^\n]+)/); return m ? m[1].trim() : "";
     }
     var op = q.options || [];
     if (mine == null || mine < 0) h += '<p><b>✕ 답을 고르지 않음</b></p>';
-    else { var r = seg(mine); h += '<p><b>✕ 내가 고른 (' + L[mine] + ') ' + esc(op[mine] || "") + '</b>' + (r ? ' — 틀린 이유: ' + esc(r.indexOf(String(op[mine]).trim()) === 0 ? r.slice(String(op[mine]).trim().length).replace(/^\s*[:：]?\s*/, "") : r) : "") + "</p>"; }
+    else { var r = seg(mine); h += '<p><b>✕ 내가 고른 (' + L[mine] + ') ' + esc(op[mine] || "") + '</b>' + (r ? ' — 틀린 이유: ' + esc(r.indexOf(String(op[mine]).trim()) === 0 ? r.slice(String(op[mine]).trim().length).replace(/^\s*[:：—–-]?\s*/, "") : r) : "") + "</p>"; }
     var pt = point(); h += '<p><b>○ 정답 (' + L[a] + ') ' + esc(op[a] || "") + '</b>' + (pt ? ' — 이유: ' + esc(pt) : "") + "</p>";
     return '<div class="why">' + h + "</div>";
   }
