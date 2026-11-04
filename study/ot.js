@@ -75,7 +75,7 @@ function otResult(o, full) {
         return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #EEF1F5' + (i < 3 ? ";font-weight:800" : "") + '"><span>' + (i < 3 ? "🔥 " : "") + esc(t) + "</span><span>" + types[t] + "개</span></div>";
       }).join("") + "</div></div>" : "") +
       '<div class="card" id="ot-box" style="border:2px solid #172844;display:grid;gap:8px"><button class="btn" data-onnote="1">📄 OT 오답노트 출력 · PDF 저장</button>' +
-      [5, 6, 7].map(function (p) { return onPracBtn(p, w[p]); }).join("") + onLastBtns([5, 6, 7]) + "</div>" +
+      "</div>" +
       '<button class="btn ghost" id="ot-edit">답안 다시 입력하기</button>');
     bindCommon();
     var box = document.getElementById("ot-box");
