@@ -139,6 +139,12 @@ var EB_CSS = `
 `;
 function ebStyle() { if (!document.getElementById("eb-css")) { var s = document.createElement("style"); s.id = "eb-css"; s.textContent = EB_CSS; document.head.appendChild(s); } }
 // 목차 보기: #/eb  (지금 학습실 LC/RC 파트만)
+function ebFreePdf() {
+  // 비회원 30일 수강권: 그 Season 교재·해설지 PDF 무료 제공 (바로 내려받기)
+  if (typeof payPart !== "function" || !payPart()) return "";
+  var n = curSer(), F = EB_PDF[n] || []; if (!F.length) return "";
+  return `<div class="card" style="border:2px solid #1E8E5A;background:#F1FBF5"><b style="font-size:17px">📘 교재 PDF 무료 제공 <small style="font-weight:700;color:#33404F">Season ${n}</small></b><p style="margin:4px 0 10px;font-size:14px;color:#33404F">수강권에 포함된 교재예요. 눌러서 내려받으세요.</p>${F.map(function (f) { return `<a class="row" href="${EB_BASE}files/${f[0]}.pdf" download="${esc(f[2])}" target="_blank" rel="noopener"><span class="pill" style="background:${/ans/.test(f[0]) ? "#1E8E5A" : "#172844"};color:#fff">PDF</span><span class="t"><b>⬇ ${esc(f[1])}</b><small>${esc(f[2])} · ${esc(f[3])}</small></span>›</a>`; }).join("")}</div>`;
+}
 function ebRoomBox() {
   var al = allowedSeries().slice().sort(), cur = curSer(), rows = [];
   [cur].forEach(function (n) {
@@ -1023,7 +1029,7 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 1) 기능 함수 (tblec.js가 같은 앵커를 다시 남겨 두므로 그 뒤에 붙는다)
 ["function lecturesOf(sec) {\n", FN + "\n"],
 // 4) 학습실 고르는 첫 화면(LC·RC 선택)에 교재 전자책
-["    ${recBox()}", "    ${ebRoomBox()}${recBox()}"],
+["    ${recBox()}", "    ${ebFreePdf()}${ebRoomBox()}${recBox()}"],
 // 5) 주소 연결
 ["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"eb\" && h[1] === \"all\") { if (h[2] && allowedSeries().indexOf(+h[2]) >= 0) ls(\"ser\", h[2]); return viewEb(true); }\n  if (h[0] === \"eb\" && h[1] === \"voc\") return viewEbVoc();\n  if (h[0] === \"eb\" && h[1] === \"note\") return viewEbNote();\n  if (h[0] === \"eb\" && h[1]) return viewEbPage(h[1], +h[2] || 1);\n  if (h[0] === \"eb\") return viewEb();\n"]
 ]);
