@@ -49,7 +49,7 @@ var PRICE = 200000, NAME = "온라인 정규반 (1개월)";
 var app = document.getElementById("app"), q = new URLSearchParams(location.search);
 var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : (q.get("p") === "class" ? "pass" : "lc"), LC = KIND !== "pass", CFG = {}, SEA = +q.get("s") || 0;
 // 비회원 30일 수강권 (가격이 정해진 상품만 보여 줌 — 가격은 관리자 페이지에서)
-var PRODS = { lc: { name: "LC 30일 수강권", price: 24900, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의"] },
+var PRODS = { lc: { name: "LC 30일 수강권", price: 30000, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의", "📘 교재 PDF 무료 제공"] },
   rc: { name: "RC 30일 수강권", price: 0, items: ["고른 Season의 RC 문제 (Part 5 문법 · 어휘 · Part 7 독해)", "문제별 해설 · 단어 누르면 뜻 · 품사"] },
   lcrc: { name: "LC+RC 30일 수강권", price: 0, items: ["고른 Season의 LC 실전 모의고사 10회 + 해설강의", "고른 Season의 RC 문제 + 해설 · 단어 뜻"] } };
 var MEM = false, REG = null, BANK = true, BOOK = false;   // 지금은 계좌이체만 (온라인 결제 열면 false)
@@ -79,7 +79,8 @@ var TERMS = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
 var TERMS_LC = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
   '<h3>상품</h3>메이크토익 비회원 학습실 30일 수강권(LC · RC · LC+RC). 결제 승인 즉시 이용 가능하며, 결제일부터 30일간 이용할 수 있습니다. 같은 상품을 이용 기간 안에 다시 결제하면 남은 기간 뒤에 30일이 더해집니다.' +
   '<h3>이용 범위</h3>LC: 결제할 때 고른 Season의 LC 실전 모의고사(회차 전체 풀기 · PART별 풀기 · 스크립트 · 해설강의). RC: 결제할 때 고른 Season의 RC 문제(해설 · 단어 뜻). LC+RC: 두 가지 모두. VOCA · A급 과제는 포함되지 않습니다.' +
-  '<h3>환불</h3>디지털 콘텐츠 특성상 결제 후 이용권이 바로 열리므로 결제 후 환불되지 않습니다(전자상거래법 제17조 제2항 제5호). 결제 오류·중복 결제는 확인 후 전액 환불해 드립니다.' +
+  '<h3>교재</h3>교재 PDF를 무료로 제공합니다(입금 확인 후 발송).' +
+  '<h3>환불</h3>디지털 콘텐츠(이용권 · 교재 PDF) 특성상 <b>입금 후 환불되지 않습니다</b>(전자상거래법 제17조 제2항 제5호). 중복 입금은 확인 후 돌려 드립니다.' +
   '<h3>문의</h3>카카오톡 메이크토익 질문방 또는 010-4845-1432</div>';
 function form(msg) {
   app.innerHTML =
@@ -99,15 +100,15 @@ function form(msg) {
     (LC && !REG ? '<button class="btn" id="reg">등록하고 결제로 넘어가기</button>' :
     (BANK ? '<div class="card" style="border:2px solid #E95721">' + (LC ? '<b style="color:var(--ink)">② 결제</b>' : '<b style="color:var(--ink)">결제</b>') +
       '<div class="msg" style="background:#FFF4EC;color:#101828;font-weight:800;margin-top:8px">🏦 현재는 <b>계좌이체</b>로만 결제할 수 있어요.<br>💳 온라인(카드) 결제는 곧 열려요.</div>' +
-      '<label style="display:flex;gap:10px;align-items:center;margin:10px 0 0;border:1.5px solid #E95721;border-radius:12px;padding:12px 14px;background:#FFF8F3;font-weight:800;color:#101828;cursor:pointer"><input type="checkbox" id="book" style="width:22px;height:22px;accent-color:#E95721"' + (BOOK ? " checked" : "") + '><span>📘 교재 PDF 추가 <b style="color:#E95721">+8,000원</b><small style="display:block;font-weight:600;color:#33404F">메이크토익 교재 PDF 파일 (입금 확인 후 보내 드려요)</small></span></label>' +
-      '<div class="price" style="margin-top:10px"><span>입금할 금액</span><b>' + (PRICE + (BOOK ? 8000 : 0)).toLocaleString() + '원</b></div>' +
+      '<div class="msg" style="background:#E8F7EF;color:#0E7A4F;font-weight:800;margin-top:10px">📘 교재 PDF 무료 제공 — 입금 확인 후 보내 드려요</div>' +
+      '<div class="price" style="margin-top:10px"><span>입금할 금액</span><b>' + PRICE.toLocaleString() + '원</b></div>' +
       '<div style="margin:10px 0;border:1.5px solid #101828;border-radius:12px;padding:12px 14px;background:#fff"><div style="font-size:13px;font-weight:800;color:#33404F">입금 계좌</div><div style="font-size:19px;font-weight:900;color:#101828;margin-top:2px">신한은행 612-06-541251</div><div style="font-size:15px;font-weight:800;color:#101828">예금주 김정수</div><button type="button" class="btn ghost" id="bankcp" style="margin-top:8px;padding:8px">📋 계좌번호 복사</button></div>' +
-      '<p class="note" style="margin:8px 0"><b>' + (PRICE + (BOOK ? 8000 : 0)).toLocaleString() + '원</b>을 <b>등록한 이름(실명)</b>으로 입금한 뒤 아래 버튼을 눌러 알려 주세요. 입금이 확인되면 학습실이 열려요.</p>' +
+      '<p class="note" style="margin:8px 0"><b>' + PRICE.toLocaleString() + '원</b>을 <b>등록한 이름(실명)</b>으로 입금한 뒤 아래 버튼을 눌러 알려 주세요. 입금이 확인되면 학습실이 열려요.</p>' +
       '<button class="btn" id="bank">📩 입금했어요 — 확인 요청 문자 보내기</button>' +
       '<a class="btn ghost" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">💬 카카오톡 메이크토익 질문방으로 문의</a></div>'
     : '<div class="card">' + (LC ? '<b style="color:var(--ink)">② 결제</b>' : '') + '<div id="pm"></div><div id="ag"></div></div>' +
     '<button class="btn" id="go">' + PRICE.toLocaleString() + '원 결제하기</button>')) +
-    '<p class="note bk">※ 교재 PDF는 8,000원 추가 (위에서 선택) · 실물 교재는 택배 착불 · 문의 요망 (<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">메이크토익 질문방</a> · 010-4845-1432)</p><p class="note" style="text-align:center">결제 후 환불되지 않아요. 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
+    '<p class="note bk">※ 교재 PDF 무료 제공 · 실물 교재는 택배 착불 · 문의 요망 (<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">메이크토익 질문방</a> · 010-4845-1432)</p><p class="note" style="text-align:center"><b>교재 PDF 무료 제공 · 입금 후 환불 불가.</b> 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
   var w, pmw;
   if (LC && !REG) { bindReg(); bindPick(); return; }
   if (BANK) { bindPick(); bindBank(); return; }
@@ -153,15 +154,14 @@ function form(msg) {
 function bindBank() {
   var rr = document.getElementById("rereg"); if (rr) rr.onclick = function () { var r = REG; REG = null; try { sessionStorage.removeItem("mkreg"); } catch (e) { } form(); document.getElementById("nm").value = r.name; document.getElementById("ph").value = r.phone; };
   var cp = document.getElementById("bankcp"); if (cp) cp.onclick = function () { var t = "신한은행 61206541251"; function ok() { cp.textContent = "✔ 복사했어요 (신한 612-06-541251)"; } if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, function () { prompt("계좌번호", t); }); else prompt("계좌번호", t); };
-  var bk = document.getElementById("book"); if (bk) bk.onchange = function () { BOOK = bk.checked; keep(function () { form(); }); };
   var b = document.getElementById("bank"); if (!b) return;
   b.onclick = function () {
     var nm = LC && REG ? REG.name : v("nm").trim(), ph = LC && REG ? REG.phone : v("ph").replace(/\D/g, "");
     if (!nm) return form('<div class="msg err">이름을 적어 주세요.</div>');
     if (!realName(nm)) return form('<div class="msg err">' + NAME_ERR + '</div>');
     if (!/^01\d{8,9}$/.test(ph)) return form('<div class="msg err">휴대폰 번호를 정확히 적어 주세요.</div>');
-    var prod = (LC ? PRODS[KIND].name + (SEA ? " (Season " + SEA + ")" : "") : NAME) + (BOOK ? " + 교재 PDF(8,000원)" : "");
-    var body = "[메이크토익 계좌이체 입금 확인 요청]\n이름: " + nm + "\n번호: " + ph.replace(/^(\d{3})(\d+)(\d{4})$/, "$1-$2-$3") + "\n상품: " + prod + "\n금액: " + (PRICE + (BOOK ? 8000 : 0)).toLocaleString() + "원\n신한은행 612-06-541251(김정수)로 입금했어요.";
+    var prod = (LC ? PRODS[KIND].name + (SEA ? " (Season " + SEA + ")" : "") : NAME) + " (교재 PDF 무료 포함)";
+    var body = "[메이크토익 계좌이체 입금 확인 요청]\n이름: " + nm + "\n번호: " + ph.replace(/^(\d{3})(\d+)(\d{4})$/, "$1-$2-$3") + "\n상품: " + prod + "\n금액: " + PRICE.toLocaleString() + "원\n신한은행 612-06-541251(김정수)로 입금했어요.";
     location.href = "sms:01048451432" + (/iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?") + "body=" + encodeURIComponent(body);
     var m = document.createElement("div"); m.className = "msg ok"; m.innerHTML = "문자 앱이 열리면 그대로 <b>보내기</b>를 눌러 주세요. 입금이 확인되면 학습실을 열어 드려요.<br>문자 앱이 안 열리면 010-4845-1432로 이름·상품을 보내 주세요.";
     b.parentNode.insertBefore(m, b.nextSibling);
@@ -211,6 +211,7 @@ function start() {
 rpc("pay_cfg", {}).then(function (c) {
   if (!c || !c.ck) return; CFG = c; CLIENT_KEY = c.ck;
   ["lc", "rc", "lcrc"].forEach(function (k) { PRODS[k].price = c[k + "_price"] || (k === "lc" ? 24900 : 0); PRODS[k].priceM = c[k + "_price_m"] || 0; });
+  if (BANK) { PRODS.lc.price = 30000; if (PRODS.lc.priceM > 30000) PRODS.lc.priceM = 0; }   // 계좌이체 기간: LC 30일 수강권 30,000원 (교재 PDF 무료)
   if (!LC) { PRICE = c.price || PRICE; }
 }).catch(function () { }).then(function () {
   if (LC) { if (!(PRODS[KIND].price > 0)) KIND = "lc"; PRICE = PRODS[KIND].price; NAME = PRODS[KIND].name; if (!(SEA >= 1 && SEA <= 3)) SEA = CFG.cur || 2; }

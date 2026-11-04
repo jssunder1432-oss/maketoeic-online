@@ -41,7 +41,7 @@
       '<a class="bt nv" href="https://maketoeic.kr/study/">학습실 입장</a></div></div>' +
       '<div class="c"><div class="mkonl-hd"><small>학원생이 아니어도</small><strong>비회원 30일 수강권</strong></div><div class="bd">' +
       "<p>원하는 Season의 LC 실전 모의고사 10회 · 해설강의로 30일 훈련해요. 결제하면 바로 열려요.</p>" +
-      '<div class="pr"><b data-mkp="lc">24,900원</b> / 30일<br><span data-mkp="lcm">메이크토익 수강생 15,000원</span></div>' +
+      '<div class="pr"><b data-mkp="lc">30,000원</b> / 30일 · 교재 PDF 무료<br><span data-mkp="lcm">메이크토익 수강생 15,000원</span></div>' +
       '<a class="bt" href="https://maketoeic.kr/lc/">30일권 보기</a></div></div>' +
       '<div class="c"><div class="mkonl-hd"><small>강의로 듣기</small><strong>A급RC 기본 Season 강의</strong></div><div class="bd">' +
       "<p>해당 월 수업 당일 녹화 영상 + 과제 해설 · 30일 수강 · 교재 별매</p>" +
@@ -55,7 +55,7 @@
       .then(function (r) { return r.json(); }).then(function (c) {
         if (!c) return;
         function w(n) { return (+n).toLocaleString() + "원"; }
-        if (c.lc_price) box.querySelectorAll('[data-mkp="lc"]').forEach(function (e) { e.textContent = w(c.lc_price); });
+        c.lc_price = 30000; if (c.lc_price) box.querySelectorAll('[data-mkp="lc"]').forEach(function (e) { e.textContent = w(c.lc_price); });
         if (c.lc_price_m) {
           box.querySelectorAll('[data-mkp="lcm"]').forEach(function (e) { e.textContent = "메이크토익 수강생 " + w(c.lc_price_m); });
           box.querySelectorAll('[data-mkp="m"]').forEach(function (e) { e.textContent = "수업 끝난 뒤 수강생가 " + w(c.lc_price_m) + "부터"; });

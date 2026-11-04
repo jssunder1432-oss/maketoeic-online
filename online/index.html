@@ -96,7 +96,7 @@ footer{padding:22px 16px 40px;max-width:960px;margin:0 auto;font-size:12.5px;lin
       <h3>비회원 30일 수강권</h3>
       <p>청주에 오기 어렵거나 혼자 공부하는 분. 원하는 Season의 문제로 30일 훈련해요.</p>
       <ul><li>LC 실전 모의고사 10회 (원본 음성 · 스크립트 · 해설강의)</li><li data-rc hidden>RC 문제 · LC+RC 함께도 선택</li><li>결제하면 바로 학습실이 열림</li></ul>
-      <div class="pr"><b data-p="lc">24,900원</b> / 30일<br><span data-p="lcm">메이크토익 수강생 15,000원</span></div>
+      <div class="pr"><b data-p="lc">30,000원</b> / 30일 · 교재 PDF 무료<br><span data-p="lcm">메이크토익 수강생 15,000원</span></div>
       <a class="btn or" href="/lc/">자세히 보고 결제하기</a>
     </div>
     <div class="card">
@@ -126,7 +126,7 @@ footer{padding:22px 16px 40px;max-width:960px;margin:0 auto;font-size:12.5px;lin
   <div class="tw"><table>
     <tr><th></th><th>수강생 학습실</th><th>비회원 30일권</th><th>A급RC Season 강의</th></tr>
     <tr><td><b>대상</b></td><td>현장 수강생</td><td>누구나</td><td>누구나</td></tr>
-    <tr><td><b>가격</b></td><td>수업 달 무료</td><td><span data-p="lc">24,900원</span> (수강생 <span data-p="lcm2">15,000원</span>)</td><td>150,000원</td></tr>
+    <tr><td><b>가격</b></td><td>수업 달 무료</td><td><span data-p="lc">30,000원</span> (수강생 <span data-p="lcm2">15,000원</span>)</td><td>150,000원</td></tr>
     <tr><td><b>기간</b></td><td>수강 기간</td><td>결제일부터 30일</td><td>30일</td></tr>
     <tr><td><b>LC 실전 모의고사</b></td><td>✔</td><td>✔ (고른 Season)</td><td>—</td></tr>
     <tr><td><b>RC 문제 · 해설</b></td><td>✔</td><td>RC · LC+RC 선택 시</td><td>—</td></tr>
@@ -165,7 +165,7 @@ footer{padding:22px 16px 40px;max-width:960px;margin:0 auto;font-size:12.5px;lin
 <script>
 fetch("https://hrlldteviatcatxyzrrz.supabase.co/rest/v1/rpc/pay_cfg",{method:"POST",headers:{apikey:"sb_publishable_YT1A99HvH7VoMz76xq7Tvg__Imr0_qy","Content-Type":"application/json"},body:"{}"}).then(function(r){return r.json()}).then(function(c){
   if(!c)return; function w(n){return (+n).toLocaleString()+"원"}
-  if(c.lc_price)document.querySelectorAll('[data-p="lc"]').forEach(function(e){e.textContent=w(c.lc_price)});
+  c.lc_price=30000;if(c.lc_price)document.querySelectorAll('[data-p="lc"]').forEach(function(e){e.textContent=w(c.lc_price)});
   if(c.lc_price_m){document.querySelectorAll('[data-p="lcm"]').forEach(function(e){e.textContent="메이크토익 수강생 "+w(c.lc_price_m)});document.querySelectorAll('[data-p="lcm2"]').forEach(function(e){e.textContent=w(c.lc_price_m)});document.querySelectorAll('[data-p="m"]').forEach(function(e){e.textContent="수강생가 "+w(c.lc_price_m)+"부터"});}
   if(c.rc_price||c.lcrc_price)document.querySelectorAll("[data-rc]").forEach(function(e){e.hidden=false});
 }).catch(function(){});
