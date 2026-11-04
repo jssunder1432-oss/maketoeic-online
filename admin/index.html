@@ -163,7 +163,7 @@ function bindHead() {
 }
 
 /* ---------- 수강생 목록 ---------- */
-function refresh() { return rpc("admin_list_students").then(function (d) { students = d || []; draw(); }).catch(function (e) { render('<div class="msg err">' + esc(e.message) + "</div>"); }); }
+function refresh() { return rpc("admin_list_students").then(function (d) { students = d || []; SUBM = null; draw(); }).catch(function (e) { render('<div class="msg err">' + esc(e.message) + "</div>"); }); }
 function stTag(s) { return s.days_left < 0 ? '<span class="tag end">만료</span>' : s.days_left <= 7 ? `<span class="tag soon">D-${s.days_left}</span>` : `<span class="tag ok">D-${s.days_left}</span>`; }
 var CATS = [["lcmock", "LC 실전 모의고사 · 해설강의"], ["lcp2", "LC Part 2 유형별"], ["rcbook", "RC 교재 문제 · 실전 테스트"], ["agrade", "A급 과제 · 해설강의"], ["voca", "VOCA · 단어 게임"]];
 var PLAN_CATS = { lc: ["lcmock"], rc: ["rcbook"], lcrc: ["lcmock", "rcbook"] };
@@ -172,8 +172,31 @@ var ONL_MK = "[온라인]";
 function ONL(s) { return String(s.memo || "").indexOf(ONL_MK) === 0; }
 function memoTxt(s) { return String(s.memo || "").replace(ONL_MK, "").trim(); }
 function kindTag(s) { if (ONL(s)) return '<span class="tag lc">온라인 수강생</span>'; return (PLAN_NM[s.plan] ? '<span class="tag lc">' + PLAN_NM[s.plan] + '</span>' : '<span class="tag full">수강생</span>') + (PLAN_NM[s.plan] && s.member ? ' <span class="tag full">수업 들은 학생</span>' : ''); }
+/* 과제 제출·오답노트(A급 과제 RC 푼 기록) 있는 학생을 목록 맨 위로 */
+var SUBM = null, SUBM_ING = false;
+function loadSubm() {
+  if (SUBM_ING) return; SUBM_ING = true;
+  var L = students.filter(function (s) { return s.days_left >= -31; });
+  Promise.all([ON_CAT ? ON_CAT : rpc("admin_get_content", { p_key: "catalog" })].concat(L.map(function (s) { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }).then(function (p) { return [s.id, p || {}]; }).catch(function () { return [s.id, {}]; }); }))).then(function (x) {
+    ON_CAT = x[0]; var K = {};
+    ((ON_CAT || {}).sections || []).forEach(function (c) { if (c.group === "A급 과제" && c.area !== "LC" && c.part >= 5) (c.keys || []).forEach(function (k) { K[k] = [+(c.series || 3), String(c.round)]; }); });
+    var out = {};
+    x.slice(1).forEach(function (r) {
+      var p = r[1], o = { hwD: "", hwN: 0, aN: 0, rd: {} };
+      Object.keys(p).forEach(function (k) {
+        var m = k.match(/^hw:(\d)-(\d+):(\d{4})(\d{2})(\d{2})$/);
+        if (m) { o.hwN++; var d = m[3] + "-" + m[4] + "-" + m[5]; if (d > o.hwD) { o.hwD = d; o.hwSer = +m[1]; o.hwR = m[2]; } return; }
+        if (K[k]) { o.aN++; var id = K[k][0] + "|" + K[k][1]; o.rd[id] = (o.rd[id] || 0) + 1; }
+      });
+      if (!o.hwD && o.aN) { var best = Object.keys(o.rd).sort(function (a, b) { return o.rd[b] - o.rd[a]; })[0].split("|"); o.aSer = +best[0]; o.aR = best[1]; }
+      out[r[0]] = o;
+    });
+    SUBM = out; SUBM_ING = false; draw();
+  }).catch(function () { SUBM = {}; SUBM_ING = false; });
+}
 function draw() {
   if (view !== "list") return;
+  if (!SUBM) loadSubm();
   var on = students.filter(function (s) { return s.days_left >= 0; });
   var soon = on.filter(function (s) { return s.days_left <= 7; }).length;
   var idle = on.filter(function (s) { return !s.week; }).length;
@@ -185,16 +208,20 @@ function draw() {
     if (fil === "idle" && (s.days_left < 0 || s.week)) return false;
     if (fil === "lc" && !PLAN_NM[s.plan]) return false;
     if (fil === "onl" && !ONL(s)) return false;
+    if (fil === "sub" && !(SUBM && SUBM[s.id] && (SUBM[s.id].hwN || SUBM[s.id].aN))) return false;
     return !k || (s.name + s.phone + (s.memo || "")).toLowerCase().indexOf(k) >= 0;
   });
+  if (SUBM) rows.sort(function (a, b) { var x = SUBM[a.id] || {}, y = SUBM[b.id] || {}; return String(y.hwD || "").localeCompare(String(x.hwD || "")) || ((y.aN ? 1 : 0) - (x.aN ? 1 : 0)); });
+  var nSub = SUBM ? Object.keys(SUBM).filter(function (k) { return SUBM[k].hwN || SUBM[k].aN; }).length : 0;
   render(head() + `<div class="card"><div class="stat"><div><b>${on.length}</b>이용 중</div><div><b>${soon}</b>7일 내 만료</div><div><b>${idle}</b>이번 주 미학습</div><div><b>${students.length - on.length}</b>만료</div></div></div>
   <div class="card">
     <button class="btn" id="ad-add" style="width:100%;padding:14px;font-size:17px">+ 수강생 등록</button>
     <input class="in" id="ad-q" placeholder="이름 · 번호 · 메모 검색" value="${esc(q)}" style="margin-top:10px">
-    <div class="chips">${[["on", "이용 중"], ["idle", "이번 주 미학습"], ["onl", "온라인 수강생"], ["lc", "비회원 30일권"], ["end", "만료"], ["all", "전체"]].map(function (c) { return `<button data-f="${c[0]}" class="${fil === c[0] ? "on" : ""}">${c[1]}</button>`; }).join("")}</div>
+    <div class="chips">${[["on", "이용 중"], ["sub", "📮 제출·오답노트 " + (SUBM ? nSub + "명" : "확인 중…")], ["idle", "이번 주 미학습"], ["onl", "온라인 수강생"], ["lc", "비회원 30일권"], ["end", "만료"], ["all", "전체"]].map(function (c) { return `<button data-f="${c[0]}" class="${fil === c[0] ? "on" : ""}">${c[1]}</button>`; }).join("")}</div>
     ${rows.map(function (s) {
       var rate = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
-      return `<div class="st"><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${memoTxt(s) ? `<div class="info">메모: ${esc(memoTxt(s))}</div>` : ""}</div>${stTag(s)}</div>
+      var sb = SUBM && SUBM[s.id], sbH = sb && (sb.hwN || sb.aN) ? `<div class="info" style="margin-top:4px">${sb.hwD ? `<span class="tag full" style="background:#FFE6D6;color:#B33F0B">📮 ${md(sb.hwD)} 과제 제출 (${sb.hwR}회 S${sb.hwSer}) · 총 ${sb.hwN}번</span> ` : ""}${sb.aN ? `<span class="tag full">📄 오답노트 ${sb.aN}문제</span> ` : ""}<button class="btn navy sm" data-subn="${s.id}" style="padding:4px 10px">📄 오답노트 열기</button></div>` : "";
+      return `<div class="st"${sbH ? ' style="border-left:4px solid #E95721"' : ""}><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}${sbH}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${memoTxt(s) ? `<div class="info">메모: ${esc(memoTxt(s))}</div>` : ""}</div>${stTag(s)}</div>
         <div class="prog"><span>푼 문제 ${s.solved}</span><span>정답률 ${rate}%</span><span>최근 7일 ${s.week}문제</span><span>마지막 학습 ${ago(s.last_at)}</span><span>마지막 접속 ${ago(s.last_login)}</span></div>
         <div class="acts"><button class="btn navy sm" data-rep="${s.id}">진도 보기</button>${s.days_left < 0 ? `<button class="btn sm" data-renew="${s.id}">재등록</button>` : `<button class="btn sm" data-ext="${s.id}">+1개월</button>`}<button class="btn ghost sm" data-edit="${s.id}">수정</button></div></div>`;
     }).join("") || '<p class="note">해당하는 수강생이 없어요.</p>'}
@@ -213,6 +240,7 @@ function draw() {
     };
   });
   app.querySelectorAll("[data-edit]").forEach(function (b) { b.onclick = function () { editForm(find(b.dataset.edit)); }; });
+  app.querySelectorAll("[data-subn]").forEach(function (b) { b.onclick = function () { var st = find(b.dataset.subn), o = SUBM[st.id] || {}; if (o.hwD) HW.day = o.hwD; hwNote(st, o.hwD ? o.hwSer : o.aSer, o.hwD ? o.hwR : o.aR, b); }; });
   app.querySelectorAll("[data-renew]").forEach(function (b) { b.onclick = function () { editForm(find(b.dataset.renew), true); }; });
   app.querySelectorAll("[data-rep]").forEach(function (b) { b.onclick = function () { report(find(b.dataset.rep)); }; });
 }
