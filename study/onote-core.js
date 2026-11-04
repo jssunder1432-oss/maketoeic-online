@@ -222,5 +222,5 @@
     d.querySelector(".pr").onclick = function () { document.title = "메이크토익_" + (o.title || "추가문제").replace(/\s+/g, "_") + "_" + (o.name || ""); window.print(); setTimeout(function () { document.title = t0; }, 1500); };
     return d;
   }
-  window.MKONOTE = { open: open, openSet: openSet, html: html, guess: onGuess, itemsOf: itemsOf };
+  window.MKONOTE = { open: open, openSet: openSet, html: html, guess: onGuess, itemsOf: itemsOf, adv: ADV };
 })();
