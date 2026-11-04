@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps2").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "ps3").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps2").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "ps3").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -238,7 +238,7 @@ function ebPlay(m, a, onEnd) {
 function ebSideClose() { var x = document.querySelector(".mkst .eb-side"); if (x) x.remove(); var r = document.querySelector(".mkst"); if (r) r.classList.remove("eb-sideon"); }
 window.addEventListener("hashchange", function () { if (!/^#\/eb\//.test(location.hash)) ebSideClose(); });
 function ebFmt(t) {
-  return esc(t || "").replace(/^(▶ [^\n]+)$/gm, '<span class="sh">$1</span>').replace(/^(■ [^\n]+)$/gm, '<span class="sh" style="margin-top:0;font-size:16px;color:#172844">$1</span>').replace(/^(\d{3}번 · [^\n]+)$/gm, '<span class="qh">$1</span>').replace(/^(\[지문 \d\])/gm, '<b style="color:#5B2A86">$1</b>').replace(/\n{2,}/g, "\n").replace(/<\/span>\n/g, "</span>").replace(/\n(<span class="(?:sh|qh)")/g, "$1");
+  return esc(t || "").replace(/^(▶ [^\n]+)$/gm, '<span class="sh">$1</span>').replace(/^(■ [^\n]+)$/gm, '<span class="sh" style="margin-top:0;font-size:16px;color:#172844">$1</span>').replace(/^(\d{3}번 · [^\n]+)$/gm, '<span class="qh">$1</span>').replace(/^(\[지문 \d\])/gm, '<b style="color:#5B2A86">$1</b>').replace(/^(정답 근거|오답 분석|의식의 흐름|보기 정리|암기|해석|어휘|이렇게 본다|정답 포인트)(?=\s|$)/gm, '<b style="color:#172844">$1</b>').replace(/^(정답 \([A-D]\))/gm, '<b style="color:#1E8E5A">$1</b>').replace(/\n{2,}/g, "\n").replace(/<\/span>\n/g, "</span>").replace(/\n(<span class="(?:sh|qh)")/g, "$1");
 }
 // 지문마다 해석 · 지문 분석 (옆에 펼침)
 function ebPs(d) {
