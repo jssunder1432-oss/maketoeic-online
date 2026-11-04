@@ -44,7 +44,7 @@
     }
     var op = q.options || [];
     if (mine == null || mine < 0) h += '<p><b>✕ 답을 고르지 않음</b></p>';
-    else { var r = seg(mine); h += '<p><b>✕ 내가 고른 (' + L[mine] + ') ' + esc(op[mine] || "") + '</b>' + (r ? ' — 틀린 이유: ' + esc(r.slice(0, String(op[mine] || "").length + 3).replace(/[:：]\s*$/, "").trim() === String(op[mine] || "").trim() || r.indexOf(String(op[mine]) + ":") === 0 ? r.slice(String(op[mine]).length).replace(/^\s*[:：]\s*/, "") : r) : "") + "</p>"; }
+    else { var r = seg(mine); h += '<p><b>✕ 내가 고른 (' + L[mine] + ') ' + esc(op[mine] || "") + '</b>' + (r ? ' — 틀린 이유: ' + esc(r.indexOf(String(op[mine]).trim()) === 0 ? r.slice(String(op[mine]).trim().length).replace(/^\s*[:：]?\s*/, "") : r) : "") + "</p>"; }
     var pt = point(); h += '<p><b>○ 정답 (' + L[a] + ') ' + esc(op[a] || "") + '</b>' + (pt ? ' — 이유: ' + esc(pt) : "") + "</p>";
     return '<div class="why">' + h + "</div>";
   }

@@ -306,7 +306,7 @@ function report(s) {
       <p class="note" style="margin-top:14px">문제를 풀고 채점한 기록 기준이에요. 해설강의 시청 시간은 따로 기록되지 않아요.</p>`;
     m.querySelector("#r-x").onclick = function () { m.remove(); };
     var nb = document.createElement("div"); nb.style.marginTop = "14px";
-    nb.innerHTML = '<p class="grp">A급 과제 오답노트</p><div id="r-on" class="note">불러오는 중…</div>';
+    nb.innerHTML = '<p class="grp">A급 과제 · OT 오답노트</p><div id="r-on" class="note">불러오는 중…</div>';
     m.querySelector(".card").appendChild(nb); onoteList(s, nb.querySelector("#r-on"));
   }).catch(function (e) { m.querySelector(".card").innerHTML = '<div class="msg err">' + esc(e.message) + '</div><button class="btn ghost" onclick="this.closest(\'.modal\').remove()">닫기</button>'; });
 }
@@ -326,22 +326,28 @@ function onoteList(s, box) {
       var r = rounds[id]; r.secs.push(c); r.done += done; r.total += keys.length;
       keys.forEach(function (k) { var p = prog[k]; if (p) { if (p[1]) r.ok++; if (String(p[2] || "") > r.last) r.last = String(p[2] || ""); } });
     });
+    [{ id: "ot-1011", title: "OT · 2026.10.11 정기토익 RC" }].forEach(function (o) {
+      var ks = Object.keys(prog).filter(function (k) { return k.indexOf(o.id + "-p") === 0; }); if (!ks.length) return;
+      var r = { ot: true, title: o.title, n: "OT", ser: 0, secs: [5, 6, 7].map(function (p) { return { id: o.id + "-p" + p, part: p }; }), done: ks.length, total: 100, ok: 0, last: "" };
+      ks.forEach(function (k) { var p = prog[k]; if (p[1]) r.ok++; if (String(p[2] || "") > r.last) r.last = String(p[2] || ""); });
+      rounds["ot:" + o.id] = r; order.push("ot:" + o.id);
+    });
     order.sort(function (a, b) { return rounds[b].last.localeCompare(rounds[a].last); });
-    if (!order.length) { box.innerHTML = "아직 푼 A급 과제가 없어요."; return; }
+    if (!order.length) { box.innerHTML = "아직 푼 A급 과제·OT가 없어요."; return; }
     box.innerHTML = '<table><tr><th>회차</th><th>푼 문제</th><th>정답</th><th>최근</th><th></th></tr>' + order.map(function (id) {
       var r = rounds[id];
-      return "<tr><td>" + r.n + "회 <span class=\"tag full\">S" + r.ser + "</span></td><td>" + r.done + " / " + r.total + "</td><td>" + r.ok + "</td><td>" + md(r.last) + '</td><td><button class="btn navy sm" data-on="' + id + '">오답노트</button></td></tr>';
+      return "<tr><td>" + (r.ot ? "<b>" + esc(r.title) + "</b>" : r.n + "회 <span class=\"tag full\">S" + r.ser + "</span>") + "</td><td>" + r.done + " / " + r.total + "</td><td>" + r.ok + "</td><td>" + md(r.last) + '</td><td><button class="btn navy sm" data-on="' + id + '">오답노트</button></td></tr>';
     }).join("") + "</table>";
     box.querySelectorAll("[data-on]").forEach(function (b) { b.onclick = function () {
       var r = rounds[b.dataset.on]; b.disabled = true; b.textContent = "여는 중…";
       Promise.all(r.secs.slice().sort(function (a, c) { return a.part - c.part; }).map(function (c) { return rpc("admin_get_content", { p_key: "sec:" + c.id }); })).then(function (full) {
         var parts = full.map(function (sec) {
           return { part: sec.part, title: String(sec.title || "").replace(/^A급 과제 \d+회 · PART \d\s*/, "").replace(/^\(|\)$/g, ""), list: MKONOTE.itemsOf(sec).filter(function (it) { return prog[it.key]; }).map(function (it) {
-            var p = prog[it.key]; return { key: it.key, q: it.q, set: it.set, mine: p[0], ok: !!p[1], type: ON_RCT[it.key] || MKONOTE.guess(it.q, it.set, sec.part) };
+            var p = prog[it.key]; return { key: it.key, q: it.q, set: it.set, mine: p[0], ok: !!p[1], type: ON_RCT[it.key] || it.q.qtype || MKONOTE.guess(it.q, it.set, sec.part) };
           }) };
         });
         var last = r.last ? new Date(r.last) : new Date();
-        MKONOTE.open({ name: s.name, title: "A급 과제 " + r.n + "회 (Season " + r.ser + ")", date: last.getFullYear() + "." + (last.getMonth() + 1) + "." + last.getDate(), parts: parts });
+        MKONOTE.open({ name: s.name, title: r.ot ? r.title : "A급 과제 " + r.n + "회 (Season " + r.ser + ")", date: last.getFullYear() + "." + (last.getMonth() + 1) + "." + last.getDate(), parts: parts });
         b.disabled = false; b.textContent = "오답노트";
       }).catch(function (e) { b.disabled = false; b.textContent = "오답노트"; alert(e.message || e); });
     }; });

@@ -16,7 +16,7 @@ function onCollect(secs, rct) {
     return full.map(function (sec, i) {
       return { part: sec.part || secs[i].part, title: String(sec.title || "").replace(/^A급 과제 \d+회 · PART \d\s*/, "").replace(/^\(|\)$/g, ""), list: itemsOf(sec).map(function (x) {
         var p = S.prog[x.key] || [-1, false];
-        return { key: x.key, q: x.q, set: x.set, mine: p[0], ok: !!p[1], type: rct[x.key] || onGuess(x.q, x.set, sec.part || secs[i].part) };
+        return { key: x.key, q: x.q, set: x.set, mine: p[0], ok: !!p[1], type: rct[x.key] || x.q.qtype || onGuess(x.q, x.set, sec.part || secs[i].part) };
       }) };
     });
   });
