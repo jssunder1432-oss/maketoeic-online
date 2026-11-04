@@ -55,6 +55,16 @@ var PRODS = { lc: { name: "LC 30일 수강권", price: 24900, items: ["고른 Se
 var MEM = false, REG = null;
 try { REG = JSON.parse(sessionStorage.getItem("mkreg") || "null"); } catch (e) { }
 function v(id) { var e = document.getElementById(id); return e ? e.value : ""; }
+// 실명만 받기: 한글 이름 2~5자(완성된 글자) 또는 영문 이름 — 자음·모음만(ㅍㄹ), 숫자·기호, 홍길동·테스트 같은 가짜 이름은 막는다
+function realName(nm) {
+  nm = String(nm || "").replace(/\s+/g, " ").trim();
+  if (/[ㄱ-ㅎㅏ-ㅣ]/.test(nm) || /\d/.test(nm)) return false;
+  if (/^(홍길동|테스트|test|asdf|qwer|가나다|김김|이이|박박|무명|익명|ㅇㅇ)$/i.test(nm.replace(/ /g, ""))) return false;
+  var k = nm.replace(/ /g, "");
+  if (/^[가-힣]{2,5}$/.test(k)) return !/^(.)\1+$/.test(k);
+  return /^[A-Za-z][A-Za-z'.-]+( [A-Za-z][A-Za-z'.-]+)+$/.test(nm) && nm.length <= 40;
+}
+var NAME_ERR = "실명(주민등록상 이름)으로 적어 주세요. 예: 김민지 — 자음만·별명·숫자는 받지 않아요.";
 function keep(fn) { var nm = v("nm"), ph = v("ph"), ag = document.getElementById("agree"); var a = ag && ag.checked; fn(); if (document.getElementById("nm")) { document.getElementById("nm").value = nm; document.getElementById("ph").value = ph; } if (ag && document.getElementById("agree")) document.getElementById("agree").checked = a; }
 var CONSENT = '<details class="consent"><summary>개인정보 수집 · 이용 안내 (필수)</summary><p>수집 항목: 이름, 휴대폰 번호<br>이용 목적: 학습실 이용권 발급 · 결제 확인 · 이용 안내 연락<br>보유 기간: 마지막 이용일로부터 1년 (요청 시 즉시 삭제)<br>동의하지 않으면 수강권을 결제할 수 없어요.</p></details>';
 function priceOf(k) { var m = PRODS[k].priceM; return MEM && m > 0 ? m : PRODS[k].price; }
@@ -83,7 +93,7 @@ function form(msg) {
     '<p class="note">교재는 별도 구매예요. <a href="/class/">자세히 보기</a></p></div>') +
     (LC && REG ? '<div class="card"><b style="color:var(--ink)">① 등록 완료</b><div class="reg"><span><b>' + esc(REG.name) + '</b> · ' + esc(REG.phone.replace(/^(\d{3})(\d+)(\d{4})$/, "$1-****-$3")) + (MEM ? ' <em>수강생가 적용</em>' : '') + '</span><button type="button" id="rereg">수정</button></div><p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b></p>' + (msg || "") + '</div>' :
     '<div class="card"><b style="color:var(--ink)">' + (LC ? '① 이름 · 휴대폰 번호 등록' : '학습실 로그인 정보') + '</b>' +
-    '<label for="nm">이름</label><input id="nm" autocomplete="name" placeholder="홍길동" value="' + esc(q.get("name") || "") + '">' +
+    '<label for="nm">이름 (실명)</label><input id="nm" autocomplete="name" placeholder="실명을 적어 주세요 (예: 김민지)" value="' + esc(q.get("name") || "") + '">' +
     '<label for="ph">휴대폰 번호</label><input id="ph" inputmode="numeric" autocomplete="tel" placeholder="010-1234-5678">' +
     '' + (LC && avail().some(function (k) { return PRODS[k].priceM > 0 && PRODS[k].priceM !== PRODS[k].price; }) ? '<div class="msg ' + (MEM ? 'ok' : '') + '" id="memmsg" style="' + (MEM ? '' : 'background:#F3F5F9;color:#101828') + '">' + (MEM ? '✓ 메이크토익 수강생 확인 — 수강생 가격이 적용됐어요.' : '메이크토익에서 수업을 들은 학생은 등록된 이름 · 휴대폰 번호를 적으면 수강생 가격이 적용돼요.') + '</div>' : '') + '<p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b>. 이미 학습실을 쓰고 있다면 등록된 번호를 그대로 적어 주세요.</p>' + (LC ? '<label class="ck"><input type="checkbox" id="agree"> 개인정보 수집 · 이용에 동의해요 (필수)</label>' + CONSENT : '') + (msg || "") + '</div>') +
     (LC && !REG ? '<button class="btn" id="reg">등록하고 결제로 넘어가기</button>' :
@@ -112,6 +122,7 @@ function form(msg) {
   b.onclick = function () {
     var nm = LC && REG ? REG.name : v("nm").trim(), ph = LC && REG ? REG.phone : v("ph").replace(/\D/g, "");
     if (!nm) return form('<div class="msg err">이름을 적어 주세요.</div>');
+    if (!realName(nm)) return form('<div class="msg err">' + NAME_ERR + '</div>');
     if (!/^01\d{8,9}$/.test(ph)) return form('<div class="msg err">휴대폰 번호를 정확히 적어 주세요.</div>');
     b.disabled = true; b.textContent = "결제창 여는 중…";
     rpc("pay_order", { p_name: nm, p_phone: ph, p_kind: KIND, p_season: LC ? SEA : null }).then(function (o) {
@@ -139,6 +150,7 @@ function bindReg() {
     var nm = v("nm").trim(), ph = v("ph").replace(/\D/g, ""), ag = document.getElementById("agree").checked;
     function err(t) { keep(function () { form('<div class="msg err">' + t + '</div>'); }); }
     if (!nm) return err("이름을 적어 주세요.");
+    if (!realName(nm)) return err(NAME_ERR);
     if (!/^01\d{8,9}$/.test(ph)) return err("휴대폰 번호를 정확히 적어 주세요.");
     if (!ag) return err("개인정보 수집 · 이용에 동의해 주세요.");
     b.disabled = true; b.textContent = "등록 중…";
