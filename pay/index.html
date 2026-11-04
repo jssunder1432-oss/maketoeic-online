@@ -52,7 +52,7 @@ var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : (q.get("
 var PRODS = { lc: { name: "LC 30일 수강권", price: 24900, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의"] },
   rc: { name: "RC 30일 수강권", price: 0, items: ["고른 Season의 RC 문제 (Part 5 문법 · 어휘 · Part 7 독해)", "문제별 해설 · 단어 누르면 뜻 · 품사"] },
   lcrc: { name: "LC+RC 30일 수강권", price: 0, items: ["고른 Season의 LC 실전 모의고사 10회 + 해설강의", "고른 Season의 RC 문제 + 해설 · 단어 뜻"] } };
-var MEM = false, REG = null;
+var MEM = false, REG = null, BANK = true;   // 지금은 계좌이체만 (온라인 결제 열면 false)
 try { REG = JSON.parse(sessionStorage.getItem("mkreg") || "null"); } catch (e) { }
 function v(id) { var e = document.getElementById(id); return e ? e.value : ""; }
 // 실명만 받기: 한글 이름 2~5자(완성된 글자) 또는 영문 이름 — 자음·모음만(ㅍㄹ), 숫자·기호, 홍길동·테스트 같은 가짜 이름은 막는다
@@ -83,7 +83,7 @@ var TERMS_LC = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
   '<h3>문의</h3>카카오톡 메이크토익 질문방 또는 010-4845-1432</div>';
 function form(msg) {
   app.innerHTML =
-    (LC ? '<div class="card hero"><span class="kicker">MAKE TOEIC · 비회원 학습실</span><h1>30일 수강권</h1><p>원하는 Season의 메이크토익 학습실 문제로 훈련해요. 결제하면 바로 열려요.</p></div>' +
+    (LC ? '<div class="card hero"><span class="kicker">MAKE TOEIC · 비회원 학습실</span><h1>30일 수강권</h1><p>원하는 Season의 메이크토익 학습실 문제로 훈련해요. 입금이 확인되면 바로 열려요.</p></div>' +
         (avail().length > 1 ? '<div class="card"><b style="color:var(--ink)">상품 고르기</b><div class="pick">' + avail().map(function (k) { return '<button type="button" class="pk' + (k === KIND ? ' on' : '') + '" data-k="' + k + '"><b>' + PRODS[k].name + '</b><span>' + (PRODS[k].priceM > 0 && PRODS[k].priceM !== PRODS[k].price ? (MEM ? '<s style="font-weight:600;margin-right:6px">' + PRODS[k].price.toLocaleString() + '</s>' + PRODS[k].priceM.toLocaleString() + '원' : PRODS[k].price.toLocaleString() + '원<br><small style="font-weight:700">수강생 ' + PRODS[k].priceM.toLocaleString() + '원</small>') : PRODS[k].price.toLocaleString() + '원') + '</span></button>'; }).join("") + '</div></div>' : '') +
         '<div class="card"><b style="color:var(--ink)">Season 고르기</b><p class="note" style="margin:4px 0 0">Season마다 문제가 달라요. 처음이면 이번 달 Season을 추천해요.</p><div class="pick s3">' + [1, 2, 3].map(function (n) { return '<button type="button" class="pk' + (n === SEA ? ' on' : '') + '" data-s="' + n + '"><b>Season ' + n + '</b><span>' + (n === CFG.cur ? '이번 달' : '') + '</span></button>'; }).join("") + '</div></div>'
         : '<div class="card hero"><span class="kicker">MAKE TOEIC · 온라인 정규반</span><h1>메이크토익 정규반을 온라인으로</h1><p>청주 메이크토익 정규반 수업을 매일 녹화 영상과 학습실로 들어요. 결제일부터 1개월.</p></div>') +
@@ -97,11 +97,17 @@ function form(msg) {
     '<label for="ph">휴대폰 번호</label><input id="ph" inputmode="numeric" autocomplete="tel" placeholder="010-1234-5678">' +
     '' + (LC && avail().some(function (k) { return PRODS[k].priceM > 0 && PRODS[k].priceM !== PRODS[k].price; }) ? '<div class="msg ' + (MEM ? 'ok' : '') + '" id="memmsg" style="' + (MEM ? '' : 'background:#F3F5F9;color:#101828') + '">' + (MEM ? '✓ 메이크토익 수강생 확인 — 수강생 가격이 적용됐어요.' : '메이크토익에서 수업을 들은 학생은 등록된 이름 · 휴대폰 번호를 적으면 수강생 가격이 적용돼요.') + '</div>' : '') + '<p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b>. 이미 학습실을 쓰고 있다면 등록된 번호를 그대로 적어 주세요.</p>' + (LC ? '<label class="ck"><input type="checkbox" id="agree"> 개인정보 수집 · 이용에 동의해요 (필수)</label>' + CONSENT : '') + (msg || "") + '</div>') +
     (LC && !REG ? '<button class="btn" id="reg">등록하고 결제로 넘어가기</button>' :
-    '<div class="card">' + (LC ? '<b style="color:var(--ink)">② 결제</b>' : '') + '<div id="pm"></div><div id="ag"></div></div>' +
-    '<button class="btn" id="go">' + PRICE.toLocaleString() + '원 결제하기</button>') +
+    (BANK ? '<div class="card" style="border:2px solid #E95721">' + (LC ? '<b style="color:var(--ink)">② 결제</b>' : '<b style="color:var(--ink)">결제</b>') +
+      '<div class="msg" style="background:#FFF4EC;color:#101828;font-weight:800;margin-top:8px">🏦 현재는 <b>계좌이체</b>로만 결제할 수 있어요.<br>💳 온라인(카드) 결제는 곧 열려요.</div>' +
+      '<p class="note" style="margin:8px 0">아래 버튼으로 신청하면 <b>입금 계좌를 문자로 안내</b>해 드려요. 입금이 확인되면 학습실이 열려요.</p>' +
+      '<button class="btn" id="bank">🏦 ' + PRICE.toLocaleString() + '원 계좌이체로 신청하기</button>' +
+      '<a class="btn ghost" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">💬 카카오톡 메이크토익 질문방으로 문의</a></div>'
+    : '<div class="card">' + (LC ? '<b style="color:var(--ink)">② 결제</b>' : '') + '<div id="pm"></div><div id="ag"></div></div>' +
+    '<button class="btn" id="go">' + PRICE.toLocaleString() + '원 결제하기</button>')) +
     '<p class="note bk">※ 온라인 수강 교재비는 별도 · 택배 배송 시 착불 · 문의 요망 (<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">메이크토익 질문방</a> · 010-4845-1432)</p><p class="note" style="text-align:center">결제 후 환불되지 않아요. 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
   var w, pmw;
   if (LC && !REG) { bindReg(); bindPick(); return; }
+  if (BANK) { bindPick(); bindBank(); return; }
   try {
     w = PaymentWidget(CLIENT_KEY, PaymentWidget.ANONYMOUS);
     pmw = w.renderPaymentMethods("#pm", { value: PRICE });
@@ -138,6 +144,22 @@ function form(msg) {
       var m = document.createElement("div"); m.className = "msg err"; m.textContent = (e && e.message && e.message.length > 6) ? e.message : "결제를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.";
       b.parentNode.insertBefore(m, b.nextSibling);
     });
+  };
+}
+// 계좌이체 신청: 이름·번호·상품을 담아 선생님께 문자 (입금 계좌는 문자로 안내)
+function bindBank() {
+  var rr = document.getElementById("rereg"); if (rr) rr.onclick = function () { var r = REG; REG = null; try { sessionStorage.removeItem("mkreg"); } catch (e) { } form(); document.getElementById("nm").value = r.name; document.getElementById("ph").value = r.phone; };
+  var b = document.getElementById("bank"); if (!b) return;
+  b.onclick = function () {
+    var nm = LC && REG ? REG.name : v("nm").trim(), ph = LC && REG ? REG.phone : v("ph").replace(/\D/g, "");
+    if (!nm) return form('<div class="msg err">이름을 적어 주세요.</div>');
+    if (!realName(nm)) return form('<div class="msg err">' + NAME_ERR + '</div>');
+    if (!/^01\d{8,9}$/.test(ph)) return form('<div class="msg err">휴대폰 번호를 정확히 적어 주세요.</div>');
+    var prod = LC ? PRODS[KIND].name + (SEA ? " (Season " + SEA + ")" : "") : NAME;
+    var body = "[메이크토익 계좌이체 신청]\n이름: " + nm + "\n번호: " + ph.replace(/^(\d{3})(\d+)(\d{4})$/, "$1-$2-$3") + "\n상품: " + prod + "\n금액: " + PRICE.toLocaleString() + "원\n입금 계좌 알려 주세요.";
+    location.href = "sms:01048451432" + (/iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?") + "body=" + encodeURIComponent(body);
+    var m = document.createElement("div"); m.className = "msg ok"; m.innerHTML = "문자 앱이 열리면 그대로 <b>보내기</b>를 눌러 주세요. 입금 계좌를 문자로 안내해 드려요.<br>문자 앱이 안 열리면 010-4845-1432로 이름·상품을 보내 주세요.";
+    b.parentNode.insertBefore(m, b.nextSibling);
   };
 }
 function bindPick() {
