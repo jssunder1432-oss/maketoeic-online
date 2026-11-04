@@ -435,7 +435,7 @@ function viewLog() {
     var L = d.leads || [], O = d.orders || [];
     var paid = L.filter(function (x) { return x.paid_at; }).length;
     var sum = O.filter(function (o) { return o.status === "done"; }).reduce(function (a, o) { return a + (o.amount || 0); }, 0);
-    var KN = { lc: "LC", rc: "RC", lcrc: "LC+RC", pass: "이용권" }, ST = { done: '<span class="tag ok">결제 완료</span>', ready: '<span class="tag soon">결제 안 함</span>', fail: '<span class="tag end">실패</span>' };
+    var KN = { lc: "LC", rc: "RC", lcrc: "LC+RC", pass: "온라인 정규반" }, ST = { done: '<span class="tag ok">결제 완료</span>', ready: '<span class="tag soon">결제 안 함</span>', fail: '<span class="tag end">실패</span>' };
     var body = logTab === "leads"
       ? (L.length ? L.map(function (x) {
           return `<div class="st"><div class="top"><div><span class="nm">${esc(x.name)}</span> ${x.member ? '<span class="tag full">수업 들은 학생</span>' : ''}<div class="info">${esc(phoneFmt(x.phone))} · ${esc(KN[x.kind] || "-")}${x.season ? " · Season " + x.season : ""}</div><div class="info">등록 ${dt(x.created_at)}${x.visits > 1 ? " · 최근 " + dt(x.updated_at) + " (" + x.visits + "번째)" : ""}</div></div>${x.paid_at ? '<span class="tag ok">결제 ' + x.pay_count + '회</span>' : '<span class="tag soon">미결제</span>'}</div>
@@ -464,7 +464,7 @@ function viewPrice() {
       ${rows.map(function (r) { return `<div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">${r[1]}</b> <span style="font-size:13px;font-weight:600">· ${r[2]}</span>
         <div class="grid" style="margin-top:6px"><div><label style="margin-top:0">비회원 가격</label><div style="display:flex;gap:6px;align-items:center"><input class="in" inputmode="numeric" data-pk="${r[0]}" value="${esc(c[r[0]] || "")}" placeholder="판매 안 함"><b>원</b></div></div>
         <div><label style="margin-top:0">수강생 가격</label><div style="display:flex;gap:6px;align-items:center"><input class="in" inputmode="numeric" data-pk="${r[0]}_m" value="${esc(c[r[0] + "_m"] || "")}" placeholder="비회원과 같음"><b>원</b></div></div></div></div>`; }).join("")}
-      <div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">수업 끝난 수강생 이용권 (1개월)</b> <span style="font-size:13px;font-weight:600">· LC 그 달 Season 전체 + RC 기출</span>
+      <div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">온라인 정규반 (1개월)</b> <span style="font-size:13px;font-weight:600">· 결제되면 수강생으로 바꿔 학습실 전체 열기</span>
         <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input class="in" inputmode="numeric" data-pk="pass_price" value="${esc(c.pass_price || "")}"><b>원</b></div></div>
       <div id="pr-msg"></div><button class="btn" id="pr-save" style="width:100%;padding:14px;margin-top:12px">가격 저장</button></div>`);
     bindHead();
