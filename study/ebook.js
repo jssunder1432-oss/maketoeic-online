@@ -71,8 +71,14 @@ var EB_CSS = `
 function ebStyle() { if (!document.getElementById("eb-css")) { var s = document.createElement("style"); s.id = "eb-css"; s.textContent = EB_CSS; document.head.appendChild(s); } }
 // 목차 보기: #/eb  (지금 학습실 LC/RC 파트만)
 function ebRoomBox() {
-  var B = ebBooks(curSer()); if (!B.length) return "";
-  return `<button class="row" data-go="#/eb/all" style="padding:26px 20px;background:linear-gradient(125deg,#5B2A86,#8E4FD1);color:#fff;border:0"><span class="pill" style="background:#fff;color:#5B2A86;font-size:15px;padding:6px 14px">교재</span><span class="t"><b style="color:#fff;font-size:21px">📖 ${esc(B[0].nm)} 전자책</b><small style="color:#fff">LC · RC 전체 · 단어 누르면 품사·뜻 · 지문 누르면 원본 음원 · 정답 매기기</small></span>›</button>`;
+  var al = allowedSeries().slice().sort(), cur = curSer(), rows = [];
+  [cur].concat(al.filter(function (n) { return n !== cur; })).forEach(function (n) {
+    ebBooks(n).forEach(function (b) {
+      rows.push(`<button class="row" data-go="#/eb/all/${n}" style="${n === cur ? "background:linear-gradient(125deg,#5B2A86,#8E4FD1);color:#fff;border:0" : ""}"><span class="pill" style="background:${n === cur ? "#fff" : "#5B2A86"};color:${n === cur ? "#5B2A86" : "#fff"}">S${n}</span><span class="t"><b style="${n === cur ? "color:#fff" : ""}">📖 ${esc(b.nm)}</b><small style="${n === cur ? "color:#fff" : ""}">Season ${n} 교재 · LC · RC 전체${n === cur ? " · 지금 Season" : ""}</small></span>›</button>`);
+    });
+  });
+  if (!rows.length) return "";
+  return `<div style="border:2px solid #5B2A86;border-radius:18px;padding:12px 12px 2px;margin:0 0 14px;background:#fff"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:2px 4px 10px"><b style="font-size:17px;color:#172844">📚 교재 전자책</b><small style="color:#33404F;font-size:13px">단어 누르면 품사·뜻 · LC 지문 누르면 원본 음원 · 정답 매기기</small></div>${rows.join("")}</div>`;
 }
 function viewEb(all) {
   ebStyle(); ls("eball", all ? "1" : "0");
@@ -212,13 +218,9 @@ function lecturesOf(sec) {
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 // 1) 기능 함수 (tblec.js가 같은 앵커를 다시 남겨 두므로 그 뒤에 붙는다)
 ["function lecturesOf(sec) {\n", FN + "\n"],
-// 2) LC 학습실 메뉴 박스에 "교재 전자책"
-["      (reelList().length ? roomRow(\"#/reels\"", "      (ebBooks(ser).length ? roomRow(\"#/eb\", \"교재\", \"📖 교재 전자책 · LC\", ebBooks(ser).map(function (b) { return b.nm; }).join(\" · \") + \" · 지문 누르면 원본 음원 · 단어 뜻\", \"linear-gradient(125deg,#5B2A86,#8E4FD1)\") : \"\") +\n      (reelList().length ? roomRow(\"#/reels\""],
-// 3) RC 학습실 메뉴 박스에 "교재 전자책"
-["      roomRow(\"#/a\", \"A급\", \"A급 과제\",", "      (ebBooks(ser).length ? roomRow(\"#/eb\", \"교재\", \"📖 교재 전자책 · RC\", ebBooks(ser).map(function (b) { return b.nm; }).join(\" · \") + \" · 단어 누르면 품사 · 뜻\", \"linear-gradient(125deg,#5B2A86,#8E4FD1)\") : \"\") +\n      roomRow(\"#/a\", \"A급\", \"A급 과제\","],
 // 4) 학습실 고르는 첫 화면(LC·RC 선택)에 교재 전자책
 ["    ${recBox()}", "    ${ebRoomBox()}${recBox()}"],
 // 5) 주소 연결
-["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"eb\" && h[1] === \"all\") return viewEb(true);\n  if (h[0] === \"eb\" && h[1]) return viewEbPage(h[1], +h[2] || 1);\n  if (h[0] === \"eb\") return viewEb();\n"]
+["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"eb\" && h[1] === \"all\") { if (h[2] && allowedSeries().indexOf(+h[2]) >= 0) ls(\"ser\", h[2]); return viewEb(true); }\n  if (h[0] === \"eb\" && h[1]) return viewEbPage(h[1], +h[2] || 1);\n  if (h[0] === \"eb\") return viewEb();\n"]
 ]);
 })();
