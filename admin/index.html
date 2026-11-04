@@ -67,6 +67,9 @@ th{background:var(--bg);font-size:13px;color:var(--navy)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="/study/onote-core.js?v=5"></script>
 <script>
+/* 새 버전(ver.txt)이 올라가면 앱·브라우저에 열려 있던 관리자 화면도 자동으로 새로 받기 */
+(function () { var B = "a1104h"; function chk() { fetch("ver.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (v) { v = (v || "").trim(); if (!v || v === B) return; try { if (sessionStorage.getItem("mkad:rl") === v) return; sessionStorage.setItem("mkad:rl", v); } catch (e) { } location.replace(location.pathname + "?v=" + v + location.hash); }).catch(function () { }); }
+  chk(); document.addEventListener("visibilitychange", function () { if (!document.hidden) chk(); }); window.addEventListener("pageshow", function (e) { if (e.persisted) location.reload(); }); })();
 (function () {
 "use strict";
 var U = "https://hrlldteviatcatxyzrrz.supabase.co", K = "sb_publishable_YT1A99HvH7VoMz76xq7Tvg__Imr0_qy";
@@ -154,7 +157,7 @@ function pwForm() {
 function head() {
   return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : "수강생 관리"}</h1></div>
   <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
-  <span style="flex:1"></span><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button></div>`;
+  <span style="flex:1"></span><button class="btn ghost sm" onclick="location.replace(location.pathname+'?v='+Date.now())">🔄 최신으로</button><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button></div>`;
 }
 function bindHead() {
   app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "hw" ? viewHw() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
