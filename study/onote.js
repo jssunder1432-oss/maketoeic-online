@@ -31,9 +31,31 @@ function onFill(set, keepNo) {
   });
   return c;
 }
+var ON_CTX = "", ON_SID = {};
+function onSetKey(part) { return "onset:" + (ON_SID[part] || ON_CTX) + ":" + part; }
+function onSetLoad(part) {
+  var keys; try { keys = JSON.parse(ls(onSetKey(part)) || "null"); } catch (e) { keys = null; }
+  if (!keys || !keys.length) return Promise.resolve(null);
+  var ids = []; keys.forEach(function (k) { var id = k.split(":")[0]; if (ids.indexOf(id) < 0) ids.push(id); });
+  return Promise.all(ids.map(function (id) { return load("sec:" + id).catch(function () { return null; }); })).then(function (secs) {
+    var M = {}; secs.forEach(function (sec) { if (sec) itemsOf(sec).forEach(function (x) { x.sec = sec; if (part === 6 && x.set) x.set = onFill(x.set, x.q.no); M[x.key] = x; }); });
+    var out = keys.map(function (k) { return M[k]; }).filter(Boolean);
+    return out.length ? out : null;
+  });
+}
 function onPractice(part, wrongTypes, back) {
-  var types = Object.keys(wrongTypes); if (!types.length) return;
   render('<div class="empty">틀린 유형 문제를 모으는 중…</div>');
+  onPick(part, wrongTypes).then(function (pick) {
+    if (!pick) { render(topbar("틀린 유형 50문제") + '<div class="card peach">이 유형의 연습 문제를 준비 중이에요.</div><button class="btn" data-go="' + back + '">돌아가기</button>'); bindCommon(); return; }
+    ON_LAST[part] = pick;
+    mixQuiz("PART " + part + " 틀린 유형 " + pick.length + "문제", "RC", pick, back);
+  });
+}
+function onPick(part, wrongTypes) {
+  return onSetLoad(part).then(function (got) { return got || onPickNew(part, wrongTypes); });
+}
+function onPickNew(part, wrongTypes) {
+  var types = Object.keys(wrongTypes); if (!types.length) return Promise.resolve(null);
   var tot = types.reduce(function (a, t) { return a + wrongTypes[t]; }, 0), want = {};
   types.forEach(function (t) { want[t] = Math.max(1, Math.round(50 * wrongTypes[t] / tot)); });
   // 덜 푼 문제은행 파일부터 조금씩 불러온다 (안 푼 문제가 모자라면 더 불러옴)
@@ -54,9 +76,9 @@ function onPractice(part, wrongTypes, back) {
       if (!enough() && ids.length) return more();
     });
   }
-  more().then(function () {
+  return more().then(function () {
     var have = types.filter(function (t) { return pool[t] && pool[t].length; });
-    if (!have.length) { render(topbar("틀린 유형 50문제") + '<div class="card peach">이 유형의 연습 문제를 준비 중이에요.</div><button class="btn" data-go="' + back + '">돌아가기</button>'); bindCommon(); return; }
+    if (!have.length) return null;
     var left = 50, pick = [];
     have.forEach(function (t) {
       var ks = pool[t], un = ks.filter(function (x) { return !S.prog[x.key]; }), wr = ks.filter(function (x) { var p = S.prog[x.key]; return p && !p[1]; }), rt = ks.filter(function (x) { var p = S.prog[x.key]; return p && p[1]; });
@@ -64,9 +86,24 @@ function onPractice(part, wrongTypes, back) {
     });
     have.forEach(function (t) { var k = Math.min(want[t], pool[t].length, left); pick = pick.concat(pool[t].splice(0, k)); left -= k; });
     var i = 0; while (left > 0 && have.some(function (t) { return pool[t].length; })) { var t = have[i++ % have.length]; if (pool[t].length) { pick.push(pool[t].shift()); left--; } }
-    pick = shuffle(pick); ON_LAST[part] = pick;
-    mixQuiz("PART " + part + " 틀린 유형 " + pick.length + "문제", "RC", pick, back);
+    pick = shuffle(pick);
+    if (ON_CTX) ls(onSetKey(part), JSON.stringify(pick.map(function (x) { return x.key; })));
+    return pick;
   });
+}
+// 한 회차 추가 문제 전체(다 푼 PART마다 50문제) → 문제편 + 정답·해설편 PDF
+function onSetPdf(parts, wrongBy, title, btn) {
+  var ps = parts.filter(function (p) { return wrongBy[p] && Object.keys(wrongBy[p]).length; });
+  if (!ps.length) return;
+  var old = btn.textContent; btn.disabled = true; btn.textContent = "문제 모으는 중…";
+  var rct = ON_RCT || {};
+  Promise.all(ps.map(function (p) { return onPick(p, wrongBy[p]); })).then(function (sets) {
+    var out = [];
+    sets.forEach(function (pick, i) { if (pick && pick.length) out.push({ part: ps[i], list: pick.map(function (x) { return { key: x.key, q: x.q, set: x.set, type: x.q.qtype || (x.sec && x.sec.qtype) || rct[x.key] || onGuess(x.q, x.set, ps[i]) }; }) }); });
+    if (!out.length) { alert("추가 문제를 준비 중이에요."); return; }
+    var d = new Date();
+    window.MKONOTE.openSet({ name: (S.profile || {}).name || "", title: title + " · 틀린 유형 추가 문제", date: d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate(), parts: out });
+  }).catch(function () { alert("문제를 불러오지 못했어요. 다시 눌러 주세요."); }).then(function () { btn.disabled = false; btn.textContent = old; });
 }
 function onWrongBy(parts) {
   var w = {}; parts.forEach(function (p) { p.list.forEach(function (x) { if (!x.ok) { w[p.part] = w[p.part] || {}; w[p.part][x.type] = (w[p.part][x.type] || 0) + 1; } }); }); return w;
@@ -100,28 +137,32 @@ function onoteRound(secs, ser, n) {
     box.innerHTML = '<b>📄 RC 오답노트 · 🎯 틀린 유형 50문제</b><p style="margin:6px 0 0;font-size:14px;color:#5B6573">PART를 하나 다 풀면 그 PART의 틀린 유형 50문제와 오답노트가 열려요.</p>';
     app.appendChild(box); return;
   }
-  var back = location.hash || "#/a";
+  var back = location.hash || "#/a"; ON_CTX = "r" + ser + "-" + n; fin.forEach(function (s) { ON_SID[s.part] = s.id; });
   var rest = secs.filter(function (s) { return fin.indexOf(s) < 0; }).map(function (s) { return s.part; });
   box.innerHTML = '<b style="font-size:16px">📄 오답노트 · 🎯 틀린 유형 50문제</b><p style="margin:4px 0 10px;font-size:14px;color:#5B6573">다 푼 PART ' + fin.map(function (s) { return s.part; }).join("·") + '의 틀린 문제로 만들어요.' + (rest.length ? " (PART " + rest.join("·") + "도 다 풀면 추가돼요)" : "") + '</p>'
     + '<button class="btn" data-onnote="1" style="width:100%">📄 오답노트 출력 · PDF 저장</button><div class="on-prac" style="display:grid;gap:8px;margin-top:8px"><div class="empty" style="padding:8px">틀린 유형 확인 중…</div></div>';
   app.appendChild(box);
   onTypes().then(function (rct) { return onCollect(fin, rct); }).then(function (parts) {
     var w = onWrongBy(parts), pr = box.querySelector(".on-prac"); if (!pr) return;
-    pr.innerHTML = (fin.map(function (s) { return onPracBtn(s.part, w[s.part]); }).join("") || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + onLastBtns(fin.map(function (s) { return s.part; }));
+    var fp = fin.map(function (s) { return s.part; }), hasW = fp.some(function (p) { return w[p] && Object.keys(w[p]).length; });
+    pr.innerHTML = (fin.map(function (s) { return onPracBtn(s.part, w[s.part]); }).join("") || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + onLastBtns(fp)
+      + (hasW ? '<button class="btn ghost" data-onset="1" style="border:2px solid #FF581F;text-align:left;line-height:1.35">📥 이 회차 추가 문제 전체 PDF 받기<br><small style="font-weight:600">PART ' + fp.filter(function (p) { return w[p]; }).join("·") + ' 틀린 유형 문제 + 정답·해설까지 한 파일로</small></button>' : "");
     onBind(box, w, back, { title: onTitle(ser, n), parts: parts }); onLastBind(box);
+    var sb = box.querySelector("[data-onset]"); if (sb) sb.onclick = function () { onSetPdf(fp, w, onTitle(ser, n), sb); };
   });
 }
 function onoteExam(sec) {
   if (!sec || sec.group !== "A급 과제" || sec.area === "LC" || !(sec.part >= 5)) return;
   var box = document.getElementById("on-ex"); if (!box) return;
-  var back = location.hash;
+  var back = location.hash; ON_CTX = "s" + sec.id; ON_SID[sec.part] = sec.id;
   onTypes().then(function (rct) {
     var meta = S.catalog.sections.filter(function (s) { return s.id === sec.id; })[0] || sec;
     return onCollect([meta], rct);
   }).then(function (parts) {
     var w = onWrongBy(parts), b = onPracBtn(sec.part, w[sec.part]);
-    box.innerHTML = '<div class="card" style="border:2px solid #172844;display:grid;gap:8px">' + (b || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + '<button class="btn ghost" data-onnote="1">📄 이 PART 오답노트 출력 · PDF 저장</button>' + onLastBtns([sec.part]) + '</div>';
+    box.innerHTML = '<div class="card" style="border:2px solid #172844;display:grid;gap:8px">' + (b || '<p style="margin:0;font-size:14px">틀린 문제가 없어요. 전부 맞혔어요! 👏</p>') + '<button class="btn ghost" data-onnote="1">📄 이 PART 오답노트 출력 · PDF 저장</button>' + onLastBtns([sec.part]) + (b ? '<button class="btn ghost" data-onset="1" style="border:2px solid #FF581F">📥 이 PART 추가 문제 전체 PDF (문제 + 해설)</button>' : "") + '</div>';
     onBind(box, w, back, { title: String(sec.title || "A급 과제"), parts: parts }); onLastBind(box);
+    var sb = box.querySelector("[data-onset]"); if (sb) sb.onclick = function () { onSetPdf([sec.part], w, String(sec.title || "A급 과제"), sb); };
   });
 }
 function viewARound(n) {

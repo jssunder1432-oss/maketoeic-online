@@ -181,5 +181,46 @@
     (sec.sets || []).forEach(function (st, si) { (st.questions || []).forEach(function (q, qi) { out.push({ key: sec.id + ":s" + si + "-" + (q.no != null ? q.no : qi), q: q, set: st }); }); });
     return out;
   }
-  window.MKONOTE = { open: open, html: html, guess: onGuess, itemsOf: itemsOf };
+  // 틀린 유형 추가 문제 한 회차 전체: 문제편 → 정답·해설편 (출력 → PDF 저장)
+  function setHtml(o) {
+    var out = '<div class="hd"><small>MAKE TOEIC · 메이크토익</small><h1>' + esc(o.title) + '</h1><div class="mt"><span>이름 <b>' + esc(o.name || "") + '</b></span><span>날짜 ' + esc(o.date || "") + '</span><span>' + o.parts.map(function (p) { return "PART " + p.part + " " + p.list.length + "문제"; }).join(" · ") + '</span></div></div>';
+    out += '<table><tr><th>PART</th><th>문제 수</th><th>들어간 유형</th></tr>' + o.parts.map(function (p) { var t = {}; p.list.forEach(function (x) { if (x.type) t[x.type] = (t[x.type] || 0) + 1; }); return "<tr><td>PART " + p.part + "</td><td>" + p.list.length + '</td><td style="text-align:left">' + Object.keys(t).map(function (k) { return esc(k.replace(/^PART \d · /, "")) + " " + t[k]; }).join(" · ") + "</td></tr>"; }).join("") + "</table>";
+    var no = 0;
+    o.parts.forEach(function (p) {
+      out += '<div class="sec">PART ' + p.part + " · 문제 " + p.list.length + "개</div>";
+      var lastSet = null;
+      p.list.forEach(function (x) {
+        var q = x.q, set = x.set; x._n = ++no;
+        if (set && (!lastSet || set.passage !== lastSet.passage)) { out += '<p style="margin:12px 0 4px;font-weight:900">■ 지문 (' + x._n + "번~)</p>" + '<div class="ps">' + psg(set.passage) + "</div>"; lastSet = set; }
+        out += '<div class="q"><span class="no">' + x._n + ".</span>" + (q.q ? blankTxt(q.q) : "") + "<ol>" + (q.options || []).map(function (op, k) { return "<li>(" + L[k] + ") " + esc(op) + "</li>"; }).join("") + "</ol></div>";
+      });
+    });
+    out += '<div style="break-before:page;page-break-before:always"></div><div class="hd"><small>MAKE TOEIC · 메이크토익</small><h1>정답 및 해설</h1><div class="mt"><span>' + esc(o.title) + "</span></div></div>";
+    o.parts.forEach(function (p) {
+      out += "<table><tr><th colspan=\"10\">PART " + p.part + " 정답</th></tr>";
+      for (var i = 0; i < p.list.length; i += 10) out += "<tr>" + p.list.slice(i, i + 10).map(function (x) { return "<td>" + x._n + ". <b>" + L[x.q.answer] + "</b></td>"; }).join("") + "</tr>";
+      out += "</table>";
+    });
+    o.parts.forEach(function (p) {
+      out += '<div class="sec">PART ' + p.part + " · 해설</div>";
+      var lastSet = null;
+      p.list.forEach(function (x) {
+        var q = x.q, set = x.set;
+        if (set && (!lastSet || set.passage !== lastSet.passage)) { if (set.tr || set.translation) out += '<div class="tr"><b>지문 해석 (' + x._n + "번~)</b>\n" + esc(set.tr || set.translation) + "</div>"; lastSet = set; }
+        out += '<div class="q">' + (x.type ? '<span class="ty">' + esc(x.type) + "</span>" : "") + '<span class="no">' + x._n + ".</span>" + (q.q ? blankTxt(q.q) : "") + "<ol>"
+          + (q.options || []).map(function (op, k) { return '<li class="' + (k === q.answer ? "ok" : "") + '">(' + L[k] + ") " + esc(op) + "</li>"; }).join("") + "</ol>"
+          + '<div class="ex">' + (q.translation && !/(^|\n)\s*해석\s*[:：]/.test(q.explain || "") ? "<p><b>해석</b> " + esc(q.translation) + "</p>" : "") + fmt(q.explain) + "</div></div>";
+      });
+    });
+    return out;
+  }
+  function openSet(o) {
+    var d = open({ title: o.title, parts: [] });
+    d.querySelector(".pg").innerHTML = setHtml(o);
+    var t0 = document.title;
+    d.querySelector(".pr").textContent = "🖨 문제+해설 출력 · PDF로 저장";
+    d.querySelector(".pr").onclick = function () { document.title = "메이크토익_" + (o.title || "추가문제").replace(/\s+/g, "_") + "_" + (o.name || ""); window.print(); setTimeout(function () { document.title = t0; }, 1500); };
+    return d;
+  }
+  window.MKONOTE = { open: open, openSet: openSet, html: html, guess: onGuess, itemsOf: itemsOf };
 })();
