@@ -59,6 +59,7 @@ th{background:var(--bg);font-size:13px;color:var(--navy)}
 .sec{font-size:15px;font-weight:800;color:var(--navy);margin:0 0 8px}
 .note{font-size:14px;color:var(--text)}
 .rec{display:grid;grid-template-columns:1fr;gap:6px;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+.rec .rf{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rec .rf .pf{display:inline-flex;align-items:center;gap:6px;background:#FFF1E6;border:1px solid #F3C9A8;border-radius:99px;padding:5px 6px 5px 12px;font-size:13.5px;font-weight:700}.rec .rf .pf button{border:0;background:#fff;border-radius:50%;width:22px;height:22px;font-size:11px;cursor:pointer}.rec .rf label{display:inline-flex;align-items:center;gap:6px;border:1.5px dashed #172844;border-radius:10px;padding:6px 12px;font-size:14px;font-weight:800;cursor:pointer}.rec .rf input[type=file]{display:none}.rec .rf .up{font-size:13px;color:#E95721;font-weight:800}
 @media(min-width:700px){.rec{grid-template-columns:130px 1.2fr 2fr 90px 40px;align-items:center}}
 </style>
 </head>
@@ -593,25 +594,51 @@ function viewRecs() {
     function row(r) {
       return `<div class="rec"><input class="in" type="date" data-k="d" value="${esc(r.d || today())}"><input class="in" data-k="t" placeholder="제목 (예: 11월 3일 LC 수업)" value="${esc(r.t || "")}">
         <input class="in" data-k="u" placeholder="유튜브 주소 붙여넣기" value="${esc(r.u || "")}"><select class="in" data-k="s"><option value="">모든 Season</option>${[1, 2, 3].map(function (n) { return `<option value="${n}" ${+r.s === n ? "selected" : ""}>Season ${n}</option>`; }).join("")}</select>
-        <button class="btn red sm" data-rm>✕</button></div>`;
+        <button class="btn red sm" data-rm>✕</button>
+        <div class="rf" data-f="${esc(JSON.stringify(r.f || []))}"></div></div>`;
+    }
+    // 수업 자료 PDF: 고르면 바로 저장소(study-audio/rec-pdf/)에 올리고, 저장 누르면 영상과 함께 학생에게 보임
+    function drawF(rf) {
+      var F = JSON.parse(rf.dataset.f || "[]");
+      rf.innerHTML = F.map(function (f, i) { return '<span class="pf">📄 <a href="' + esc(f.u) + '" target="_blank" rel="noopener">' + esc(f.n) + '</a><button data-fx="' + i + '" title="빼기">✕</button></span>'; }).join("") +
+        '<label>📎 PDF 첨부<input type="file" accept="application/pdf,.pdf" multiple></label><span class="up"></span>';
+      rf.querySelectorAll("[data-fx]").forEach(function (b) { b.onclick = function () { F.splice(+b.dataset.fx, 1); rf.dataset.f = JSON.stringify(F); drawF(rf); }; });
+      var inp = rf.querySelector("input"), up = rf.querySelector(".up");
+      inp.onchange = function () {
+        var files = Array.prototype.slice.call(inp.files || []); if (!files.length) return;
+        var n = 0; up.textContent = "올리는 중… 0 / " + files.length;
+        files.reduce(function (pr, file) {
+          return pr.then(function () {
+            if (!/\.pdf$/i.test(file.name) && file.type !== "application/pdf") { n++; return; }
+            var path = "rec-pdf/" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + ".pdf";
+            return sb.storage.from("study-audio").upload(path, file, { contentType: "application/pdf", upsert: false }).then(function (r) {
+              if (r.error) throw r.error;
+              var u = sb.storage.from("study-audio").getPublicUrl(path).data.publicUrl;
+              F.push({ n: file.name.replace(/\.pdf$/i, ""), u: u, p: path }); n++; up.textContent = "올리는 중… " + n + " / " + files.length;
+            });
+          });
+        }, Promise.resolve()).then(function () { rf.dataset.f = JSON.stringify(F); drawF(rf); rf.querySelector(".up").textContent = "✔ 올렸어요 · 아래 저장을 눌러야 학생에게 보여요"; })
+          .catch(function (e) { rf.dataset.f = JSON.stringify(F); drawF(rf); rf.querySelector(".up").textContent = "올리지 못했어요: " + (e.message || e); });
+      };
     }
     render(head() + `<div class="card"><p class="sec">당일 수업 녹화 링크</p>
-      <p class="note" style="margin-top:0">유튜브에 <b>일부 공개</b>로 올린 수업 영상 주소를 붙여 넣고 저장하면, 학생 학습실의 빨간 <b>🎥 당일 수업 녹화</b> 버튼에 최신순으로 나와요. Season을 고르면 그 Season 학생에게만 보여요.</p>
+      <p class="note" style="margin-top:0">유튜브에 <b>일부 공개</b>로 올린 수업 영상 주소를 붙여 넣고(수업 자료는 <b>📎 PDF 첨부</b>로 같이 올리고) 저장하면, 학생 학습실의 빨간 <b>🎥 당일 수업 녹화</b> 버튼에 최신순으로 나와요. Season을 고르면 그 Season 학생에게만 보여요.</p>
       <div id="r-list">${list.map(row).join("")}</div>
       <button class="btn ghost" id="r-add" style="width:100%">+ 녹화 영상 추가</button>
       <div id="r-msg"></div><button class="btn" id="r-save" style="width:100%;padding:14px;margin-top:8px">저장</button></div>`);
     bindHead();
     var box = document.getElementById("r-list");
-    function bindRm() { box.querySelectorAll("[data-rm]").forEach(function (b) { b.onclick = function () { b.closest(".rec").remove(); }; }); }
+    function bindRm() { box.querySelectorAll("[data-rm]").forEach(function (b) { b.onclick = function () { b.closest(".rec").remove(); }; }); box.querySelectorAll(".rf:not([data-ok])").forEach(function (rf) { rf.dataset.ok = 1; drawF(rf); }); }
     bindRm();
     document.getElementById("r-add").onclick = function () { box.insertAdjacentHTML("afterbegin", row({ d: today(), t: "", u: "", s: "" })); bindRm(); box.querySelector("[data-k=t]").focus(); };
     document.getElementById("r-save").onclick = function () {
       var out = [], bad = 0;
       box.querySelectorAll(".rec").forEach(function (el) {
         var r = {}; el.querySelectorAll("[data-k]").forEach(function (i) { r[i.dataset.k] = i.value.trim(); });
-        if (!r.u) return;
-        if (!/(youtu\.be\/|youtube\.com\/)/.test(r.u)) { bad++; return; }
-        out.push({ t: r.t || (r.d + " 수업"), d: r.d, u: r.u, s: r.s ? +r.s : null });
+        var f = JSON.parse((el.querySelector(".rf") || {}).dataset ? el.querySelector(".rf").dataset.f || "[]" : "[]");
+        if (!r.u && !f.length) return;
+        if (r.u && !/(youtu\.be\/|youtube\.com\/)/.test(r.u)) { bad++; return; }
+        out.push({ t: r.t || (r.d + " 수업"), d: r.d, u: r.u, s: r.s ? +r.s : null, f: f.length ? f : undefined });
       });
       var msg = document.getElementById("r-msg");
       if (bad) { msg.innerHTML = '<div class="msg err">유튜브 주소가 아닌 칸이 ' + bad + "개 있어요.</div>"; return; }

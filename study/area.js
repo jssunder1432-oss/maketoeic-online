@@ -32,7 +32,7 @@ function viewRoom() {
 function inSea(s) { return s.group === "A급 과제" ? serOf(s) === curSer() : (!seasonOf([s]) || seasonOf([s]) === curSer()); }
 function bmSea() { return bmList().filter(function (k) { var id = k.split(":")[0]; return S.catalog.sections.some(function (s) { return s.id === id && s.area === S.area && inSea(s); }); }); }
 // ---------- 당일 수업 녹화 (유튜브) — 목록 = content "videos".rec = [{t:제목, d:"2026-11-03", u:유튜브 주소, s:시즌(없으면 모든 시즌)}] ----------
-function recList() { var R = (S.videos && S.videos.rec) || []; return R.filter(function (r) { return r && r.u && (!r.s || +r.s === curSer()); }).sort(function (a, b) { return String(b.d || "").localeCompare(String(a.d || "")); }); }
+function recList() { var R = (S.videos && S.videos.rec) || []; return R.filter(function (r) { return r && (r.u || (r.f && r.f.length)) && (!r.s || +r.s === curSer()); }).sort(function (a, b) { return String(b.d || "").localeCompare(String(a.d || "")); }); }
 function ytKey(u) { var m = String(u || "").match(/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)([\w-]{11})/); return m ? m[1] : null; }
 function recBox() {
   var L = recList();
@@ -41,13 +41,14 @@ function recBox() {
 function viewRec(i) {
   var L = recList();
   if (i == null || !L[i]) {
-    render(topbar("당일 수업 녹화") + `<div class="card hero"><span class="kicker">MAKE TOEIC · 당일 수업 녹화</span><h1>🎥 수업 다시 보기</h1><p>Season ${curSer()} · 최신 수업이 맨 위에 있어요.</p></div>` + (L.length ? L.map(function (r, k) { return `<button class="row" data-go="#/rec/${k}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(r.t || "수업 녹화")}</b><small>${esc(r.d || "")}</small></span>›</button>`; }).join("") : '<div class="empty">아직 올라온 수업 녹화가 없어요.</div>'));
+    render(topbar("당일 수업 녹화") + `<div class="card hero"><span class="kicker">MAKE TOEIC · 당일 수업 녹화</span><h1>🎥 수업 다시 보기</h1><p>Season ${curSer()} · 최신 수업이 맨 위에 있어요.</p></div>` + (L.length ? L.map(function (r, k) { return `<button class="row" data-go="#/rec/${k}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(r.t || "수업 녹화")}</b><small>${esc(r.d || "")}${(r.f || []).length ? " · 📄 PDF " + r.f.length + "개" : ""}</small></span>›</button>`; }).join("") : '<div class="empty">아직 올라온 수업 녹화가 없어요.</div>'));
     bindCommon(); return;
   }
   var r = L[i], k = ytKey(r.u);
   render(topbar("당일 수업 녹화") +
-    `<div style="border-radius:14px;overflow:hidden;background:#000;margin-bottom:10px">${k ? `<iframe src="https://www.youtube-nocookie.com/embed/${k}?rel=0&modestbranding=1&playsinline=1" style="display:block;width:100%;aspect-ratio:16/9;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : '<div class="empty" style="color:#fff">영상 주소를 확인해 주세요.</div>'}</div>` +
+    (r.u ? `<div style="border-radius:14px;overflow:hidden;background:#000;margin-bottom:10px">${k ? `<iframe src="https://www.youtube-nocookie.com/embed/${k}?rel=0&modestbranding=1&playsinline=1" style="display:block;width:100%;aspect-ratio:16/9;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : '<div class="empty" style="color:#fff">영상 주소를 확인해 주세요.</div>'}</div>` : "") +
     `<div class="card"><b style="font-size:17px">${esc(r.t || "수업 녹화")}</b><p style="margin:6px 0 0;color:#172844">${esc(r.d || "")}</p></div>` +
+    ((r.f || []).length ? `<div class="grp">📄 수업 자료 PDF</div>` + r.f.map(function (f) { return `<a class="row" href="${esc(f.u)}" target="_blank" rel="noopener" download="${esc(f.n)}.pdf" style="text-decoration:none"><span class="pill" style="background:#172844;color:#fff">PDF</span><span class="t"><b>${esc(f.n)}</b><small>눌러서 보기 · 내려받기</small></span>⬇</a>`; }).join("") : "") +
     (L.length > 1 ? `<div class="grp">다른 수업 녹화</div>` + L.map(function (x, n) { return n === +i ? "" : `<button class="row" data-go="#/rec/${n}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(x.t || "수업 녹화")}</b><small>${esc(x.d || "")}</small></span>›</button>`; }).join("") : ""));
   bindCommon();
 }
