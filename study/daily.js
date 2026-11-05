@@ -59,7 +59,8 @@ function dgWeak() {
     DG_WEAK = w; return w;
   });
 }
-function dgKey(part) { return "dg:" + dgYmd(new Date()) + ":" + part; }
+function dgKey(part) { return "dg:" + dgYmd(new Date()) + ":" + part + (part === 5 ? "a" : ""); }
+function dgIsVoc(x) { var t = x.q.qtype || (x.sec && x.sec.qtype) || onGuess(x.q, x.set, 5) || ""; return /^어휘|전치사 선택/.test(t); }
 function dgLoadKeys(keys, part) {
   var ids = []; keys.forEach(function (k) { var id = k.split(":")[0]; if (ids.indexOf(id) < 0) ids.push(id); });
   return Promise.all(ids.map(function (id) { return load("sec:" + id).catch(function () { return null; }); })).then(function (secs) {
@@ -82,28 +83,23 @@ function dgSets(secs, part, weak, n, seed) {
   return pick;
 }
 // 오늘 문제 고르기
-//  기초 다지기: PART 5 = 교재 단원 문제 8 + 같은 유형 연습 4 / PART 6 = 유형 연습 1지문 / PART 7 = 유형 연습 1지문
-//  실전 다지기: PART 5 = 틀린 유형 15(A급 변형 + 유형 연습) / PART 6 = A급 변형 1지문 / PART 7 = A급 변형 2지문
+//  PART 5 = A급 과제 변형 문제, 문법 10 + 어휘 (기초 5 / 실전 10) — 문법·어휘 섞지 않고 따로
+//  기초 다지기: PART 6 = 유형 연습 1지문 / PART 7 = 유형 연습 1지문
+//  실전 다지기: PART 6 = A급 변형 1지문 / PART 7 = A급 변형 2지문
 function dgPick(part, weak, u5) {
   var saved; try { saved = JSON.parse(ls(dgKey(part)) || "null"); } catch (e) { saved = null; }
   if (saved && saved.length) return dgLoadKeys(saved, part);
   var seed = dgYmd(new Date()) * 10 + part + (S.profile && S.profile.name ? S.profile.name.length * 7 : 0);
   var wt = Object.keys(weak[part] || {}), basic = weak.basic, job;
   if (part === 5) {
-    if (basic) {
-      job = Promise.all([dgLoadAll([u5[1]]), dgLoadAll(dgShuffle(onIds5(ON_T5[u5[3]] || "pos"), seed).slice(0, 2))]).then(function (x) {
-        var a = dgShuffle(dgItems(x[0]), seed).slice(0, 8), b = dgShuffle(dgItems(x[1]), seed + 1).slice(0, 12 - a.length);
-        return a.concat(b);
-      });
-    } else {
-      var sl = wt.map(function (t) { return ON_T5[t]; }).filter(Boolean), ids = [];
-      if (!sl.length) sl = Object.keys(ON_T5).map(function (t) { return ON_T5[t]; });
-      sl.forEach(function (s) { ids = ids.concat(onIds5(s)); });
-      job = Promise.all([dgLoadAll(dgShuffle(DG_V[5], seed).slice(0, 4)), dgLoadAll(dgShuffle(ids, seed).slice(0, 3))]).then(function (x) {
-        var a = dgShuffle(dgItems(x[0], wt), seed).slice(0, 9), b = dgShuffle(dgItems(x[1]), seed + 1).slice(0, 15 - a.length);
-        return a.concat(b);
-      });
-    }
+    // PART 5 = A급 과제 기준(A급 과제 변형 문제), 문법·어휘를 따로 나눠서 준다
+    var nG = 10, nV = basic ? 5 : 10, pt = basic ? u5[3] : "";
+    job = dgLoadAll(dgShuffle(DG_V[5], seed).slice(0, 6)).then(function (secs) {
+      var all = dgShuffle(dgItems(secs), seed), G = [], V = [];
+      all.forEach(function (x) { (dgIsVoc(x) ? V : G).push(x); });
+      function rank(a) { return a.map(function (x, i) { var t = x.q.qtype || ""; return { x: x, s: (t === pt ? 2 : 0) + (wt.indexOf(t) >= 0 ? 1 : 0), i: i }; }).sort(function (p, q) { return q.s - p.s || p.i - q.i; }).map(function (o) { return o.x; }); }
+      return rank(G).slice(0, nG).concat(rank(V).slice(0, nV));
+    });
   } else {
     var ids2 = basic ? ON_BANK[part] : DG_V[part];
     job = dgLoadAll(dgShuffle(ids2, seed).slice(0, 3)).then(function (secs) { return dgSets(secs, part, weak, basic ? 1 : (part === 6 ? 1 : 2), seed + 2); });
@@ -139,9 +135,9 @@ function viewDG() {
     function row(ic, t, sub, btn, done, prog, pg) {
       return '<div class="card" style="display:flex;align-items:center;gap:12px;padding:16px;' + (done ? 'background:#F1F8F4;border-color:#9BD3B4' : '') + '"><div style="font-size:26px">' + (done ? "✅" : ic) + '</div><div style="flex:1;min-width:0"><b style="font-size:17px">' + t + '</b><div style="font-size:13.5px;color:#3A4250;margin-top:2px">' + sub + '</div>' + (pg ? pgTag(pg) : "") + (prog ? '<div style="font-size:13px;font-weight:800;margin-top:4px">' + prog + '</div>' : '') + '</div>' + btn + '</div>';
     }
-    function topW(part) { var o = w[part] || {}; return Object.keys(o).sort(function (a, b) { return o[b] - o[a]; }).slice(0, 2).map(function (t) { return t.replace(/^PART \d · /, ""); }); }
+    function topW(part) { var o = w[part] || {}; return Object.keys(o).sort(function (a, b) { return o[b] - o[a]; }).slice(0, part === 5 ? 4 : 2).map(function (t) { return t.replace(/^PART \d · /, ""); }); }
     function qbtn(p, s) { return '<button class="btn sm" data-dg="' + p + '"' + (s.n ? "" : " disabled") + '>' + (s.k ? "이어 풀기" : "풀기") + '</button>'; }
-    var s5 = st(L[5]), s6 = st(L[6]), s7 = st(L[7]), tw5 = topW(5), tw6 = topW(6), tw7 = topW(7), basic = w.basic;
+    var tw5 = topW(5), L5g = L[5].filter(function (x) { return !dgIsVoc(x); }), L5v = L[5].filter(dgIsVoc), s5g = st(L5g), s5v = st(L5v), tw5g = tw5.filter(function (t) { return !/^어휘|전치사 선택/.test(t); }), tw5v = tw5.filter(function (t) { return /^어휘|전치사 선택/.test(t); }), s5 = st(L[5]), s6 = st(L[6]), s7 = st(L[7]), tw6 = topW(6), tw7 = topW(7), basic = w.basic;
     var allDone = s5.done && s6.done && s7.done;
     var p2t = p2.secs.map(function (x) { var t = secStats(x); return { x: x, t: t }; });
     render(topbar("매일 과제") +
@@ -149,7 +145,8 @@ function viewDG() {
       '<div class="card peach" style="font-size:14px"><b>💡 오늘의 문법 포인트 · ' + esc(u5[0]) + '</b><br>' + esc(u5[4]) + '<br>' + pgTag("p." + u5[2] + " KEY POINT") + '</div>' +
       row("📖", "단어 암기 · VOCA DAY " + String(vd).padStart(2, "0"), "단어 외우기 → 카드 → 단어 시험까지", '<button class="btn sm" data-go="#/v/' + vd + '">열기</button>', false, "", "") +
       (p2t.length ? row("🎧", "PART 2 듣기 · " + esc(p2.u.nm), "교재 진도 · 오늘 " + p2t.length + "챕터", '<div style="display:grid;gap:6px">' + p2t.map(function (o) { return '<button class="btn sm" data-go="#/s/' + encodeURIComponent(o.x.id) + '">' + esc(o.x.title.replace(/ 의문[사문]$/, "")) + '</button>'; }).join("") + '</div>', p2t.every(function (o) { return o.t.total && o.t.done >= o.t.total; }), p2t.map(function (o) { return esc(o.x.title.replace(/ 의문[사문]$/, "")) + " " + o.t.done + " / " + o.t.total; }).join(" · "), "p." + p2.u.pg + " (정답 패턴 → 기출 → 마킹 시트)") : "") +
-      row("✏️", "PART 5 · " + s5.n + "문제", basic ? "교재 단원 ‘" + esc(u5[0]) + "’ 문제 + 같은 유형 연습" : (tw5.length ? "집중 유형: " + esc(tw5.join(", ")) + " (A급 과제 변형 문제)" : "문법 · 어휘 골고루"), qbtn(5, s5), s5.done, s5.k + " / " + s5.n, "p." + u5[2] + " " + u5[0] + (basic ? " 풀고 오기" : " 복습")) +
+      row("✏️", "PART 5 문법 · " + s5g.n + "문제", "A급 과제 문법 문제" + (tw5g.length ? " · 집중 유형: " + esc(tw5g.join(", ")) : ""), qbtn("5g", s5g), s5g.done, s5g.k + " / " + s5g.n, "p." + u5[2] + " " + u5[0] + (basic ? " 풀고 오기" : " 복습")) +
+      row("🔤", "PART 5 어휘 · " + s5v.n + "문제", "A급 과제 어휘 문제" + (tw5v.length ? " · 집중 유형: " + esc(tw5v.join(", ")) : ""), qbtn("5v", s5v), s5v.done, s5v.k + " / " + s5v.n, "") +
       '<div id="dg-on5" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
       row("📄", "PART 6 · 지문 1개 (" + s6.n + "문제)", tw6.length ? "집중 유형: " + esc(tw6.join(", ")) : "문법 · 어휘 · 접속부사 · 문장 고르기", qbtn(6, s6), s6.done, s6.k + " / " + s6.n, "") +
       '<div id="dg-on6" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
@@ -171,9 +168,9 @@ function viewDG() {
       onBind(box, wb, "#/dg", { title: "매일 과제 Day " + day + " (" + (d.getMonth() + 1) + "/" + d.getDate() + ") · PART " + p.part, parts: [p] }); onLastBind(box);
     });
     app.querySelectorAll("[data-dg]").forEach(function (b) { b.onclick = function () {
-      var p = +b.dataset.dg, list = L[p].filter(function (x) { return !S.prog[x.key]; });
-      if (!list.length) list = L[p];
-      mixQuiz("매일 과제 · PART " + p, "RC", list, "#/dg");
+      var d0 = b.dataset.dg, p = parseInt(d0, 10), src = d0 === "5g" ? L5g : d0 === "5v" ? L5v : L[p], list = src.filter(function (x) { return !S.prog[x.key]; });
+      if (!list.length) list = src;
+      mixQuiz("매일 과제 · PART " + (d0 === "5g" ? "5 문법" : d0 === "5v" ? "5 어휘" : p), "RC", list, "#/dg");
     }; });
   }).catch(function (e) { render(topbar("매일 과제") + '<div class="empty">과제를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.</div>'); bindCommon(); });
 }
