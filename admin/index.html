@@ -158,7 +158,7 @@ function pwForm() {
 function head() {
   return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : view === "ot" ? "OT 기초 진단 · 매일 공부 가이드" : "수강생 관리"}</h1></div>
   <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 기초 진단</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
-  <span style="flex:1"></span><button class="btn ghost sm" onclick="location.replace(location.pathname+'?v='+Date.now())">🔄 최신으로</button><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button></div>`;
+  <span style="flex:1"></span><button class="btn ghost sm" onclick="location.replace(location.pathname+'?v='+Date.now())">🔄 최신으로</button><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button><a class="btn navy sm" href="/" style="text-decoration:none">🏠 나가기</a></div>`;
 }
 function bindHead() {
   app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "hw" ? viewHw() : view === "ot" ? viewOt() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
