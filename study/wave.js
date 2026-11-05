@@ -138,8 +138,14 @@ function ebScan() {
   (function vis() {
     if (!document.contains(box)) return;
     var a = document.getElementById("eb-au"), s = a && a.src;
-    if (!a || !document.contains(a)) { box.remove(); return; }
+    if (!a || !document.contains(a)) { box.remove(); document.querySelectorAll(".eb-camf,.eb-audf,.eb-inkf").forEach(function (b) { b.style.bottom = ""; }); return; }
     box.style.display = s && s !== hid ? "" : "none";
+    // 캡처·음원·필기 떠 있는 버튼이 음파에 가리지 않게: 음파가 보이면 버튼을 음파 위로 올림
+    var up = box.style.display === "" ? Math.ceil(box.getBoundingClientRect().height) + 20 : 0;
+    document.querySelectorAll(".eb-camf,.eb-audf,.eb-inkf").forEach(function (b) {
+      var v = up ? "calc(" + up + "px + env(safe-area-inset-bottom))" : "";
+      if (b.style.bottom !== v) { b.style.bottom = v; b.style.transition = "bottom .2s"; }
+    });
     setTimeout(vis, 300);
   })();
 }
