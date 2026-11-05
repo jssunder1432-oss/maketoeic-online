@@ -83,17 +83,17 @@ function dgSets(secs, part, weak, n, seed) {
   return pick;
 }
 // 오늘 문제 고르기 — A급 과제와 같은 구성 (Day N = A급 과제 N회 구성, 15일마다 다음 변형으로)
-//  PART 5: 1~8회 문법만, 9~15회 어휘만 / PART 6: 4지문 / PART 7: 그 회차와 같은 지문 수 — 전부 그 회차 문제의 변형 문제
+//  PART 5: 1~8회 문법만, 9~15회 어휘만 / PART 6 / PART 7 — 그 회차 A급 과제 문제 그대로, 풀고 나면 틀린 유형별 맞춤 추가문제(변형)
 function dgRound(day) { return (day - 1) % 15 + 1; }
 function dgASec(r, part) { var ser = curSer(); return ((S.catalog || {}).sections || []).filter(function (s) { return s.group === "A급 과제" && +s.round === r && +s.part === part && serOf(s) === ser; })[0]; }
 function dgPick(part, day) {
-  var k = "dg2:" + dgYmd(new Date()) + ":" + part + ":" + curSer(), saved;
+  var k = "dg3:" + dgYmd(new Date()) + ":" + part + ":" + curSer(), saved;
   try { saved = JSON.parse(ls(k) || "null"); } catch (e) { saved = null; }
   if (saved && saved.length) return dgLoadKeys(saved, part);
   var r = dgRound(day), v = Math.floor((day - 1) / 15), sc = dgASec(r, part);
   if (!sc) return Promise.resolve([]);
   return Promise.all([sc.keys ? Promise.resolve(sc.keys) : load("sec:" + sc.id).then(function (x) { return itemsOf(x).map(function (y) { return y.key; }); }), onVmap()]).then(function (x) {
-    var keys = x[0].map(function (o) { var L = x[1][o] || []; return L.length ? L[v % L.length] : null; }).filter(Boolean);
+    var keys = x[0].slice(); // A급 과제 그 회차 문제 그대로 (변형 문제는 아래 '유형별 강화 추가문제'로)
     return dgLoadKeys(keys, part);
   }).then(function (pick) { pick = pick || []; if (pick.length) ls(k, JSON.stringify(pick.map(function (x) { return x.key; }))); return pick; });
 }
@@ -129,15 +129,15 @@ function viewDG() {
     var allDone = s5.done && s6.done && s7.done;
     var p2t = p2.secs.map(function (x) { var t = secStats(x); return { x: x, t: t }; });
     render(topbar("매일 과제") +
-      '<div class="card hero"><span class="kicker">' + (d.getMonth() + 1) + "월 " + d.getDate() + '일 · Day ' + day + ' · A급 과제 ' + r5 + '회 구성</span><h1 style="margin:4px 0">오늘의 과제</h1><p>' + (allDone ? "오늘 문제를 다 풀었어요! 👏 내일 새 과제가 나와요." : "위에서부터 순서대로 하면 돼요. 내일이 되면 새 과제로 바뀌어요.") + "<br><small>A급 과제 " + r5 + "회와 같은 구성(PART 5 " + (r5 <= 8 ? "문법" : "어휘") + " · PART 6 · PART 7)의 변형 문제예요.</small>" + '</p></div>' +
+      '<div class="card hero"><span class="kicker">' + (d.getMonth() + 1) + "월 " + d.getDate() + '일 · Day ' + day + ' · A급 과제 ' + r5 + '회</span><h1 style="margin:4px 0">오늘의 과제</h1><p>' + (allDone ? "오늘 문제를 다 풀었어요! 👏 내일 새 과제가 나와요." : "위에서부터 순서대로 하면 돼요. 내일이 되면 새 과제로 바뀌어요.") + "<br><small>A급 과제 " + r5 + "회(PART 5 " + (r5 <= 8 ? "문법" : "어휘") + " · PART 6 · PART 7)를 그대로 풀어요. 풀고 나면 틀린 유형을 분석해서 아래에 맞춤 추가문제(변형 문제)가 나와요.</small>" + '</p></div>' +
       '<div class="card peach" style="font-size:14px"><b>💡 오늘의 ' + (r5 <= 8 ? "문법" : "어휘") + ' 포인트 · ' + esc(u5[0]) + '</b><br>' + esc(u5[4]) + '<br>' + pgTag("p." + u5[2] + " KEY POINT") + '</div>' +
       row("📖", "단어 암기 · VOCA DAY " + String(vd).padStart(2, "0"), "단어 외우기 → 카드 → 단어 시험까지", '<button class="btn sm" data-go="#/v/' + vd + '">열기</button>', false, "", "") +
       (p2t.length ? row("🎧", "PART 2 듣기 · " + esc(p2.u.nm), "교재 진도 · 오늘 " + p2t.length + "챕터", '<div style="display:grid;gap:6px">' + p2t.map(function (o) { return '<button class="btn sm" data-go="#/s/' + encodeURIComponent(o.x.id) + '">' + esc(o.x.title.replace(/ 의문[사문]$/, "")) + '</button>'; }).join("") + '</div>', p2t.every(function (o) { return o.t.total && o.t.done >= o.t.total; }), p2t.map(function (o) { return esc(o.x.title.replace(/ 의문[사문]$/, "")) + " " + o.t.done + " / " + o.t.total; }).join(" · "), "p." + p2.u.pg + " (정답 패턴 → 기출 → 마킹 시트)") : "") +
-      row(r5 <= 8 ? "✏️" : "🔤", "PART 5 " + (r5 <= 8 ? "문법" : "어휘") + " · " + s5.n + "문제", "A급 과제 " + r5 + "회 구성 · " + (r5 <= 8 ? "문법만" : "어휘만") + " (변형 문제)", qbtn(5, s5), s5.done, s5.k + " / " + s5.n, "p." + u5[2] + " " + u5[0] + " 복습") +
+      row(r5 <= 8 ? "✏️" : "🔤", "PART 5 " + (r5 <= 8 ? "문법" : "어휘") + " · " + s5.n + "문제", "A급 과제 " + r5 + "회 · " + (r5 <= 8 ? "문법만" : "어휘만") + " · A급 과제 " + r5 + "회 문제", qbtn(5, s5), s5.done, s5.k + " / " + s5.n, "p." + u5[2] + " " + u5[0] + " 복습") +
       '<div id="dg-on5" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
-      row("📄", "PART 6 · 지문 " + dgSetN(L[6]) + "개 (" + s6.n + "문제)", "A급 과제 " + r5 + "회 구성 · 문법 · 어휘 · 접속부사 · 문장 고르기", qbtn(6, s6), s6.done, s6.k + " / " + s6.n, "") +
+      row("📄", "PART 6 · 지문 " + dgSetN(L[6]) + "개 (" + s6.n + "문제)", "A급 과제 " + r5 + "회 · 문법 · 어휘 · 접속부사 · 문장 고르기", qbtn(6, s6), s6.done, s6.k + " / " + s6.n, "") +
       '<div id="dg-on6" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
-      row("📰", "PART 7 · 지문 " + dgSetN(L[7]) + "개 (" + s7.n + "문제)", "A급 과제 " + r5 + "회 구성 · 세부 사항 · 사실 확인 · 추론 등", qbtn(7, s7), s7.done, s7.k + " / " + s7.n, "p." + p7pg + " 지문 1세트" + (day === 1 ? " · p.98 유형별 풀이법 먼저" : "")) +
+      row("📰", "PART 7 · 지문 " + dgSetN(L[7]) + "개 (" + s7.n + "문제)", "A급 과제 " + r5 + "회 · 세부 사항 · 사실 확인 · 추론 등", qbtn(7, s7), s7.done, s7.k + " / " + s7.n, "p." + p7pg + " 지문 1세트" + (day === 1 ? " · p.98 유형별 풀이법 먼저" : "")) +
       '<div id="dg-on7" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
       '<div class="card" style="font-size:13.5px;color:#3A4250">📘 표시는 메이크토익 교재 쪽수예요. 교재로 먼저 풀고 학습실 문제로 확인하세요. 틀린 문제는 해설의 ‘의식의 흐름’을 소리 내 읽고, 다음 날 시작 전에 한 번 더 보세요.</div>');
     bindCommon();
