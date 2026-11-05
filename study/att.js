@@ -6,7 +6,7 @@
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
 var FN = T(function () {/*// 출석 도장 — study/att.js
 var ATT_MONTHS = { "2026-11": ["2026-11-04", "2026-11-27"] };
-var ATT_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+var ATT_HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
 function attYmd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function attDays(d0) {
   var y = d0.getFullYear(), m = d0.getMonth(), key = y + "-" + String(m + 1).padStart(2, "0"), R = ATT_MONTHS[key];
