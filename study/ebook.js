@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psQ").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psQ").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -306,16 +306,11 @@ function ebPlay(m, a, onEnd) {
   if (au.dataset.src !== src) { au.dataset.src = src; au.src = src; au.preload = "auto"; au.onloadedmetadata = function () { if (run === EBP.stop) seekPlay(); }; au.load(); var p = au.play(); if (p && p.catch) p.catch(function () { }); }
   else seekPlay();
 }
-// 문장만 잘라 틀지 않고, 그 문장이 든 지문(대화·담화·문항) 원음 전체를 튼다:
-//  같은 쪽에 그 문장을 품는 더 긴 구간(지문 전체·문항 전체)이 있으면 그것, 없으면 같은 음원에서 이어지는 문장들을 묶은 덩어리
-function ebWhole(A, a) {
-  if (!a || !a[2]) return a;
-  var best = a;
-  (A || []).forEach(function (b) { if (b && b[0] === a[0] && (+b[1] || 0) <= +a[1] + 0.05 && (!b[2] || +b[2] >= +a[2] - 0.05) && (!b[2] ? 1e9 : b[2] - b[1]) > (!best[2] ? 1e9 : best[2] - best[1])) best = b; });
-  if (best !== a) return best;
-  var L = (A || []).filter(function (b) { return b && b[0] === a[0] && b[2]; }).sort(function (p, q) { return p[1] - q[1]; }), st = +a[1], en = +a[2], moved = true;
-  while (moved) { moved = false; L.forEach(function (b) { if (+b[1] < st && +b[2] >= st - 1.2) { st = +b[1]; moved = true; } if (+b[2] > en && +b[1] <= en + 1.2) { en = +b[2]; moved = true; } }); }
-  return [a[0], Math.max(0, st - 0.1), en + 0.2];
+// 문장을 누르면 그 문항(질문·정답 등) 원음을 한 번씩만 순서대로 — 같은 구간은 다시 틀지 않는다(반복 없음)
+function ebGrp(d, i) { var A = d.a || [], g = d.aq && d.aq[i]; return (g && g.length ? g : [i]).map(function (j) { return A[j]; }).filter(Boolean); }
+function ebSeq(m, L, onEnd) {
+  var i = 0, tok;
+  (function nx() { if (i >= L.length) { if (onEnd) onEnd(); return; } var a = L[i++]; ebPlay(m, a, function () { var t = EBP.stop; setTimeout(function () { if (t === EBP.stop) nx(); }, 450); }); tok = EBP.stop; })();
 }
 function ebSideClose() { var x = document.querySelector(".mkst .eb-side"); if (x) x.remove(); var r = document.querySelector(".mkst"); if (r) r.classList.remove("eb-sideon"); }
 window.addEventListener("hashchange", function () { if (!/^#\/eb\//.test(location.hash)) ebSideClose(); });
@@ -508,7 +503,7 @@ document.addEventListener("keydown", function (e) { if (!EBI.on || (e.key !== "B
 window.addEventListener("hashchange", function () { if (EBI.on) { EBI.on = false; var b = document.querySelector(".mkst .eb-inkbar"); if (b) b.remove(); var h = document.querySelector(".mkst"); if (h) h.classList.remove("eb-inking"); } });
 // 한 단어 여러 품사: 이 문장에서 쓰인 용도를 맨 위(우선)로, 다른 쓰임은 아래에
 var EB_ALT = null;
-function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
+function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psQ").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
 function ebAltShow(pop, word, g) {
   var k = String(word || "").toLowerCase().replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
   ebAlt().then(function (A) {
@@ -595,9 +590,7 @@ function ebDraw(m, d) {
   // 예문 음원이 있는 쪽(파트2 이론·표현 정리 등): 쪽 예문 전체 듣기 · 음원 받기
   if (!(d.t || []).length && !(d.ft || []).length) {
     var ex = [], ek = {};
-    W.forEach(function (w) { var a = (d.aw && d.aw[w[5]]) || A[w[5]]; if (w[5] < 0 || !a) return; var k = a.join("|"); if (ek[k]) return; ek[k] = 1; ex.push(a); });
-    ex = ex.map(function (a) { return ebWhole(A, a); }); var exk = {}; ex = ex.filter(function (a) { var k = a.join("|"); if (exk[k]) return false; exk[k] = 1; return true; });
-    ex = ex.filter(function (a, i) { return !ex.some(function (b, j) { return j !== i && b[0] === a[0] && b[1] <= a[1] && b[2] >= a[2] && (b[2] - b[1] > a[2] - a[1]); }); });
+    W.forEach(function (w) { var a = A[w[5]]; if (w[5] < 0 || !a) return; var k = a.join("|"); if (ek[k]) return; ek[k] = 1; ex.push(a); });
     var tk2 = app.querySelector("#eb-trk");
     if (ex.length && tk2) {
       tk2.style.display = "block";
@@ -758,7 +751,7 @@ function ebDraw(m, d) {
   }
   ov.onclick = function (e) {
     var el = e.target.closest(".eb-w"); if (!el) return;
-    var w = W[+el.dataset.i], g = w[4] >= 0 ? G[w[4]] : null, a = w[5] >= 0 ? ((d.aw && d.aw[w[5]]) || ebWhole(A, A[w[5]])) : null;
+    var w = W[+el.dataset.i], g = w[4] >= 0 ? G[w[4]] : null, a = w[5] >= 0 && A[w[5]] ? ebGrp(d, w[5]) : null;
     if (PPM[+el.dataset.i]) { var pk = +el.dataset.i; if (ppOn[pk]) { delete ppOn[pk]; ebPpDraw(); ebHide(); return; } ppOn[pk] = 1; ebPpDraw(); }
     var sk = undefined; // 주어·동사·목적어 색 박스 표시는 끔 (2026-11-05 요청)
     if (sk !== undefined) { if (svOn === sk) { svOn = -1; ebSvDraw(); ebHide(); return; } svOn = sk; ebSvDraw(); }
@@ -766,7 +759,7 @@ function ebDraw(m, d) {
     ebHide();
     el.classList.add("on");
     if (g && g[4]) ov.querySelectorAll(".eb-w").forEach(function (x) { var y = W[+x.dataset.i]; if (y[4] === w[4]) x.classList.add("on"); });
-    if (a) ov.querySelectorAll(".eb-w").forEach(function (x) { if (W[+x.dataset.i][5] === w[5] && !x.classList.contains("on")) x.classList.add("play"); });
+    if (a) { var gi = (d.aq && d.aq[w[5]]) || [w[5]]; ov.querySelectorAll(".eb-w").forEach(function (x) { if (gi.indexOf(W[+x.dataset.i][5]) >= 0 && !x.classList.contains("on")) x.classList.add("play"); }); }
     var word = w[6] || (g && g[3]) || "";
     var pop = document.createElement("div"); pop.className = "eb-pop";
     pop.innerHTML = `<button class="x" aria-label="닫기">×</button>` +
@@ -780,8 +773,8 @@ function ebDraw(m, d) {
     if (svb) { svDraw(); svb.onclick = function () { ebVocToggle(vw); svDraw(); }; }
     pop.querySelector(".x").onclick = function () { ebHide(); stopPlay(); EBP.stop++; };
     if (a) {
-      ebPlay(m, a);
-      pop.querySelector('[data-p="1"]').onclick = function () { ebPlay(m, a); };
+      ebSeq(m, a);
+      pop.querySelector('[data-p="1"]').onclick = function () { ebSeq(m, a); };
       pop.querySelector('[data-p="0"]').onclick = function () { stopPlay(); EBP.stop++; };
     }
   };
