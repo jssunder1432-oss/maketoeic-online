@@ -137,7 +137,7 @@ function fxTap(el, e) {
   // 구조 / 전치사 중앙선
   var pp = rc && isItem && canSv ? fxPpOf(X, ti) : null;
   if (pp) { if (FXS.pp[ti] && FXS.root === root) { delete FXS.pp[ti]; fxPpDraw(root, X); ebHide(); return; } if (FXS.root !== root) FXS.pp = {}; FXS.root = root; FXS.pp[ti] = pp; fxPpDraw(root, X); }
-  else if (canSv) { var k = fxSentOf(X, ti); if (k >= 0 && FXS.root === root && FXS.k === k && el.classList.contains("on")) { fxClear(); FXS.k = -1; ebHide(); root.querySelectorAll(".on").forEach(function (x) { x.classList.remove("on"); }); return; } if (k !== FXS.k || FXS.root !== root) fxSvDraw(root, X, k); }
+  else if (false) { var k = fxSentOf(X, ti); if (k >= 0 && FXS.root === root && FXS.k === k && el.classList.contains("on")) { fxClear(); FXS.k = -1; ebHide(); root.querySelectorAll(".on").forEach(function (x) { x.classList.remove("on"); }); return; } if (k !== FXS.k || FXS.root !== root) fxSvDraw(root, X, k); }
   ebHide(); document.querySelectorAll(".mkst .fxr .on,.mkst .fxr .ck").forEach(function (x) { x.classList.remove("on"); x.classList.remove("ck"); });
   el.classList.add("on");
   var p = el.dataset.p || "", m = el.dataset.m || "", b = el.dataset.b || "", L = X.F.L || [], extra = [];
@@ -149,7 +149,7 @@ function fxTap(el, e) {
   var au = fxAudOf(el);
   pop.innerHTML = '<button class="x" aria-label="닫기">×</button><div><span class="wd">' + esc(word) + "</span>" + (p ? '<span class="ps">' + esc(p) + "</span>" : "") + (b ? '<span class="bs">원형 ' + esc(b) + "</span>" : "") + "</div>" + (m ? '<div class="mn">' + esc(m) + "</div>" : "") +
     extra.map(function (x) { return '<div class="fxl">' + x + "</div>"; }).join("") +
-    (canSv && sk >= 0 && !pp ? '<div class="fxl" style="color:#1F5FD6">🧱 문장 구조를 위에 표시했어요 · 같은 단어를 한 번 더 누르면 사라져요</div>' : rc && root.dataset.bl && !fxGraded(root) ? '<div class="fxl">🧱 문장 구조는 채점한 뒤에 보여요</div>' : "") +
+
     '<div class="pl">' + (au ? '<button data-fp="1">▶ 이 문장 듣기</button><button class="g" data-fp="0">■ 멈춤</button>' : "") + (m ? '<button class="g sv" data-sv="1">☆ 단어장 저장</button>' : "") + "</div>";
   (document.querySelector(".mkst") || document.body).appendChild(pop); if (typeof ebPopFollow === "function") ebPopFollow(pop);
   if (p && m) ebAltShow(pop, word, [p, m, b]);
