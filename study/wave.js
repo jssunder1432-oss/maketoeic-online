@@ -81,6 +81,7 @@ function build(host, getA, plBtn, cls) {
   function setPl(t) { var p = plBtn && plBtn(); if (p) p.textContent = t; }
   function playFrom(t, asRange) {
     var x = au(); if (!x) return; range = !!asRange; clearTimeout(wait);
+    if (cls === "eb") { x.ontimeupdate = null; x.onended = null; x.onseeked = null; }
     try { x.currentTime = t; } catch (e) { }
     x.play().then(function () { setPl("❚❚"); }).catch(function () { });
   }
@@ -121,5 +122,26 @@ function scan() {
     }
   }
 }
-var tmo = 0; new MutationObserver(function () { clearTimeout(tmo); tmo = setTimeout(scan, 60); }).observe(document.documentElement, { childList: true, subtree: true });
+// 3) 교재(전자책) 예문 음원: 화면 아래에 음파 (예문을 누르면 그 음원이 보여요)
+function ebScan() {
+  var au = document.getElementById("eb-au"), root = au && au.closest(".mkst");
+  var old = document.getElementById("mkw-eb");
+  if (!au) { if (old) old.remove(); return; }
+  if (old && old.dataset.for === "1" && document.contains(old)) return;
+  var box = document.createElement("div"); box.id = "mkw-eb"; box.dataset.for = "1";
+  box.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom));width:min(760px,calc(100% - 16px));z-index:60;background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 6px 24px rgba(23,40,68,.18);padding:8px 10px;box-sizing:border-box;display:none";
+  box.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><b style="font-size:13px;color:#172844;flex:1">🎧 예문 음파</b><button class="mkw-x" style="border:0;background:none;font-size:16px;cursor:pointer">✕</button></div>';
+  (root || document.body).appendChild(box);
+  var w = build(box, function () { return document.getElementById("eb-au"); }, null, "eb"); w.style.marginTop = "4px";
+  var hid = "", last = "";
+  box.querySelector(".mkw-x").onclick = function () { hid = (document.getElementById("eb-au") || {}).src || ""; box.style.display = "none"; };
+  (function vis() {
+    if (!document.contains(box)) return;
+    var a = document.getElementById("eb-au"), s = a && a.src;
+    if (!a || !document.contains(a)) { box.remove(); return; }
+    box.style.display = s && s !== hid ? "" : "none";
+    setTimeout(vis, 300);
+  })();
+}
+var tmo = 0; new MutationObserver(function () { clearTimeout(tmo); tmo = setTimeout(function () { scan(); try { ebScan(); } catch (e) { } }, 60); }).observe(document.documentElement, { childList: true, subtree: true });
 })();
