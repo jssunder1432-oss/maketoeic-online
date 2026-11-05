@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psY").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psY").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -188,7 +188,7 @@ function viewEbPage(id, n) {
   if (!bk) { render(topbar("교재 전자책") + '<div class="empty">이 Season에서는 볼 수 없는 교재예요.</div>'); bindCommon(); return; }
   ebMeta(id).then(function (m) {
     n = Math.max(1, Math.min(m.n, n || 1)); ls("ebp:" + id, n);
-    var z = +(ls("ebz") || (window.innerWidth < 700 ? 2 : 1));
+    var z = +(ls("ebz2") || 1);
     var ch = (m.toc || []).filter(function (c) { return n >= c.p && n <= c.e; })[0];
     var opts = []; for (var i = 1; i <= m.n; i++) opts.push(i);
     render(topbar(bk.nm + " · " + n + "쪽") + (ch ? `<p class="eb-tip" style="margin-top:-6px"><b>${esc(ch.t)}</b></p>` : "") +
@@ -214,14 +214,15 @@ function viewEbPage(id, n) {
         if (multi || EBI.on || (window.visualViewport && window.visualViewport.scale > 1.05)) return;
         var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
         if (Date.now() - t0 > 700 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return;
-        var max = sw.scrollWidth - sw.clientWidth;
-        if (dx < 0 && sl0 >= max - 4) goP(n + 1);
+        var max = sw.scrollWidth - sw.clientWidth, moved = Math.abs(sw.scrollLeft - sl0) > 6;
+        if (moved) return;   // 확대해서 옆으로 움직인 것이면 넘기지 않음
+        if (dx < 0 && (max <= 4 || sl0 >= max - 4)) goP(n + 1);
         else if (dx > 0 && sl0 <= 4) goP(n - 1);
       }, { passive: true });
     })();
     app.querySelector("#eb-sel").onchange = function () { goP(+this.value); };
     var pg = app.querySelector("#eb-pg"), sc = app.querySelector("#eb-sc");
-    function zoom(d) { var nz = Math.max(1, Math.min(4, z + d)); if (nz === z) return; var cx = (sc.scrollLeft + sc.clientWidth / 2) / pg.offsetWidth, cy = (sc.scrollTop + sc.clientHeight / 2) / pg.offsetHeight; z = nz; ls("ebz", z); pg.style.width = z * 100 + "%"; sc.scrollLeft = cx * pg.offsetWidth - sc.clientWidth / 2; sc.scrollTop = cy * pg.offsetHeight - sc.clientHeight / 2; }
+    function zoom(d) { var nz = Math.max(1, Math.min(4, z + d)); if (nz === z) return; var cx = (sc.scrollLeft + sc.clientWidth / 2) / pg.offsetWidth, cy = (sc.scrollTop + sc.clientHeight / 2) / pg.offsetHeight; z = nz; ls("ebz2", z); pg.style.width = z * 100 + "%"; sc.scrollLeft = cx * pg.offsetWidth - sc.clientWidth / 2; sc.scrollTop = cy * pg.offsetHeight - sc.clientHeight / 2; }
     app.querySelector("#eb-zo").onclick = function () { zoom(-0.5); };
     app.querySelector("#eb-zi").onclick = function () { zoom(0.5); };
     app.querySelector("#eb-cap").onclick = function () { ebCapture(bk, n, sc, pg); };
@@ -507,7 +508,7 @@ document.addEventListener("keydown", function (e) { if (!EBI.on || (e.key !== "B
 window.addEventListener("hashchange", function () { if (EBI.on) { EBI.on = false; var b = document.querySelector(".mkst .eb-inkbar"); if (b) b.remove(); var h = document.querySelector(".mkst"); if (h) h.classList.remove("eb-inking"); } });
 // 한 단어 여러 품사: 이 문장에서 쓰인 용도를 맨 위(우선)로, 다른 쓰임은 아래에
 var EB_ALT = null;
-function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psY").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
+function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
 function ebAltShow(pop, word, g) {
   var k = String(word || "").toLowerCase().replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
   ebAlt().then(function (A) {
@@ -594,7 +595,7 @@ function ebDraw(m, d) {
   // 예문 음원이 있는 쪽(파트2 이론·표현 정리 등): 쪽 예문 전체 듣기 · 음원 받기
   if (!(d.t || []).length && !(d.ft || []).length) {
     var ex = [], ek = {};
-    W.forEach(function (w) { var a = A[w[5]]; if (w[5] < 0 || !a) return; var k = a.join("|"); if (ek[k]) return; ek[k] = 1; ex.push(a); });
+    W.forEach(function (w) { var a = (d.aw && d.aw[w[5]]) || A[w[5]]; if (w[5] < 0 || !a) return; var k = a.join("|"); if (ek[k]) return; ek[k] = 1; ex.push(a); });
     ex = ex.map(function (a) { return ebWhole(A, a); }); var exk = {}; ex = ex.filter(function (a) { var k = a.join("|"); if (exk[k]) return false; exk[k] = 1; return true; });
     ex = ex.filter(function (a, i) { return !ex.some(function (b, j) { return j !== i && b[0] === a[0] && b[1] <= a[1] && b[2] >= a[2] && (b[2] - b[1] > a[2] - a[1]); }); });
     var tk2 = app.querySelector("#eb-trk");
@@ -757,7 +758,7 @@ function ebDraw(m, d) {
   }
   ov.onclick = function (e) {
     var el = e.target.closest(".eb-w"); if (!el) return;
-    var w = W[+el.dataset.i], g = w[4] >= 0 ? G[w[4]] : null, a = w[5] >= 0 ? ebWhole(A, A[w[5]]) : null;
+    var w = W[+el.dataset.i], g = w[4] >= 0 ? G[w[4]] : null, a = w[5] >= 0 ? ((d.aw && d.aw[w[5]]) || ebWhole(A, A[w[5]])) : null;
     if (PPM[+el.dataset.i]) { var pk = +el.dataset.i; if (ppOn[pk]) { delete ppOn[pk]; ebPpDraw(); ebHide(); return; } ppOn[pk] = 1; ebPpDraw(); }
     var sk = undefined; // 주어·동사·목적어 색 박스 표시는 끔 (2026-11-05 요청)
     if (sk !== undefined) { if (svOn === sk) { svOn = -1; ebSvDraw(); ebHide(); return; } svOn = sk; ebSvDraw(); }
