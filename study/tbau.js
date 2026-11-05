@@ -4,7 +4,7 @@
    - 영상 파일은 그대로, 앱에서 재생할 때만 바꿔 끼운다 */
 (function () {
 if (window.MKST_TBAU_ON) return; window.MKST_TBAU_ON = 1;
-function keyOf(src) { var m = String(src || "").match(/\/tb\/(c\/s\d\/p2_[0-9_]+)\.mp4/); return m ? m[1] : null; }
+function keyOf(src) { var m = String(src || "").match(/\/tb\/(.+)\.mp4/); return m ? m[1] : null; }
 function hook(v) {
   if (v.dataset.tbau) return; v.dataset.tbau = "1";
   var A = new Audio(), on = -1, key = null, L = [], userMuted = false;
