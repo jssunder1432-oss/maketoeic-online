@@ -40,7 +40,7 @@ function attBind() {
 function attRe() { var box = app.querySelector("[data-att]"); if (!box) return; box.outerHTML = attCard(); attBind(); }
 function attInject(html) {
   if (!S.token || (typeof payPart === "function" && payPart()) || app.querySelector("[data-att]")) return;
-  if (!/어느 학습실로 들어갈까요|오늘의 학습|시즌을 선택하세요/.test(html)) return;
+  if (!/시즌을 선택하세요/.test(html) && !(/어느 학습실로 들어갈까요/.test(html) && !S.picked)) return;
   var at = app.querySelector(".hero"); if (!at) return;
   Object.keys(S.prog || {}).forEach(function (k) { if (/^att:/.test(k) && S.prog[k] && !S.prog[k][1]) delete S.prog[k]; });
   at.insertAdjacentHTML("afterend", attCard()); attBind();
