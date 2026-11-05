@@ -65,8 +65,8 @@ function viewHome() {
   function box(title, sub, color, inner) { return `<div style="border:2px solid ${color};border-radius:18px;padding:12px 12px 2px;margin:0 0 14px;background:#fff"><div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:2px 4px 10px"><b style="font-size:17px;color:#172844">${title}</b><small style="color:#33404F;font-size:13px">${sub}</small></div>${inner}</div>`; }
   var top = lc
     ? box("🎧 LC 문제 · 해설강의", "Season " + ser, "#172844",
-      roomRow("#/learn", "문제", "📝 문제 풀기", "기본 유형 연습 · 실전 모의고사 PART별 풀기", "linear-gradient(125deg,#14233E,#233C5C)") +
-      (fulls.length ? roomRow("#/full", "전체", "🎯 실전 모의고사 회차 전체 풀기", "한 회차 PART 1~4 전체를 실전처럼 한 번에 · " + fulls.length + "회", "linear-gradient(125deg,#E95721,#FF8A3D)") : "") +
+      roomRow("#/learn", "문제", "📝 문제 풀기", "교재 파트2 추가 유형 연습문제", "linear-gradient(125deg,#14233E,#233C5C)") +
+      (fulls.length ? roomRow("#/full", "전체", "🎯 실전 모의고사 회차 전체 풀기", "전체 풀기 · PART별 풀기 · 문제별 풀기 · " + fulls.length + "회", "linear-gradient(125deg,#E95721,#FF8A3D)") : "") +
       (typeof viewLcvRounds === "function" && window.MKST_LCVID ? roomRow("#/lcv", "강의", "🎬 실전 모의고사 해설강의", "회차 → 문제를 골라 그 문제 강의만 보기", "") : "") +
       ("lcrow", ""))
     : box("📚 교재 · A급 과제 문제", "Season " + ser, "#FF581F",
@@ -114,9 +114,9 @@ function viewFullList() {
     (gs.length ? gs.map(function (g) {
       var secs = fullSecs(ser, g), tt = 0, dd = 0; secs.forEach(function (s) { var t = secStats(s); tt += t.total; dd += t.done; });
       var sv = exGet("full:" + ser + ":" + g);
-      return `<button class="row" data-go="#/full/${ser}/${encodeURIComponent(g)}"><span class="pill o">${fullRound(g)}회</span><span class="t"><b>${esc(g)} 전체</b><small>PART 1~4 · ${tt}문항${sv.ans ? " · 풀던 중 (이어서 풀기)" : dd ? " · " + dd + "문항 푼 적 있음" : ""}</small></span>›</button>` + (typeof lcdlBtn === "function" ? lcdlBtn(g, secs) : "");
+      return `<button class="row" data-go="#/full/${ser}/${encodeURIComponent(g)}"><span class="pill o">${fullRound(g)}회</span><span class="t"><b>${esc(g)} 전체</b><small>PART 1~4 · ${tt}문항${sv.ans ? " · 풀던 중 (이어서 풀기)" : dd ? " · " + dd + "문항 푼 적 있음" : ""}</small></span>›</button>` + (typeof fullRowExtra === "function" ? fullRowExtra(ser, g, secs) : "") + (typeof lcdlBtn === "function" ? lcdlBtn(g, secs) : "");
     }).join("") : '<div class="empty">이 Series의 실전 모의고사를 준비 중이에요.</div>'));
-  bindCommon();
+  bindCommon(); if (typeof bindFullRows === "function") bindFullRows();
 }
 function viewFull(ser, g) {
   if (allowedSeries().indexOf(ser) < 0) { render(topbar("실전 모의고사") + '<div class="empty">이 Series는 수강 기간에 포함되지 않았어요.</div>'); bindCommon(); return; }
