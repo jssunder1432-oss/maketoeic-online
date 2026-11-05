@@ -15,19 +15,29 @@ function attDays(d0) {
   return out;
 }
 function attHr(v) { var h = v >= 100 ? Math.floor(v / 100) : v, m = v >= 100 ? v % 100 : 0, t = h < 12 ? "오전 " + h : h === 12 ? "낮 12" : "오후 " + (h - 12); return t + "시" + (m ? " " + m + "분" : ""); }
+// 접속하면 맨 위에 오늘 도장 (찍었으면 큰 도장, 아직이면 수업 시각 버튼 바로)
+function attShort(v) { var h = v >= 100 ? Math.floor(v / 100) : v, m = v >= 100 ? v % 100 : 0; return (h < 12 ? "오전 " : "오후 ") + (h > 12 ? h - 12 : h) + ":" + String(m).padStart(2, "0"); }
+function attToday(today, D, P) {
+  if (D.indexOf(today) < 0) return "";
+  var p = P["att:" + today], dt = new Date(today + "T00:00:00"), lab = (dt.getMonth() + 1) + "월 " + dt.getDate() + "일 (" + "일월화수목금토"[dt.getDay()] + ")";
+  if (p) return '<div style="display:flex;align-items:center;gap:14px;margin-top:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid #F3C9A8"><div style="width:104px;height:104px;border-radius:50%;border:4px solid #E0322B;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-12deg);color:#E0322B;flex:0 0 auto"><b style="font-size:24px;line-height:1">출석</b><small style="font-size:12px;font-weight:900;margin-top:3px;white-space:nowrap">' + attShort(+p[0]) + '</small></div><div><b style="font-size:17px">오늘 ' + lab + '</b><div style="font-size:14px;font-weight:700;color:#1E8E5A;margin-top:2px">출석 도장을 찍었어요 ✔</div><small style="color:#33404F;font-weight:700">시각을 바꾸려면 아래 오늘 칸을 누르세요</small></div></div>';
+  return '<div style="margin-top:12px;padding:12px 14px;border-radius:14px;background:#fff;border:2px solid #E95721"><b style="font-size:17px">오늘 ' + lab + ' · 몇 시 수업에 참석했나요?</b><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px">' + ATT_HOURS.map(function (h) { return '<button class="btn sm" data-attq="' + h + '">' + attHr(h) + '</button>'; }).join("") + "</div></div>";
+}
 function attCard() {
   var now = new Date(), today = attYmd(now), D = attDays(now), P = S.prog || {}, n = D.filter(function (d) { return P["att:" + d]; }).length, W = "일월화수목금토";
   return '<div class="card" data-att="1" style="border:2px solid #E95721;background:#FFFBF7"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><b style="font-size:18px">📅 ' + (now.getMonth() + 1) + '월 출석 도장</b><span style="font-weight:900;color:#E95721;font-size:16px">' + n + " / " + D.length + "회</span>" + (P["att:" + today] ? '<small style="margin-left:auto;color:#1E8E5A;font-weight:800">오늘 출석 완료 ✔</small>' : D.indexOf(today) >= 0 ? '<small style="margin-left:auto;color:#E95721;font-weight:800">오늘 수업일 · 도장을 찍어 주세요</small>' : "") + "</div>" +
+    attToday(today, D, P) +
     '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;margin-top:10px">' + D.map(function (d) {
       var p = P["att:" + d], dt = new Date(d + "T00:00:00"), fut = d > today, on = d === today;
       return '<button data-attd="' + d + '"' + (fut ? " disabled" : "") + ' style="aspect-ratio:1;border-radius:50%;border:2px ' + (p ? "solid #E0322B" : on ? "solid #E95721" : "dashed #C9CFDA") + ";background:" + (p ? "#FFF0EE" : "#fff") + ";padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:" + (fut ? ".6" : "1") + ";min-width:0;width:100%;box-sizing:border-box" + ';position:relative">' +
         '<span style="font-size:12px;font-weight:800;color:#33404F">' + (dt.getMonth() + 1) + "/" + dt.getDate() + "(" + W[dt.getDay()] + ")</span>" +
-        (p ? '<span style="font-size:20px;line-height:1.1;color:#E0322B;font-weight:900;transform:rotate(-12deg)">출석</span><span style="font-size:11px;font-weight:800;color:#E0322B">' + attHr(+p[0]) + "</span>" : '<span style="font-size:18px;color:#C9CFDA">' + (fut ? "·" : "＋") + "</span>") + "</button>";
+        (p ? '<span style="font-size:20px;line-height:1.1;color:#E0322B;font-weight:900;transform:rotate(-12deg)">출석</span><span style="font-size:10.5px;font-weight:800;color:#E0322B;white-space:nowrap">' + attShort(+p[0]) + "</span>" : '<span style="font-size:18px;color:#C9CFDA">' + (fut ? "·" : "＋") + "</span>") + "</button>";
     }).join("") + "</div>" +
     '<p style="margin:8px 2px 0;font-size:13px;font-weight:700;color:#33404F">수업한 날을 누르고 몇 시 수업에 참석했는지 고르면 도장이 찍혀요.</p><div id="att-pick" style="display:none;margin-top:10px"></div></div>';
 }
 function attBind() {
   var box = app.querySelector("[data-att]"); if (!box) return;
+  box.querySelectorAll("[data-attq]").forEach(function (b) { b.onclick = function () { var d = attYmd(new Date()), v = +b.dataset.attq; S.prog["att:" + d] = [v, true, 1]; api("save_progress", { p_token: S.token, p_item: "att:" + d, p_chosen: v, p_correct: true }).catch(function () { }); attRe(); }; });
   box.querySelectorAll("[data-attd]").forEach(function (b) {
     b.onclick = function () {
       var d = b.dataset.attd, pk = box.querySelector("#att-pick"), p = S.prog["att:" + d], dt = new Date(d + "T00:00:00");
