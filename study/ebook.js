@@ -732,7 +732,7 @@ function ebDraw(m, d) {
     var el = e.target.closest(".eb-w"); if (!el) return;
     var w = W[+el.dataset.i], g = w[4] >= 0 ? G[w[4]] : null, a = w[5] >= 0 ? A[w[5]] : null;
     if (PPM[+el.dataset.i]) { var pk = +el.dataset.i; if (ppOn[pk]) { delete ppOn[pk]; ebPpDraw(); ebHide(); return; } ppOn[pk] = 1; ebPpDraw(); }
-    var sk = PPM[+el.dataset.i] ? undefined : SVM[+el.dataset.i];
+    var sk = undefined; // 주어·동사·목적어 색 박스 표시는 끔 (2026-11-05 요청)
     if (sk !== undefined) { if (svOn === sk) { svOn = -1; ebSvDraw(); ebHide(); return; } svOn = sk; ebSvDraw(); }
     else if (svOn >= 0) { svOn = -1; ebSvDraw(); }
     ebHide();
