@@ -156,18 +156,18 @@ function pwForm() {
 
 /* ---------- 상단 ---------- */
 function head() {
-  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : view === "ot" ? "OT 기초 진단 · 매일 공부 가이드" : "수강생 관리"}</h1></div>
-  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 기초 진단</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
+  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "blog" ? "블로그 이미지" : view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : view === "ot" ? "OT 기초 진단 · 매일 공부 가이드" : "수강생 관리"}</h1></div>
+  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 기초 진단</button><button class="t ${view === "blog" ? "on" : ""}" data-v="blog">📰 블로그 이미지</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
   <span style="flex:1"></span><button class="btn ghost sm" onclick="location.replace(location.pathname+'?v='+Date.now())">🔄 최신으로</button><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button><a class="btn navy sm" href="/" style="text-decoration:none">🏠 나가기</a></div>`;
 }
 function bindHead() {
-  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "hw" ? viewHw() : view === "ot" ? viewOt() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
+  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "hw" ? viewHw() : view === "ot" ? viewOt() : view === "blog" ? viewBlog() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
   document.getElementById("ad-out").onclick = function () { sb.auth.signOut().then(function () { viewLogin(); }); };
   document.getElementById("ad-chpw").onclick = pwForm;
 }
 
 /* ---------- 수강생 목록 ---------- */
-function refresh() { return rpc("admin_list_students").then(function (d) { students = d || []; SUBM = null; draw(); }).catch(function (e) { render('<div class="msg err">' + esc(e.message) + "</div>"); }); }
+function refresh() { return rpc("admin_list_students").then(function (d) { students = d || []; SUBM = null; draw(); setTimeout(function () { try { blogAuto(); } catch (e) { } }, 4000); }).catch(function (e) { render('<div class="msg err">' + esc(e.message) + "</div>"); }); }
 function stTag(s) { return s.days_left < 0 ? '<span class="tag end">만료</span>' : s.days_left <= 7 ? `<span class="tag soon">D-${s.days_left}</span>` : `<span class="tag ok">D-${s.days_left}</span>`; }
 var CATS = [["lcmock", "LC 실전 모의고사 · 해설강의"], ["lcp2", "LC Part 2 유형별"], ["rcbook", "RC 교재 문제 · 실전 테스트"], ["agrade", "A급 과제 · 해설강의"], ["voca", "VOCA · 단어 게임"]];
 var PLAN_CATS = { lc: ["lcmock"], rc: ["rcbook"], lcrc: ["lcmock", "rcbook"] };
@@ -442,6 +442,145 @@ function otScore(o, secs, prog) {
   });
   r.basic = r.p[5] && r.p[5].k < OT_CUT; return r;
 }
+/* ---------- 📰 블로그 이미지: 날마다 학생들이 많이 틀린 문제 10개를 이미지로 (자동 저장 → 내려받기) ----------
+   - 관리자 화면을 열면 지난 7일 중 아직 안 만든 날을 자동으로 만들어 저장소(study-audio/blog/날짜/NN.png)에 올린다
+   - 목록 = content "blog" = { days: { "2026-11-05": [{ u, k, w, n }] } }
+   - 문제: PART 5 · PART 6(빈칸 문장) · LC PART 2 — 오답 수 많은 순, 그날 10개가 안 되면 최근 7일에서 채움 */
+var BLOG = { sec: {}, busy: false };
+function blogSec(id) { if (!BLOG.sec[id]) BLOG.sec[id] = rpc("admin_get_content", { p_key: "sec:" + id }).catch(function () { return null; }); return BLOG.sec[id]; }
+function blogItem(sec, key) {
+  if (!sec) return null;
+  var rest = key.slice(sec.id.length + 1), m;
+  if ((m = /^i(.*)$/.exec(rest))) {
+    var it = (sec.items || []).filter(function (x, i) { return (x.src || "") + (x.no != null ? x.no : i) === m[1]; })[0];
+    if (!it || !it.options) return null;
+    if (sec.area === "RC" && sec.part === 5) return { part: "PART 5", q: it.q, o: it.options, a: it.answer, ex: it.explain, t: it.qtype || "" };
+    if (sec.area === "LC" && sec.part === 2) return { part: "PART 2 (듣기)", q: it.q, o: it.options, a: it.answer, ex: it.explain, t: "" };
+    return null;
+  }
+  if ((m = /^s(\d+)-(.*)$/.exec(rest)) && sec.area === "RC" && sec.part === 6) {
+    var st = (sec.sets || [])[+m[1]]; if (!st) return null;
+    var q = (st.questions || []).filter(function (x, i) { return String(x.no != null ? x.no : i) === m[2]; })[0]; if (!q) return null;
+    if ((q.options || []).some(function (o) { return o.length > 45; })) return null;
+    var P = String(st.passage || "").replace(/\n+/g, " "), re = new RegExp("-{2,}\\s*" + q.no + "\\s*-{2,}"), at = P.search(re); if (at < 0) return null;
+    var s0 = Math.max(P.lastIndexOf(". ", at) + 2, at - 220), s1 = P.indexOf(". ", at); s1 = s1 < 0 ? Math.min(P.length, at + 160) : s1 + 1;
+    var sent = P.slice(s0, s1).replace(re, "_____").replace(/-{2,}\s*\d{3}\s*-{2,}/g, "_____");
+    return { part: "PART 6", q: sent, o: q.options, a: q.answer, ex: q.explain, t: q.qtype || "" };
+  }
+  return null;
+}
+function blogPoint(ex) {
+  var L = String(ex || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean), pick = "";
+  if (L.length && L.every(function (s) { return /^\([A-D]\)/.test(s); })) { pick = L.join(" / "); return pick.length > 190 ? pick.slice(0, 188) + "…" : pick; }
+  L.forEach(function (s) { if (!pick && /^(의식의 흐름|정답 포인트|정답 근거|해설|이렇게 본다)/.test(s)) pick = s.replace(/^(의식의 흐름|정답 근거|해설|이렇게 본다)\s*:\s*/, "").replace(/^정답 포인트\s*[—:-]\s*/, ""); });
+  if (!pick) pick = L.filter(function (s) { return !/^(정답|유형|해석)/.test(s); })[0] || "";
+  return pick.length > 190 ? pick.slice(0, 188) + "…" : pick;
+}
+function blogWrap(x, t, w) {
+  var out = [], line = "";
+  String(t).split(/(\s+)/).forEach(function (tok) {
+    if (!tok) return;
+    if (x.measureText(line + tok).width <= w) { line += tok; return; }
+    if (line.trim()) { out.push(line.trim()); line = ""; }
+    if (x.measureText(tok).width <= w) { line = tok.trim() ? tok : ""; return; }
+    tok.split("").forEach(function (c) { if (x.measureText(line + c).width > w) { out.push(line); line = c; } else line += c; });
+  });
+  if (line.trim()) out.push(line.trim());
+  return out;
+}
+function blogDraw(o, rank, day) {
+  var W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  var x = cv.getContext("2d"), F = "'Pretendard','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif", L = "ABCD", M = 70;
+  x.fillStyle = "#FFF9F5"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#172844"; x.fillRect(0, 0, W, 210);
+  x.fillStyle = "#FF713E"; x.font = "800 30px " + F; x.fillText("MAKE TOEIC · 오늘의 오답 TOP " + rank, M, 78);
+  x.fillStyle = "#fff"; x.font = "900 56px " + F; x.fillText("학생들이 가장 많이 틀린 문제", M, 150);
+  x.fillStyle = "#D7E0EE"; x.font = "700 28px " + F; x.fillText(day.replace(/-/g, ".") + "  ·  " + o.n + "번 풀어서 " + o.w + "번 틀렸어요", M, 192);
+  var y = 270;
+  x.font = "900 30px " + F; var pw = x.measureText(o.part).width;
+  x.fillStyle = "#FF581F"; x.beginPath(); x.roundRect ? x.roundRect(M, y - 38, pw + 48, 52, 26) : x.rect(M, y - 38, pw + 48, 52); x.fill();
+  x.fillStyle = "#fff"; x.fillText(o.part, M + 24, y);
+  if (o.t) { x.fillStyle = "#33404F"; x.font = "700 28px " + F; x.fillText(o.t.replace(/^PART \d · /, ""), M + pw + 70, y); }
+  y += 70; x.fillStyle = "#172844"; x.font = "700 42px Georgia,'Times New Roman'," + F;
+  var ql = blogWrap(x, String(o.q || "").replace(/_{3,}|-{4,}/g, "________"), W - M * 2);
+  if (ql.length > 7) { x.font = "700 36px Georgia,'Times New Roman'," + F; ql = blogWrap(x, String(o.q || "").replace(/_{3,}|-{4,}/g, "________"), W - M * 2).slice(0, 9); }
+  var lh = parseInt(x.font.match(/(\d+)px/)[1], 10) * 1.42;
+  ql.forEach(function (l) { x.fillText(l, M, y); y += lh; });
+  y += 20;
+  o.o.forEach(function (t, k) {
+    x.fillStyle = "#fff"; x.strokeStyle = "#E7EAF0"; x.lineWidth = 3; x.beginPath(); x.roundRect ? x.roundRect(M, y, W - M * 2, 74, 18) : x.rect(M, y, W - M * 2, 74); x.fill(); x.stroke();
+    x.fillStyle = "#172844"; x.beginPath(); x.arc(M + 44, y + 37, 24, 0, Math.PI * 2); x.fill();
+    x.fillStyle = "#fff"; x.font = "900 26px " + F; x.textAlign = "center"; x.fillText(L[k], M + 44, y + 46); x.textAlign = "left";
+    x.fillStyle = "#172844"; x.font = "600 34px Georgia,'Times New Roman'," + F; var ot = blogWrap(x, t, W - M * 2 - 110)[0] || ""; x.fillText(ot, M + 90, y + 49);
+    y += 90;
+  });
+  y += 10;
+  var by = Math.max(y, H - 400), bh = H - by - 90;
+  x.fillStyle = "#172844"; x.beginPath(); x.roundRect ? x.roundRect(M, by, W - M * 2, bh, 24) : x.rect(M, by, W - M * 2, bh); x.fill();
+  x.fillStyle = "#FF8A3D"; x.font = "900 36px " + F; x.fillText("정답 (" + L[o.a] + ") " + (o.o[o.a] || ""), M + 36, by + 62);
+  x.fillStyle = "#fff"; x.font = "600 30px " + F; var pl = blogWrap(x, blogPoint(o.ex), W - M * 2 - 72), py = by + 116;
+  pl.slice(0, Math.floor((bh - 130) / 44)).forEach(function (l) { x.fillText(l, M + 36, py); py += 44; });
+  x.fillStyle = "#33404F"; x.font = "800 28px " + F; x.fillText("청주토익 메이크토익 · maketoeic.kr", M, H - 40);
+  return cv;
+}
+function blogMake(day, force) {
+  var from = new Date(day + "T00:00:00"); from.setDate(from.getDate() - 6);
+  return Promise.all([rpc("admin_day_wrong", { p_from: day, p_to: day }), rpc("admin_day_wrong", { p_from: ymd(from), p_to: day })]).then(function (r) {
+    var seen = {}, L = [];
+    r[0].concat(r[1]).forEach(function (o) { if (!seen[o.k]) { seen[o.k] = 1; L.push(o); } });
+    if (!r[0].length) return null;
+    var out = [];
+    function next(i) {
+      if (out.length >= 10 || i >= L.length) return Promise.resolve(out);
+      var o = L[i], id = o.k.split(":")[0];
+      return blogSec(id).then(function (sec) { var it = blogItem(sec, o.k); if (it) { it.k = o.k; it.w = o.w; it.n = o.n; out.push(it); } return next(i + 1); });
+    }
+    return next(0);
+  }).then(function (items) {
+    if (!items || !items.length) return null;
+    var up = items.map(function (it, i) {
+      var cv = blogDraw(it, i + 1, day), path = "blog/" + day + "/" + String(i + 1).padStart(2, "0") + ".png";
+      return new Promise(function (res) { cv.toBlob(res, "image/png"); }).then(function (b) {
+        return sb.storage.from("study-audio").upload(path, b, { contentType: "image/png", upsert: true }).then(function (r) { if (r.error) throw r.error; return { u: sb.storage.from("study-audio").getPublicUrl(path).data.publicUrl + "?t=" + Date.now(), k: it.k, w: it.w, n: it.n }; });
+      });
+    });
+    return Promise.all(up);
+  }).then(function (L) {
+    if (!L) return null;
+    return rpc("admin_get_content", { p_key: "blog" }).catch(function () { return null; }).then(function (b) {
+      b = b || { days: {} }; b.days = b.days || {}; b.days[day] = L;
+      return rpc("admin_put_content", { p_key: "blog", p_data: b, p_text: null }).then(function () { return L; });
+    });
+  });
+}
+// 관리자 화면을 열 때: 지난 7일 중 안 만든 날 + 오늘(없으면) 자동 생성
+function blogAuto() {
+  if (BLOG.busy) return Promise.resolve(); BLOG.busy = true;
+  return rpc("admin_get_content", { p_key: "blog" }).catch(function () { return null; }).then(function (b) {
+    var have = (b && b.days) || {}, days = [];
+    for (var i = 0; i <= 7; i++) { var d = new Date(); d.setDate(d.getDate() - i); var k = ymd(d); if (!have[k]) days.push(k); }
+    return days.reduce(function (p, d) { return p.then(function () { return blogMake(d).catch(function () { }); }); }, Promise.resolve());
+  }).then(function () { BLOG.busy = false; }, function () { BLOG.busy = false; });
+}
+function blogDl(u, name) { return fetch(u).then(function (r) { return r.blob(); }).then(function (b) { var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000); }); }
+function viewBlog() {
+  render(head() + '<div class="card">블로그 이미지를 준비하는 중… (안 만든 날은 지금 자동으로 만들어요)</div>'); bindHead();
+  blogAuto().then(function () { return rpc("admin_get_content", { p_key: "blog" }); }).then(function (b) {
+    var D = (b && b.days) || {}, ks = Object.keys(D).sort().reverse();
+    render(head() + `<div class="card"><p class="sec">📰 블로그 포스팅 이미지 (날마다 오답 TOP 10)</p>
+      <p class="note" style="margin-top:0">학생들이 그날 푼 문제(과제·매일 과제·학습실) 중 <b>가장 많이 틀린 문제 10개</b>를 이미지로 만들어 자동 저장해요(PART 5 · PART 6 · LC PART 2). 관리자 화면을 열 때마다 아직 안 만든 날을 만들어 둬요. 오늘 것은 학생들이 더 풀면 <b>다시 만들기</b>로 새로 만들 수 있어요.</p>
+      <button class="btn ghost" id="bl-today" style="width:100%">🔄 오늘(${ymd(new Date())}) 이미지 다시 만들기</button><div id="bl-msg"></div></div>` +
+      (ks.length ? ks.map(function (d) {
+        return `<div class="card"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:17px">${d}</b><span class="note" style="margin:0">${D[d].length}장</span><button class="btn sm" data-bla="${d}" style="margin-left:auto">⬇ ${D[d].length}장 모두 받기</button></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px">${D[d].map(function (o, i) { return `<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff"><img src="${esc(o.u)}" alt="" style="width:100%;display:block" loading="lazy"><button class="btn ghost sm" data-bl1="${d}|${i}" style="width:100%;border:0;border-radius:0">⬇ ${String(i + 1).padStart(2, "0")}.png</button></div>`; }).join("")}</div></div>`;
+      }).join("") : '<div class="card"><p class="note">아직 학생들이 푼 기록이 없어 만든 이미지가 없어요.</p></div>'));
+    bindHead();
+    app.querySelectorAll("[data-bl1]").forEach(function (bt) { bt.onclick = function () { var a = bt.dataset.bl1.split("|"), o = D[a[0]][+a[1]]; blogDl(o.u, "메이크토익_오답_" + a[0] + "_" + String(+a[1] + 1).padStart(2, "0") + ".png"); }; });
+    app.querySelectorAll("[data-bla]").forEach(function (bt) { bt.onclick = function () { var d = bt.dataset.bla; bt.disabled = true; D[d].reduce(function (p, o, i) { return p.then(function () { return blogDl(o.u, "메이크토익_오답_" + d + "_" + String(i + 1).padStart(2, "0") + ".png"); }).then(function () { return new Promise(function (r) { setTimeout(r, 400); }); }); }, Promise.resolve()).then(function () { bt.disabled = false; bt.textContent = "✔ 받았어요"; }); }; });
+    document.getElementById("bl-today").onclick = function () { var m = document.getElementById("bl-msg"), bt = this; bt.disabled = true; m.innerHTML = '<div class="msg">만드는 중…</div>'; blogMake(ymd(new Date()), true).then(function (L) { if (!L) { m.innerHTML = '<div class="msg err">오늘은 아직 틀린 문제 기록이 없어요.</div>'; bt.disabled = false; return; } viewBlog(); }).catch(function (e) { m.innerHTML = '<div class="msg err">' + esc(e.message || e) + "</div>"; bt.disabled = false; }); };
+  }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message || e) + "</div>"); bindHead(); });
+}
+
 function viewOt() {
   var o = OT_TESTS[0];
   render(head() + '<div class="card"><p class="note">불러오는 중…</p></div>'); bindHead();
