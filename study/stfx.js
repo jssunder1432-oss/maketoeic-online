@@ -143,8 +143,11 @@ function fxTap(el, e) {
   var p = el.dataset.p || "", m = el.dataset.m || "", b = el.dataset.b || "", L = X.F.L || [], extra = [];
   var ph = el.closest(".gph"), phT = ph ? ph.textContent.replace(/^[^A-Za-z0-9$%']+|[,.;:?!"')]+$/g, "") : "";
   if (ph) { ph.classList.add("on"); if (p || m) extra.push("· <b>" + esc(word) + "</b> " + esc(p) + " " + esc(m) + (b ? " (원형 " + esc(b) + ")" : "")); }
-  (X.ck || []).forEach(function (c) { if (c[0].indexOf(ti) < 0) return; var ws = c[0].map(function (i) { var t = root.querySelector('[data-ti="' + i + '"]'); if (t) t.classList.add("ck"); return t ? fxWord(t) : ""; }).join(" "); extra.push("🧩 <b>" + esc(L[c[1]] || "") + "</b> · " + esc(ws)); });
-  (X.rd || []).forEach(function (r) { if (r[0] === ti) extra.push("🔗 <b>" + esc((L[r[1]] || "").split(" — ")[0]) + "</b> — " + esc((L[r[1]] || "").split(" — ").slice(1).join(" — "))); });
+  var BL = {}, hide = root.dataset.bl && !fxGraded(root);
+  if (hide) root.querySelectorAll(".gx").forEach(function (g) { if (/_{3,}|-{4,}|-{2,}\d{3}/.test(g.textContent) || g.querySelector("span")) BL[g.dataset.ti] = 1; });
+  function hasBl(L2) { return hide && L2.some(function (i) { return BL[i]; }); }
+  (X.ck || []).forEach(function (c) { if (c[0].indexOf(ti) < 0 || hasBl(c[0])) return; var ws = c[0].map(function (i) { var t = root.querySelector('[data-ti="' + i + '"]'); if (t) t.classList.add("ck"); return t ? fxWord(t) : ""; }).join(" "); extra.push("🧩 <b>" + esc(L[c[1]] || "") + "</b> · " + esc(ws)); });
+  (X.rd || []).forEach(function (r) { if (r[0] === ti && !hasBl([ti])) extra.push("🔗 <b>" + esc((L[r[1]] || "").split(" — ")[0]) + "</b> — " + esc((L[r[1]] || "").split(" — ").slice(1).join(" — "))); });
   var sk = fxSentOf(X, ti); if (sk >= 0 && X.sv[sk][1].some(function (cl) { return cl[4] && cl[1].indexOf(ti) >= 0; })) extra.push("📢 <b>명령문</b> — 주어(You)가 생략되고 동사원형으로 시작하는 문장");
   var pop = document.createElement("div"); pop.className = "eb-pop";
   var au = fxAudOf(el);
