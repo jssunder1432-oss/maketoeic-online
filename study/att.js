@@ -6,7 +6,7 @@
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
 var FN = T(function () {/*// 출석 도장 — study/att.js
 var ATT_MONTHS = { "2026-11": ["2026-11-04", "2026-11-27"] };
-var ATT_HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+var ATT_HOURS = [1110, 1730, 1910]; // 이번 달 수업 시각 (HHMM)
 function attYmd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function attDays(d0) {
   var y = d0.getFullYear(), m = d0.getMonth(), key = y + "-" + String(m + 1).padStart(2, "0"), R = ATT_MONTHS[key];
@@ -14,7 +14,7 @@ function attDays(d0) {
   for (var d = new Date(a); d <= b; d.setDate(d.getDate() + 1)) { var w = d.getDay(); if (w > 0 && w < 6) out.push(attYmd(d)); }
   return out;
 }
-function attHr(h) { return h < 12 ? "오전 " + h + "시" : h === 12 ? "낮 12시" : "오후 " + (h - 12) + "시"; }
+function attHr(v) { var h = v >= 100 ? Math.floor(v / 100) : v, m = v >= 100 ? v % 100 : 0, t = h < 12 ? "오전 " + h : h === 12 ? "낮 12" : "오후 " + (h - 12); return t + "시" + (m ? " " + m + "분" : ""); }
 function attCard() {
   var now = new Date(), today = attYmd(now), D = attDays(now), P = S.prog || {}, n = D.filter(function (d) { return P["att:" + d]; }).length, W = "일월화수목금토";
   return '<div class="card" data-att="1" style="border:2px solid #E95721;background:#FFFBF7"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><b style="font-size:18px">📅 ' + (now.getMonth() + 1) + '월 출석 도장</b><span style="font-weight:900;color:#E95721;font-size:16px">' + n + " / " + D.length + "회</span>" + (P["att:" + today] ? '<small style="margin-left:auto;color:#1E8E5A;font-weight:800">오늘 출석 완료 ✔</small>' : D.indexOf(today) >= 0 ? '<small style="margin-left:auto;color:#E95721;font-weight:800">오늘 수업일 · 도장을 찍어 주세요</small>' : "") + "</div>" +
@@ -32,7 +32,7 @@ function attBind() {
     b.onclick = function () {
       var d = b.dataset.attd, pk = box.querySelector("#att-pick"), p = S.prog["att:" + d], dt = new Date(d + "T00:00:00");
       pk.style.display = "block";
-      pk.innerHTML = '<div style="font-weight:800;margin-bottom:6px">' + (dt.getMonth() + 1) + "월 " + dt.getDate() + "일 몇 시 수업이었나요?" + (p ? ' <small style="color:#1E8E5A">(지금: ' + attHr(+p[0]) + ")</small>" : "") + '</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">' +
+      pk.innerHTML = '<div style="font-weight:800;margin-bottom:6px">' + (dt.getMonth() + 1) + "월 " + dt.getDate() + "일 몇 시 수업이었나요?" + (p ? ' <small style="color:#1E8E5A">(지금: ' + attHr(+p[0]) + ")</small>" : "") + '</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">' +
         ATT_HOURS.map(function (h) { return '<button class="btn ' + (p && +p[0] === h ? "" : "ghost ") + 'sm" data-atth="' + h + '">' + attHr(h) + "</button>"; }).join("") + "</div>" +
         '<div style="display:flex;gap:6px;margin-top:8px">' + (p ? '<button class="btn ghost sm" data-attx="1" style="flex:1">도장 지우기</button>' : "") + '<button class="btn ghost sm" data-attc="1" style="flex:1">닫기</button></div>';
       pk.querySelectorAll("[data-atth]").forEach(function (h) { h.onclick = function () { var v = +h.dataset.atth; S.prog["att:" + d] = [v, true, 1]; api("save_progress", { p_token: S.token, p_item: "att:" + d, p_chosen: v, p_correct: true }).catch(function () { }); attRe(); }; });
