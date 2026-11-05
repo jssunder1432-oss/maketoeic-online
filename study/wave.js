@@ -1,7 +1,7 @@
 /* PART 2 문제 풀기: 듣기 음원 음파 보기 + 구간 골라 듣기 (2026-11-06)
    - 음성 듣기 줄(.audio) 빈 공간 아래에 음파를 그린다
    - 음파를 드래그 → 그 구간만 재생(반복 켜면 계속), 짧게 누르면 그 위치부터 재생
-   - PART 2 화면(보기 3개 · 지문/사진 없음)에만 붙는다 */
+   - LC 문제 풀기 전체(PART 1~4 · 실전 모의고사 PART별 풀기 · 채점 후 다시 보기)에 붙는다. 자동 넘김 실전 모드는 시간 재는 중이라 제외 */
 (function () {
 if (window.MKST_WAVE) return; window.MKST_WAVE = 1;
 var PK = {}, SEL = {}, AC = null, H = 64;
@@ -11,10 +11,8 @@ var css = ".mkw{flex:0 0 100%;width:100%;margin-top:10px}.mkw canvas{display:blo
 var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
 function isP2(box) {
-  var sc = box.closest(".mkst") || document;
-  if (sc.querySelector(".passage") || sc.querySelector(".lcimg")) return false;
-  var qb = sc.querySelectorAll(".qb"); if (qb.length !== 1) return false;
-  return qb[0].querySelectorAll(".opts .opt").length === 3;
+  // LC 음원(PART 1~4 · 실전 모의고사 포함). RC '지문 읽어주기'는 제외
+  return !/지문 읽어주기/.test(box.textContent || "");
 }
 function peaks(src) {
   if (PK[src]) return PK[src];
