@@ -206,6 +206,19 @@ function viewEbPage(id, n) {
     // ‹ 뒤로 = 쪽 넘긴 기록을 되짚지 않고 바로 목차로 (쪽을 넘겨도 한 번에 나가기)
     app.querySelectorAll("[data-back],[data-ebtoc]").forEach(function (b) { if (b.dataset.back != null) b.textContent = "‹ 목차"; b.onclick = function () { ebHide(); ebSideClose(); go(ls("eball") === "1" ? "#/eb/all/" + ser : "#/eb"); }; });
     app.querySelectorAll("[data-ebn]").forEach(function (b) { b.onclick = function () { goP(+b.dataset.ebn); }; });
+    // 옆으로 밀어서 쪽 넘기기 (확대해서 옆으로 움직일 땐 가장자리에 닿은 뒤 한 번 더 밀면 넘어감, 필기 중엔 안 넘어감)
+    (function () {
+      var sw = app.querySelector("#eb-sc"); if (!sw) return; var x0 = 0, y0 = 0, t0 = 0, sl0 = 0, multi = false;
+      sw.addEventListener("touchstart", function (e) { multi = e.touches.length > 1; if (multi) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); sl0 = sw.scrollLeft; }, { passive: true });
+      sw.addEventListener("touchend", function (e) {
+        if (multi || EBI.on || (window.visualViewport && window.visualViewport.scale > 1.05)) return;
+        var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+        if (Date.now() - t0 > 700 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return;
+        var max = sw.scrollWidth - sw.clientWidth;
+        if (dx < 0 && sl0 >= max - 4) goP(n + 1);
+        else if (dx > 0 && sl0 <= 4) goP(n - 1);
+      }, { passive: true });
+    })();
     app.querySelector("#eb-sel").onchange = function () { goP(+this.value); };
     var pg = app.querySelector("#eb-pg"), sc = app.querySelector("#eb-sc");
     function zoom(d) { var nz = Math.max(1, Math.min(4, z + d)); if (nz === z) return; var cx = (sc.scrollLeft + sc.clientWidth / 2) / pg.offsetWidth, cy = (sc.scrollTop + sc.clientHeight / 2) / pg.offsetHeight; z = nz; ls("ebz", z); pg.style.width = z * 100 + "%"; sc.scrollLeft = cx * pg.offsetWidth - sc.clientWidth / 2; sc.scrollTop = cy * pg.offsetHeight - sc.clientHeight / 2; }
