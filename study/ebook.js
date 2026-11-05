@@ -137,6 +137,8 @@ var EB_CSS = `
 .mkst .eb-side .bd .qh{display:block;margin:14px 0 2px;font-weight:900;color:#C2410C}
 @media (min-width:900px){.mkst.eb-sideon .wrap,.mkst.eb-sideon main{margin-right:470px}}
 `;
+function ebOnPg() { return /^#\/eb\/b/.test(location.hash) || !!document.querySelector(".mkst .st-ink"); }
+function ebPg(p) { return typeof p === "string" && isNaN(+p) ? p : p + "쪽"; }
 function ebStyle() { if (!document.getElementById("eb-css")) { var s = document.createElement("style"); s.id = "eb-css"; s.textContent = EB_CSS; document.head.appendChild(s); } }
 // 목차 보기: #/eb  (지금 학습실 LC/RC 파트만)
 function ebFreePdf() {
@@ -318,7 +320,7 @@ function ebCamFloat(fn) {
   (document.querySelector(".mkst") || document.body).appendChild(bi); ebFollow(bi, 158, 96);
   var V = window.visualViewport;
   function place() {
-    if (!b.isConnected || !/^#\/eb\/b/.test(location.hash)) { b.remove(); if (V) { V.removeEventListener("resize", place); V.removeEventListener("scroll", place); } return; }
+    if (!b.isConnected || !ebOnPg()) { b.remove(); if (V) { V.removeEventListener("resize", place); V.removeEventListener("scroll", place); } return; }
     var sc = V ? V.scale || 1 : 1;
     if (sc <= 1.01) { b.style.transform = ""; b.style.left = ""; b.style.top = ""; b.style.bottom = ""; return; }
     b.style.left = "0"; b.style.top = "0"; b.style.bottom = "auto"; b.style.transformOrigin = "0 0";
@@ -326,21 +328,21 @@ function ebCamFloat(fn) {
     b.style.transform = "translate(" + x + "px," + y + "px) scale(" + 1 / sc + ")";
   }
   if (V) { V.addEventListener("resize", place); V.addEventListener("scroll", place); }
-  window.addEventListener("hashchange", function h() { if (!/^#\/eb\/b/.test(location.hash)) { b.remove(); window.removeEventListener("hashchange", h); } });
+  window.addEventListener("hashchange", function h() { if (!ebOnPg()) { b.remove(); window.removeEventListener("hashchange", h); } });
   place();
 }
 // 📸 캡처 버튼 옆 🎧 음원 버튼: 누르면 이 쪽 음원 목록(전체 듣기·문제 골라 듣기·받기)이 아래에서 올라옴 — 확대해도 따라옴
 function ebFollow(el, left, bottom) {
   var V = window.visualViewport;
   function place() {
-    if (!el.isConnected || !/^#\/eb\/b/.test(location.hash)) { el.remove(); if (V) { V.removeEventListener("resize", place); V.removeEventListener("scroll", place); } return; }
+    if (!el.isConnected || !ebOnPg()) { el.remove(); if (V) { V.removeEventListener("resize", place); V.removeEventListener("scroll", place); } return; }
     var sc = V ? V.scale || 1 : 1;
     if (sc <= 1.01) { el.style.transform = ""; el.style.left = ""; el.style.top = ""; el.style.bottom = ""; return; }
     el.style.left = "0"; el.style.top = "0"; el.style.bottom = "auto"; el.style.transformOrigin = "0 0";
     el.style.transform = "translate(" + (V.offsetLeft + left / sc) + "px," + (V.offsetTop + V.height - (el.offsetHeight + bottom) / sc) + "px) scale(" + 1 / sc + ")";
   }
   if (V) { V.addEventListener("resize", place); V.addEventListener("scroll", place); }
-  window.addEventListener("hashchange", function h() { if (!/^#\/eb\/b/.test(location.hash)) { el.remove(); window.removeEventListener("hashchange", h); } });
+  window.addEventListener("hashchange", function h() { if (!ebOnPg()) { el.remove(); window.removeEventListener("hashchange", h); } });
   place(); return place;
 }
 function ebAudFloat() {
@@ -801,7 +803,7 @@ function viewEbNote() {
         var D = days[k], dt = new Date(k + "T00:00:00");
         return `<div class="card eb-nd"><div class="eb-ndh"><b>${dt.getMonth() + 1}월 ${dt.getDate()}일 (${"일월화수목금토"[dt.getDay()]})</b><small>캡처 ${D.n.length}장 · 단어 ${D.v.length}개</small></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 10px"><button class="btn" data-np="${k}" data-sh="1">📤 이 날 필기 PDF 보내기</button><button class="btn ghost" data-np="${k}">📄 PDF 저장</button></div>
-          ${D.n.map(function (o) { return `<div class="eb-ni"><img src="${o.img}" alt=""><div class="eb-nm"><small>${esc(o.b)} · ${o.p}쪽 · ${new Date(o.t).toTimeString().slice(0, 5)}</small><textarea data-nm="${o.id}" placeholder="메모 (선생님 설명, 외울 것…)">${esc(o.memo || "")}</textarea><div style="display:flex;gap:6px"><button class="exb" data-ngo="#/eb/${o.bid}/${o.p}">쪽 열기</button><button class="exb" data-nd="${o.id}" style="color:#D2453B">삭제</button></div></div></div>`; }).join("")}
+          ${D.n.map(function (o) { return `<div class="eb-ni"><img src="${o.img}" alt=""><div class="eb-nm"><small>${esc(o.b)} · ${ebPg(o.p)} · ${new Date(o.t).toTimeString().slice(0, 5)}</small><textarea data-nm="${o.id}" placeholder="메모 (선생님 설명, 외울 것…)">${esc(o.memo || "")}</textarea><div style="display:flex;gap:6px"><button class="exb" data-ngo="${o.go || "#/eb/" + o.bid + "/" + o.p}">쪽 열기</button><button class="exb" data-nd="${o.id}" style="color:#D2453B">삭제</button></div></div></div>`; }).join("")}
           ${D.v.length ? `<div class="eb-nv">⭐ ${D.v.map(function (v) { return esc(v.w); }).join(" · ")}</div>` : ""}</div>`;
       }).join("") : `<div class="empty">아직 캡처가 없어요. 교재 쪽에서 📸 버튼을 눌러 보세요.</div>`) +
       `<div style="display:grid;gap:8px;margin-top:10px"><button class="btn ghost" data-go="#/eb/voc">⭐ 내 단어장</button><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">교재 목차로</button></div>`);
@@ -863,7 +865,7 @@ function ebNotePdf(day, N, V, share, btn) {
       var c = COL[i % COL.length];
       x.save(); x.shadowColor = "rgba(23,40,68,.18)"; x.shadowBlur = 18; x.shadowOffsetY = 6; ebRR(x, M, y, mw, h - 20, 22); x.fillStyle = "#fff"; x.fill(); x.restore();
       x.fillStyle = c; ebRR(x, M, y, mw, 58, 22); x.fill(); x.fillRect(M, y + 30, mw, 28);
-      x.fillStyle = "#fff"; x.font = "900 26px " + F; x.fillText("No." + (i + 1) + "   " + o.b + " · " + o.p + "쪽", M + 24, y + 39);
+      x.fillStyle = "#fff"; x.font = "900 26px " + F; x.fillText("No." + (i + 1) + "   " + o.b + " · " + ebPg(o.p), M + 24, y + 39);
       x.textAlign = "right"; x.font = "700 22px " + F; x.fillText(new Date(o.t).toTimeString().slice(0, 5), M + mw - 24, y + 38); x.textAlign = "left";
       x.drawImage(im, M + (mw - iw) / 2, y + 74, iw, ih);
       x.strokeStyle = "#E3E8EF"; x.lineWidth = 2; x.strokeRect(M + (mw - iw) / 2, y + 74, iw, ih);
@@ -883,7 +885,7 @@ function ebNotePdf(day, N, V, share, btn) {
         if (i % 2 === 0) { x.fillStyle = "#FFF8E1"; x.fillRect(M, y - 6, PW - 2 * M, h); }
         x.fillStyle = "#172844"; x.font = "700 28px Georgia,serif"; x.fillText(v.w, M + 18, y + 26);
         x.font = "500 24px " + F; ml.forEach(function (t, k) { x.fillStyle = "#172844"; x.fillText(t, M + 400, y + 25 + k * 34); });
-        x.fillStyle = "#9AA5B4"; x.font = "500 18px " + F; x.textAlign = "right"; x.fillText((v.b || "") + (v.p ? " " + v.p + "쪽" : ""), PW - M - 10, y + 25); x.textAlign = "left";
+        x.fillStyle = "#9AA5B4"; x.font = "500 18px " + F; x.textAlign = "right"; x.fillText((v.b || "") + (v.p ? " " + ebPg(v.p) : ""), PW - M - 10, y + 25); x.textAlign = "left";
         y += h;
       });
     }
@@ -911,7 +913,7 @@ function viewEbVoc() {
   render(topbar("내 단어장") +
     `<div class="card hero"><span class="kicker">교재 전자책 · 모든 교재</span><h1>⭐ 내 단어장 ${L.length}개</h1><p>교재에서 단어를 누르고 <b>☆ 단어장 저장</b>을 누르면 여기에 모여요. 다 모으면 PDF로 저장하거나 카톡·문자로 보낼 수 있어요.</p></div>` +
     (L.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px"><button class="btn" id="eb-vsend">📤 PDF 보내기</button><button class="btn ghost" id="eb-vsave">📄 PDF 저장</button></div>
-      <div class="card" style="padding:6px 12px"><table class="eb-vt">${L.map(function (v, i) { return `<tr><td class="w">${esc(v.w)}</td><td><b style="color:#C2410C">${esc(v.ps)}</b> ${esc(v.mn)}${v.bs ? `<br><small style="color:#33404F">원형 ${esc(v.bs)}</small>` : ""}</td><td class="s">${esc(v.b)}<br>${v.p ? v.p + "쪽" : ""}</td><td><button data-vd="${i}">삭제</button></td></tr>`; }).join("")}</table></div>
+      <div class="card" style="padding:6px 12px"><table class="eb-vt">${L.map(function (v, i) { return `<tr><td class="w">${esc(v.w)}</td><td><b style="color:#C2410C">${esc(v.ps)}</b> ${esc(v.mn)}${v.bs ? `<br><small style="color:#33404F">원형 ${esc(v.bs)}</small>` : ""}</td><td class="s">${esc(v.b)}<br>${v.p ? esc(ebPg(v.p)) : ""}</td><td><button data-vd="${i}">삭제</button></td></tr>`; }).join("")}</table></div>
       <div style="display:grid;gap:8px;margin-top:10px"><button class="btn ghost" id="eb-vclr">단어장 비우기</button></div>`
       : `<div class="empty">아직 저장한 단어가 없어요. 교재 쪽에서 모르는 단어를 눌러 보세요.</div>`) +
     `<div style="display:grid;gap:8px;margin-top:10px"><button class="btn ghost" data-go="#/eb${ls("eball") === "1" ? "/all" : ""}">교재 목차로</button></div>`);
@@ -942,7 +944,7 @@ function ebVocPdf(share, btn) {
     function flush() { pages.push(cv.toDataURL("image/jpeg", 0.9)); }
     head(true);
     L.forEach(function (v, i) {
-      var wl = wrap(v.w, 330, "700 28px Georgia,serif"), ml = wrap(v.ps + "  " + v.mn + (v.bs ? "  (원형 " + v.bs + ")" : ""), C[3] - C[2] - 20, "500 24px " + F), sl = wrap((v.b || "") + (v.p ? " " + v.p + "쪽" : ""), 190, "500 20px " + F);
+      var wl = wrap(v.w, 330, "700 28px Georgia,serif"), ml = wrap(v.ps + "  " + v.mn + (v.bs ? "  (원형 " + v.bs + ")" : ""), C[3] - C[2] - 20, "500 24px " + F), sl = wrap((v.b || "") + (v.p ? " " + ebPg(v.p) : ""), 190, "500 20px " + F);
       var h = Math.max(wl.length * 36, ml.length * 34, sl.length * 28) + 22;
       if (y + h > H - M) { flush(); head(false); }
       if (i % 2) { x.fillStyle = "#F4F6FA"; x.fillRect(M, y - 4, W - 2 * M, h); }
