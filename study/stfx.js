@@ -273,7 +273,7 @@ function stInk(key, pg) {
   var cv = document.createElement("canvas"); cv.id = "eb-ink"; cv.className = "st-ink"; pg.appendChild(cv);
   var cur = null, raf = 0;
   function WH() { return [pg.offsetWidth, Math.max(pg.offsetHeight, pg.scrollHeight)]; }
-  function size() { var d = Math.min(1.5, window.devicePixelRatio || 1), s = WH(), w = Math.round(s[0] * d), h = Math.round(s[1] * d); cv.style.height = s[1] + "px"; if (w && h && (cv.width !== w || cv.height !== h)) { cv.width = w; cv.height = h; paint(); } }
+  function size() { var s = WH(); s[1] = Math.min(s[1], 30000); var d = Math.min(1.5, window.devicePixelRatio || 1, Math.sqrt(14e6 / Math.max(1, s[0] * s[1]))), w = Math.round(s[0] * d), h = Math.round(s[1] * d); cv.style.height = s[1] + "px"; if (w && h && (cv.width !== w || cv.height !== h)) { cv.width = w; cv.height = h; paint(); } }
   function conv(s) { var r = cv.width / cv.height; if (s.t === "text") return { t: "text", c: s.c, s: s.s, x: s.x, y: s.y * r, txt: s.txt }; var o = {}; for (var k in s) o[k] = s[k]; o.p = (s.p || []).map(function (q) { return [q[0], q[1] * r]; }); return o; }
   function paint() { if (!cv.height) return; ebInkPaint(cv, EBI.S.map(conv), cur && !cur.er ? conv(cur) : null); }
   function save() { if (key === EBI.key) ebInkPut(key, EBI.S); }
