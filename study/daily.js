@@ -97,6 +97,26 @@ function dgPick(part, day) {
     return dgLoadKeys(keys, part);
   }).then(function (pick) { pick = pick || []; if (pick.length) ls(k, JSON.stringify(pick.map(function (x) { return x.key; }))); return pick; });
 }
+// 지난 날 과제: Day N = A급 과제 N회(15일마다 반복) · VOCA DAY · PART 2 진도 — 펼치기로 확인하고 이어서 풀기
+function dgPastHtml(day) {
+  if (day <= 1) return "";
+  var st = dgDate(dgStart()), rows = [], open = ls("dgpast") === "1";
+  for (var d = day - 1; d >= 1; d--) {
+    var dt = new Date(st); dt.setDate(dt.getDate() + d - 1);
+    var r = dgRound(d), vd = (d - 1) % 30 + 1, p2 = dgP2(d), parts = [];
+    [5, 6, 7].forEach(function (p) {
+      var sc = dgASec(r, p); if (!sc) return;
+      var ks = sc.keys || [], k = ks.filter(function (x) { return S.prog[x]; }).length, n = ks.length;
+      parts.push('<button class="btn ' + (n && k >= n ? "ghost " : "") + 'sm" data-go="#/s/' + encodeURIComponent(sc.id) + '" style="flex:1 1 30%;padding:9px 4px;font-size:13.5px">' + (n && k >= n ? "✅ " : "") + "PART " + p + (p === 5 ? (r <= 8 ? " 문법" : " 어휘") : "") + '<br><small style="font-weight:700">' + k + " / " + n + "</small></button>");
+    });
+    var all = parts.every(function (h) { return /✅/.test(h); });
+    rows.push('<div class="card" style="margin:0;padding:12px 14px;' + (all ? "background:#F1F8F4;border-color:#9BD3B4" : "") + '"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><b style="font-size:16px">' + (all ? "✅ " : "") + "Day " + d + '</b><span style="font-size:13.5px;font-weight:700;color:#33404F">' + (dt.getMonth() + 1) + "/" + dt.getDate() + "(" + "일월화수목금토"[dt.getDay()] + ") · A급 과제 " + r + '회</span></div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"><button class="btn ghost sm" data-go="#/v/' + vd + '" style="flex:1 1 30%;padding:9px 4px;font-size:13.5px">📖 VOCA DAY ' + String(vd).padStart(2, "0") + '</button>' + p2.secs.map(function (x) { return '<button class="btn ghost sm" data-go="#/s/' + encodeURIComponent(x.id) + '" style="flex:1 1 30%;padding:9px 4px;font-size:13.5px">🎧 ' + esc(x.title.replace(/ 의문[사문]$/, "")) + "</button>"; }).join("") + "</div>" +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + parts.join("") + "</div></div>");
+  }
+  return '<button class="row" id="dg-past" style="margin-top:4px"><span class="pill n">지난 과제</span><span class="t"><b style="font-size:16px">📂 이전 과제 보기</b><small>Day 1 ~ Day ' + (day - 1) + ' · 못 푼 것은 눌러서 이어서 풀기</small></span><b style="font-size:13px">' + (open ? "▲ 접기" : "▼ 펼치기") + '</b></button>' +
+    '<div id="dg-pastbox" style="display:' + (open ? "grid" : "none") + ';gap:8px;margin:0 0 14px">' + rows.join("") + "</div>";
+}
 function dgSetN(L) { var o = {}; (L || []).forEach(function (x) { o[x.key.replace(/-\d+$/, "")] = 1; }); return Object.keys(o).length; }
 function dgP2(day) {
   var u = DG_P2[(day - 1) % DG_P2.length], all = ((S.catalog || {}).sections || []).filter(function (s) { return s.group === "Part 2 유형별"; });
@@ -139,8 +159,10 @@ function viewDG() {
       '<div id="dg-on6" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
       row("📰", "PART 7 · 지문 " + dgSetN(L[7]) + "개 (" + s7.n + "문제)", "A급 과제 " + r5 + "회 · 세부 사항 · 사실 확인 · 추론 등", qbtn(7, s7), s7.done, s7.k + " / " + s7.n, "p." + p7pg + " 지문 1세트" + (day === 1 ? " · p.98 유형별 풀이법 먼저" : "")) +
       '<div id="dg-on7" style="display:grid;gap:8px;margin:-4px 0 12px"></div>' +
+      dgPastHtml(day) +
       '<div class="card" style="font-size:13.5px;color:#3A4250">📘 표시는 메이크토익 교재 쪽수예요. 교재로 먼저 풀고 학습실 문제로 확인하세요. 틀린 문제는 해설의 ‘의식의 흐름’을 소리 내 읽고, 다음 날 시작 전에 한 번 더 보세요.</div>');
     bindCommon();
+    var pb = document.getElementById("dg-past"); if (pb) pb.onclick = function () { var bx = document.getElementById("dg-pastbox"), on = bx.style.display === "none"; bx.style.display = on ? "grid" : "none"; pb.querySelector("b").textContent = on ? "▲ 접기" : "▼ 펼치기"; ls("dgpast", on ? "1" : "0"); };
     // 오늘 푼 RC에서 틀린 유형별 추가 50문제 + 오답노트 (A급 과제와 같은 방식)
     var ymd = dgYmd(new Date()), parts = [5, 6, 7].map(function (p) {
       return { part: p, title: "매일 과제 Day " + day, list: L[p].filter(function (x) { return S.prog[x.key]; }).map(function (x) { var g = S.prog[x.key]; return { key: x.key, q: x.q, set: x.set, mine: g[0], ok: !!g[1], type: x.q.qtype || (x.sec && x.sec.qtype) || onGuess(x.q, x.set, p) }; }) };
