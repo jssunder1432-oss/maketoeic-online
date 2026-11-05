@@ -36,7 +36,7 @@ var EB_CSS = `
 .mkst .eb-ch .eb-sub button small{display:block;font-size:11.5px;font-weight:600;color:#5B6573;margin-top:2px}
 .mkst .eb-bar{position:sticky;top:calc(52px + env(safe-area-inset-top));z-index:20;display:flex;align-items:center;gap:6px;background:rgba(245,247,250,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:8px 0;margin:-4px 0 8px}
 .mkst .eb-bar button,.mkst .eb-bar select{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;font-weight:800;font-size:14px;color:#172844;min-height:40px}
-.mkst .eb-bar select{flex:1;min-width:0;padding:9px 6px}
+.mkst .eb-bar select{flex:1;min-width:0;padding:9px 6px}@media(max-width:430px){.mkst .eb-bar{gap:4px}.mkst .eb-bar button{padding:9px 8px}.mkst .eb-bar select{padding:9px 2px;font-size:13px}}
 .mkst .eb-trk{padding:0 0 6px;margin:0 0 4px}
 .mkst .eb-tt{display:flex;gap:6px;flex-wrap:wrap}
 .mkst .eb-tt button{border:1.5px solid #172844;background:#fff;color:#172844;border-radius:12px;padding:10px 13px;font-weight:900;font-size:14.5px}
@@ -192,7 +192,7 @@ function viewEbPage(id, n) {
     var ch = (m.toc || []).filter(function (c) { return n >= c.p && n <= c.e; })[0];
     var opts = []; for (var i = 1; i <= m.n; i++) opts.push(i);
     render(topbar(bk.nm + " · " + n + "쪽") + (ch ? `<p class="eb-tip" style="margin-top:-6px"><b>${esc(ch.t)}</b></p>` : "") +
-      `<div class="eb-bar"><button data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀</button><select id="eb-sel">${opts.map(function (i) { return `<option value="${i}" ${i === n ? "selected" : ""}>${i} / ${m.n}쪽</option>`; }).join("")}</select><button data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>▶</button><button id="eb-zo">－</button><button id="eb-zi">＋</button><button id="eb-cap" title="화면 캡처 → 필기 노트" style="background:#FFF4EC;border-color:#E95721">📸</button><button class="eb-inkb" id="eb-inkb" title="필기" style="background:#EEF4FF;border-color:#1F5FD6">✏️</button></div>
+      `<div class="eb-bar"><button data-ebtoc="1" title="목차로 나가기" aria-label="목차" style="padding:0;width:34px;min-width:34px;flex:0 0 34px">📑</button><button data-ebn="${n - 1}" ${n <= 1 ? "disabled" : ""}>◀</button><select id="eb-sel" style="min-width:64px;flex:1 1 64px">${opts.map(function (i) { return `<option value="${i}" ${i === n ? "selected" : ""}>${i} / ${m.n}쪽</option>`; }).join("")}</select><button data-ebn="${n + 1}" ${n >= m.n ? "disabled" : ""}>▶</button><button id="eb-zo">－</button><button id="eb-zi">＋</button><button id="eb-cap" title="화면 캡처 → 필기 노트" style="background:#FFF4EC;border-color:#E95721">📸</button><button class="eb-inkb" id="eb-inkb" title="필기" style="background:#EEF4FF;border-color:#1F5FD6">✏️</button></div>
       <div id="eb-trk" class="eb-trk" style="display:none"></div>
       <div class="eb-scroll" id="eb-sc"><div class="eb-pg" id="eb-pg" style="width:${z * 100}%"><img id="eb-img" alt="${n}쪽" src="${EB_BASE + id}/i/${n}.webp?v=${m.v || 1}"><div id="eb-ov"></div></div></div>
       <div id="eb-psbox"></div>
@@ -202,7 +202,9 @@ function viewEbPage(id, n) {
       <audio id="eb-au" preload="none"></audio>`);
     bindCommon();
     if (n < m.n) { var pre = new Image(); pre.src = EB_BASE + id + "/i/" + (n + 1) + ".webp?v=" + (m.v || 1); }
-    function goP(p) { if (p >= 1 && p <= m.n) { ebHide(); ebSideClose(); go("#/eb/" + id + "/" + p); } }
+    function goP(p) { if (p >= 1 && p <= m.n) { ebHide(); ebSideClose(); location.replace("#/eb/" + id + "/" + p); } }
+    // ‹ 뒤로 = 쪽 넘긴 기록을 되짚지 않고 바로 목차로 (쪽을 넘겨도 한 번에 나가기)
+    app.querySelectorAll("[data-back],[data-ebtoc]").forEach(function (b) { if (b.dataset.back != null) b.textContent = "‹ 목차"; b.onclick = function () { ebHide(); ebSideClose(); go(ls("eball") === "1" ? "#/eb/all/" + ser : "#/eb"); }; });
     app.querySelectorAll("[data-ebn]").forEach(function (b) { b.onclick = function () { goP(+b.dataset.ebn); }; });
     app.querySelector("#eb-sel").onchange = function () { goP(+this.value); };
     var pg = app.querySelector("#eb-pg"), sc = app.querySelector("#eb-sc");
