@@ -13,7 +13,7 @@ var FXT = {}, FXF = {}, FX_CSS = `
 .mkst .fxr .gw,.mkst .fxr .gx{position:relative;z-index:2}
 .mkst .fxr .gph{text-decoration:underline solid #FF9A6B;text-decoration-thickness:2px;text-underline-offset:4px;background:#FFF4EC;border-radius:4px}
 .mkst .fxr .gph .gw{text-decoration:none}
-.mkst .fxr .on{background:#FFE3D6;color:#172844}
+.mkst .fxr .on{background:#FFE3D6;color:#172844}.mkst .fxr .gph.on{background:#FFD3BC;box-shadow:0 0 0 2px #FF9A6B}
 .mkst .fxr .ck{background:#FFF1C9}
 .mkst .mr-line .fxr .gw{text-decoration:underline dotted #C9CFDA;text-underline-offset:4px}
 .mkst .fxsv{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1}
@@ -52,7 +52,7 @@ function fxPre(key, d) {
 function fxOf(text) { return text ? FXT[fxH(text)] || null : null; }
 function fxText(t) { var X = fxOf(t); return X ? fxGloss(t, {}, {}, [], false, X) : esc(t); }
 function fxGloss(text, g, oc, ph, psg, X) {
-  g = g || {}; oc = oc || {}; ph = ph && ph.length ? ph : (X.ph || []);
+  g = g || {}; oc = oc || {}; ph = X.ph && X.ph.length ? X.ph : (ph || []);
   var G = X.F.G, start = {}; ph.forEach(function (p) { start[p[0]] = p; });
   var parts = String(text).split(/(\s+)/), out = [], ti = -1, open = null, bl = false;
   parts.forEach(function (t) {
@@ -141,19 +141,20 @@ function fxTap(el, e) {
   ebHide(); document.querySelectorAll(".mkst .fxr .on,.mkst .fxr .ck").forEach(function (x) { x.classList.remove("on"); x.classList.remove("ck"); });
   el.classList.add("on");
   var p = el.dataset.p || "", m = el.dataset.m || "", b = el.dataset.b || "", L = X.F.L || [], extra = [];
-  var ph = el.closest(".gph"); if (ph) { extra.push("📌 <b>표현</b> " + esc(ph.textContent.replace(/[,.;:?!"]+$/, "")) + " — " + esc(ph.dataset.pm)); }
+  var ph = el.closest(".gph"), phT = ph ? ph.textContent.replace(/^[^A-Za-z0-9$%']+|[,.;:?!"')]+$/g, "") : "";
+  if (ph) { ph.classList.add("on"); if (p || m) extra.push("· <b>" + esc(word) + "</b> " + esc(p) + " " + esc(m) + (b ? " (원형 " + esc(b) + ")" : "")); }
   (X.ck || []).forEach(function (c) { if (c[0].indexOf(ti) < 0) return; var ws = c[0].map(function (i) { var t = root.querySelector('[data-ti="' + i + '"]'); if (t) t.classList.add("ck"); return t ? fxWord(t) : ""; }).join(" "); extra.push("🧩 <b>" + esc(L[c[1]] || "") + "</b> · " + esc(ws)); });
   (X.rd || []).forEach(function (r) { if (r[0] === ti) extra.push("🔗 <b>" + esc((L[r[1]] || "").split(" — ")[0]) + "</b> — " + esc((L[r[1]] || "").split(" — ").slice(1).join(" — "))); });
-  var sk = fxSentOf(X, ti); if (sk >= 0 && X.sv[sk][1].some(function (cl) { return cl[4]; })) extra.push("📢 <b>명령문</b> — 주어(You)가 생략되고 동사원형으로 시작하는 문장");
+  var sk = fxSentOf(X, ti); if (sk >= 0 && X.sv[sk][1].some(function (cl) { return cl[4] && cl[1].indexOf(ti) >= 0; })) extra.push("📢 <b>명령문</b> — 주어(You)가 생략되고 동사원형으로 시작하는 문장");
   var pop = document.createElement("div"); pop.className = "eb-pop";
   var au = fxAudOf(el);
-  pop.innerHTML = '<button class="x" aria-label="닫기">×</button><div><span class="wd">' + esc(word) + "</span>" + (p ? '<span class="ps">' + esc(p) + "</span>" : "") + (b ? '<span class="bs">원형 ' + esc(b) + "</span>" : "") + "</div>" + (m ? '<div class="mn">' + esc(m) + "</div>" : "") +
+  pop.innerHTML = '<button class="x" aria-label="닫기">×</button>' + (ph ? '<div><span class="wd">' + esc(phT) + '</span><span class="ps">묶음 표현</span></div><div class="mn">' + esc(ph.dataset.pm) + "</div>" : '<div><span class="wd">' + esc(word) + "</span>" + (p ? '<span class="ps">' + esc(p) + "</span>" : "") + (b ? '<span class="bs">원형 ' + esc(b) + "</span>" : "") + "</div>" + (m ? '<div class="mn">' + esc(m) + "</div>" : "")) +
     extra.map(function (x) { return '<div class="fxl">' + x + "</div>"; }).join("") +
 
-    '<div class="pl">' + (au ? '<button data-fp="1">▶ 이 문장 듣기</button><button class="g" data-fp="0">■ 멈춤</button>' : "") + (m ? '<button class="g sv" data-sv="1">☆ 단어장 저장</button>' : "") + "</div>";
+    '<div class="pl">' + (au ? '<button data-fp="1">▶ 이 문장 듣기</button><button class="g" data-fp="0">■ 멈춤</button>' : "") + (m || ph ? '<button class="g sv" data-sv="1">☆ 단어장 저장</button>' : "") + "</div>";
   (document.querySelector(".mkst") || document.body).appendChild(pop); if (typeof ebPopFollow === "function") ebPopFollow(pop);
-  if (p && m) ebAltShow(pop, word, [p, m, b]);
-  var vw = m ? { w: b && /^(동사|과거분사|현재분사|동명사)/.test(p) ? b : word, ps: p, mn: m, bs: b, b: "학습실", p: (Q && Q.sec ? Q.sec.title : "문제") } : null;
+  if (p && m && !ph) ebAltShow(pop, word, [p, m, b]);
+  var vw = ph ? { w: phT, ps: "표현", mn: ph.dataset.pm, bs: "", b: "학습실", p: (Q && Q.sec ? Q.sec.title : "문제") } : m ? { w: b && /^(동사|과거분사|현재분사|동명사)/.test(p) ? b : word, ps: p, mn: m, bs: b, b: "학습실", p: (Q && Q.sec ? Q.sec.title : "문제") } : null;
   var svb = pop.querySelector("[data-sv]");
   function svDraw() { var on = ebVocHas(vw); svb.classList.toggle("on", on); svb.textContent = on ? "★ 저장됨 (단어장)" : "☆ 단어장 저장"; }
   if (svb) { svDraw(); svb.onclick = function () { ebVocToggle(vw); svDraw(); }; }
