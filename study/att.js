@@ -1,4 +1,4 @@
-/* 출석 체크 도장 (2026-11-05): 학습실 첫 화면에 이번 달 수업일 도장판 — 수업한 날을 누르면 출석 도장
+/* 출석 체크 도장 (2026-11-05): 학습실 첫 화면에 이번 달 수업일 도장판 — 수업한 날을 누르고 몇 시 수업이었는지 고르면 도장
    - 수업일: ATT_MONTHS에 적은 달은 그 기간 주중, 그 밖의 달은 그 달 주중 전체
    - 기록: progress "att:YYYY-MM-DD" (chosen = 수업 시각(시), correct = true) — 관리자 진도 기록에도 남는다
    - 수강생만(비회원 30일권은 안 보임). 오늘·지난 수업일만 찍을 수 있고 앞으로 올 날은 잠김 */
@@ -22,18 +22,22 @@ function attCard() {
       var p = P["att:" + d], dt = new Date(d + "T00:00:00"), fut = d > today, on = d === today;
       return '<button data-attd="' + d + '"' + (fut ? " disabled" : "") + ' style="aspect-ratio:1;border-radius:50%;border:2px ' + (p ? "solid #E0322B" : on ? "solid #E95721" : "dashed #C9CFDA") + ";background:" + (p ? "#FFF0EE" : "#fff") + ";padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:" + (fut ? ".6" : "1") + ";min-width:0;width:100%;box-sizing:border-box" + ';position:relative">' +
         '<span style="font-size:12px;font-weight:800;color:#33404F">' + (dt.getMonth() + 1) + "/" + dt.getDate() + "(" + W[dt.getDay()] + ")</span>" +
-        (p ? '<span style="font-size:20px;line-height:1.1;color:#E0322B;font-weight:900;transform:rotate(-12deg)">출석</span>' : '<span style="font-size:18px;color:#C9CFDA">' + (fut ? "·" : "＋") + "</span>") + "</button>";
+        (p ? '<span style="font-size:20px;line-height:1.1;color:#E0322B;font-weight:900;transform:rotate(-12deg)">출석</span><span style="font-size:11px;font-weight:800;color:#E0322B">' + attHr(+p[0]) + "</span>" : '<span style="font-size:18px;color:#C9CFDA">' + (fut ? "·" : "＋") + "</span>") + "</button>";
     }).join("") + "</div>" +
-    '<p style="margin:8px 2px 0;font-size:13px;font-weight:700;color:#33404F">수업한 날을 누르면 출석 도장이 찍혀요.</p></div>';
+    '<p style="margin:8px 2px 0;font-size:13px;font-weight:700;color:#33404F">수업한 날을 누르고 몇 시 수업에 참석했는지 고르면 도장이 찍혀요.</p><div id="att-pick" style="display:none;margin-top:10px"></div></div>';
 }
 function attBind() {
   var box = app.querySelector("[data-att]"); if (!box) return;
   box.querySelectorAll("[data-attd]").forEach(function (b) {
     b.onclick = function () {
-      var d = b.dataset.attd, k = "att:" + d;
-      if (S.prog[k]) { if (!confirm(d.slice(5).replace("-", "/") + " 출석 도장을 지울까요?")) return; delete S.prog[k]; api("save_progress", { p_token: S.token, p_item: k, p_chosen: -1, p_correct: false }).catch(function () { }); }
-      else { S.prog[k] = [1, true, 1]; api("save_progress", { p_token: S.token, p_item: k, p_chosen: 1, p_correct: true }).catch(function () { }); }
-      attRe();
+      var d = b.dataset.attd, pk = box.querySelector("#att-pick"), p = S.prog["att:" + d], dt = new Date(d + "T00:00:00");
+      pk.style.display = "block";
+      pk.innerHTML = '<div style="font-weight:800;margin-bottom:6px">' + (dt.getMonth() + 1) + "월 " + dt.getDate() + "일 몇 시 수업이었나요?" + (p ? ' <small style="color:#1E8E5A">(지금: ' + attHr(+p[0]) + ")</small>" : "") + '</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">' +
+        ATT_HOURS.map(function (h) { return '<button class="btn ' + (p && +p[0] === h ? "" : "ghost ") + 'sm" data-atth="' + h + '">' + attHr(h) + "</button>"; }).join("") + "</div>" +
+        '<div style="display:flex;gap:6px;margin-top:8px">' + (p ? '<button class="btn ghost sm" data-attx="1" style="flex:1">도장 지우기</button>' : "") + '<button class="btn ghost sm" data-attc="1" style="flex:1">닫기</button></div>';
+      pk.querySelectorAll("[data-atth]").forEach(function (h) { h.onclick = function () { var v = +h.dataset.atth; S.prog["att:" + d] = [v, true, 1]; api("save_progress", { p_token: S.token, p_item: "att:" + d, p_chosen: v, p_correct: true }).catch(function () { }); attRe(); }; });
+      var x = pk.querySelector("[data-attx]"); if (x) x.onclick = function () { delete S.prog["att:" + d]; api("save_progress", { p_token: S.token, p_item: "att:" + d, p_chosen: -1, p_correct: false }).catch(function () { }); attRe(); };
+      pk.querySelector("[data-attc]").onclick = function () { pk.style.display = "none"; };
     };
   });
 }
