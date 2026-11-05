@@ -16,7 +16,7 @@ function nmBookBox() {
 function nmInject(html) {
   if (typeof payPart !== "function" || !payPart() || S.area !== "LC" || app.querySelector("[data-nmbk]")) return;
   var b0 = [].filter.call(app.querySelectorAll("b"), function (x) { return /LC 문제 · 해설강의/.test(x.textContent); })[0]; if (!b0) return; var g = b0.parentNode.parentNode;
-  var h = nmBookBox(); if (!h) return; g.insertAdjacentHTML("beforebegin", '<div data-nmbk="1">' + h + "</div>");
+  var h = nmBookBox(); if (!h) return; g.insertAdjacentHTML("beforebegin", '<div data-nmbk="1">' + (typeof myBox === "function" ? myBox() : "") + h + "</div>"); if (typeof myBind === "function") myBind();
   app.querySelectorAll("[data-nmbk] [data-go]").forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
 }
 var BK_CSS = ".mkst.bk-q .ex,.mkst.bk-q section.mr,.mkst.bk-q .card.script,.mkst.bk-q .qb>.pill,.mkst.bk-q details.nc,.mkst.bk-q .fxp2 [data-rep],.mkst.bk-q .fxp2+.fxtip,.mkst.bk-q [data-lec]{display:none!important}.mkst.bk-q .opt.right,.mkst.bk-q .opt.wrong{background:#fff!important;border-color:var(--line)!important;color:inherit!important}.mkst.bk-q .opt.right .k,.mkst.bk-q .opt.wrong .k{background:#EEF1F5!important;color:#172844!important}";
@@ -53,6 +53,7 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["function ebFreePdf() {\n", "function ebFreePdf() {\n  if (typeof payPart === \"function\" && payPart()) return nmBookBox();\n"],
 ["function ebRoomBox() {\n", "function ebRoomBox() {\n  if (typeof payPart === \"function\" && payPart()) return \"\";\n"],
 ['var LC_OPEN = ["", "learn", "full", "lcx",', 'var LC_OPEN = ["", "learn", "full", "lcx", "bk",'],
+["function catOpen(h) {\n  var r = h[0] || \"\";\n", "function catOpen(h) {\n  var r = h[0] || \"\";\n  if (r === \"eb\" && (h[1] === \"voc\" || h[1] === \"note\")) return true;\n"],
 ['  if (h[0] === "lcx" && h[2]) return viewLcx(+h[1], decodeURIComponent(h[2]));\n', '  if (h[0] === "bk" && h[2]) return viewBook(+h[1], decodeURIComponent(h[2]));\n  if (h[0] === "lcx" && h[2]) return viewLcx(+h[1], decodeURIComponent(h[2]));\n'],
 ["var chs = (m.toc || []).filter(function (c) { return all || c.area === S.area; });", "var chs = (m.toc || []).filter(function (c) { return (all || c.area === S.area) && ebPlanOk(c.area); });"],
 ["    var ch = (m.toc || []).filter(function (c) { return n >= c.p && n <= c.e; })[0];\n", "    var ch = (m.toc || []).filter(function (c) { return n >= c.p && n <= c.e; })[0];\n    if (ch && !ebPlanOk(ch.area)) { render(topbar(\"교재 전자책\") + '<div class=\"empty\">수강권에 포함되지 않은 쪽이에요.</div>'); bindCommon(); return; }\n"],

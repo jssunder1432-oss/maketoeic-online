@@ -52,12 +52,23 @@ function attBind() {
   });
 }
 function attRe() { var box = app.querySelector("[data-att]"); if (!box) return; box.outerHTML = attCard(); attBind(); }
+// 첫 화면: 내 단어장 · 필기 노트(캡처) 폴더 바로 가기
+function myBox() {
+  var nv = typeof ebVoc === "function" ? ebVoc().length : 0;
+  return '<div data-mybox="1" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px">' +
+    '<button class="row" data-go="#/eb/voc" style="margin:0;flex-direction:column;align-items:flex-start;gap:4px;padding:16px;border:2px solid #E8B500;background:#FFFBEA"><b style="font-size:17px">⭐ 내 단어장</b><small style="color:#33404F;font-weight:700">저장한 단어 ' + nv + '개 · PDF</small></button>' +
+    '<button class="row" data-go="#/eb/note" style="margin:0;flex-direction:column;align-items:flex-start;gap:4px;padding:16px;border:2px solid #E95721;background:#FFF4EC"><b style="font-size:17px">📒 필기 노트</b><small style="color:#33404F;font-weight:700" data-mynote>📸 캡처한 화면 모음 · 날짜별 PDF</small></button></div>';
+}
+function myBind() {
+  app.querySelectorAll("[data-mybox] [data-go]").forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
+  if (typeof ebNotes === "function") ebNotes().then(function (L) { var e = app.querySelector("[data-mynote]"); if (e) e.textContent = "📸 캡처 " + L.length + "장 · 날짜별 PDF"; });
+}
 function attInject(html) {
   if (!S.token || (typeof payPart === "function" && payPart()) || app.querySelector("[data-att]")) return;
   if (!/시즌을 선택하세요/.test(html) && !(/어느 학습실로 들어갈까요/.test(html) && !S.picked)) return;
   var at = app.querySelector(".hero"); if (!at) return;
   Object.keys(S.prog || {}).forEach(function (k) { if (/^att:/.test(k) && S.prog[k] && !S.prog[k][1]) delete S.prog[k]; });
-  at.insertAdjacentHTML("afterend", attCard()); attBind();
+  at.insertAdjacentHTML("afterend", attCard() + myBox()); attBind(); myBind();
 }
 function viewLectures(id) {
 */});
