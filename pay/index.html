@@ -52,7 +52,7 @@ var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : (q.get("
 var PRODS = { lc: { name: "LC 30일 수강권", price: 30000, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의", "📘 비회원 교재 PDF 무료 제공"] },
   rc: { name: "RC 30일 수강권", price: 0, items: ["고른 Season의 RC 문제 (Part 5 문법 · 어휘 · Part 7 독해)", "문제별 해설 · 단어 누르면 뜻 · 품사"] },
   lcrc: { name: "LC+RC 30일 수강권", price: 0, items: ["고른 Season의 LC 실전 모의고사 10회 + 해설강의", "고른 Season의 RC 문제 + 해설 · 단어 뜻"] } };
-var MEM = false, REG = null, BANK = true, BOOK = false;
+var MEM = false, REG = null, BANK = true, BOOK = false, PG = "toss", MID = "";
 function FREEPDF() { return LC && !MEM; }   // 교재 PDF 무료·30,000원은 비회원 30일권만 (수강생가·정규반은 그대로)   // 지금은 계좌이체만 (온라인 결제 열면 false)
 try { REG = JSON.parse(sessionStorage.getItem("mkreg") || "null"); } catch (e) { }
 function v(id) { var e = document.getElementById(id); return e ? e.value : ""; }
@@ -114,7 +114,9 @@ function form(msg) {
   var w, pmw;
   if (LC && !REG) { bindReg(); bindPick(); return; }
   if (BANK) bindBank();
-  try {
+  if (PG === "inno") {
+    document.getElementById("pm").innerHTML = '<div class="msg" style="background:#F3F5F9;color:#101828;font-weight:800;margin-top:8px">💳 신용카드 결제 — 버튼을 누르면 이노페이 결제창이 열려요.</div>' + (MID === "testpay01m" ? '<div class="msg" style="background:#FFF4EC;color:#101828;font-weight:800;margin-top:8px">지금은 테스트 결제창이에요. 결제는 밤 11시에 자동 취소되고 이용권은 발급되지 않아요.</div>' : '');
+  } else try {
     w = PaymentWidget(CLIENT_KEY, PaymentWidget.ANONYMOUS);
     pmw = w.renderPaymentMethods("#pm", { value: PRICE });
     w.renderAgreement("#ag");
@@ -142,6 +144,11 @@ function form(msg) {
       if (o.status !== "ok") throw new Error(o.status);
       try { sessionStorage.setItem("mkpay", JSON.stringify({ name: nm, last4: ph.slice(-4) })); } catch (e) { }
       if (o.amount !== PRICE) { PRICE = o.amount; try { pmw.updateAmount(PRICE); } catch (e) { } }
+      if (PG === "inno") return loadInno().then(function () {
+        b.disabled = false; b.textContent = PRICE.toLocaleString() + "원 결제하기";
+        innopay.goPay({ payMethod: "CARD", mid: MID, moid: o.order_id, goodsName: String(o.order_name).slice(0, 40), amt: o.amount, goodsCnt: 1,
+          buyerName: nm, buyerTel: ph, buyerEmail: "js1432@naver.com", returnUrl: location.origin + "/pay/" });
+      });
       return w.requestPayment({ orderId: o.order_id, orderName: o.order_name, customerName: nm, customerMobilePhone: ph,
         successUrl: location.origin + "/pay/?ok=1", failUrl: location.origin + "/pay/?fail=1" });
     }).catch(function (e) {
@@ -205,14 +212,33 @@ function done() {
     app.innerHTML = '<div class="card"><div class="msg err">' + esc(e.message) + '</div><p class="note">결제 금액이 빠져나갔는데 이 화면이 나오면 카카오톡 고객 문의나 010-4845-1432로 알려 주세요.</p></div><a class="btn" href="/pay/">다시 결제하기</a>';
   });
 }
+function loadInno() {
+  if (window.innopay) return Promise.resolve();
+  return new Promise(function (ok, no) { var s = document.createElement("script"); s.src = "https://pg.innopay.co.kr/tpay/js/v1/innopay.js"; s.onload = ok; s.onerror = function () { no(new Error("결제창을 불러오지 못했어요. 새로고침해 주세요.")); }; document.head.appendChild(s); });
+}
+function doneInno() {
+  app.innerHTML = '<div class="card"><b>결제를 확인하는 중이에요…</b><p class="note">창을 닫지 말고 잠시만 기다려 주세요.</p></div>';
+  rpc("pay_confirm_inno", { p_order_id: q.get("moid"), p_payment_key: q.get("tid"), p_amount: +q.get("amt"), p_token: q.get("paymentToken") }).then(function (r) {
+    history.replaceState(null, "", "/pay/?done=1");
+    if (r.status === "test") { app.innerHTML = '<div class="card"><div class="msg" style="background:#FFF4EC;color:#101828;font-weight:800">' + esc(r.message) + '</div></div><a class="btn" href="/pay/?p=class&pg=inno">결제 화면으로 돌아가기</a>'; return; }
+    if (r.status !== "ok") throw new Error(r.message || "결제를 확인하지 못했어요.");
+    var info = {}; try { info = JSON.parse(sessionStorage.getItem("mkpay") || "{}"); } catch (e) { }
+    app.innerHTML = '<div class="card hero"><span class="kicker">결제 완료</span><h1>' + esc(r.name) + '님, 학습실이 열렸어요</h1><p>이용 기간: ' + esc(r.end_date) + '까지</p></div>' +
+      '<div class="card"><p style="margin:0;font-size:15px;line-height:1.7;color:var(--ink)">학습실 입장: 이름 <b>' + esc(r.name) + '</b> + 휴대폰 뒤 4자리' + (info.last4 ? ' <b>' + esc(info.last4) + '</b>' : '') + '</p></div>' +
+      '<a class="btn navy" href="/study/">학습실 입장하기</a>';
+  }).catch(function (e) {
+    app.innerHTML = '<div class="card"><div class="msg err">' + esc(e.message) + '</div><p class="note">카드 금액이 빠져나갔는데 이 화면이 나오면 카카오톡 고객 문의나 010-4845-1432로 알려 주세요.</p></div><a class="btn" href="/pay/">다시 결제하기</a>';
+  });
+}
 function start() {
+  if (q.get("paymentToken") && q.get("tid")) return doneInno();
   if (q.get("ok") && q.get("paymentKey")) done();
   else if (q.get("fail")) form('<div class="msg err">' + esc(q.get("message") || "결제가 취소됐어요.") + '</div>');
   else form();
 }
 // 결제 키·가격은 서버(Supabase shop_cfg)에서 받아 온다 — 키를 바꿀 때 이 파일은 그대로
 rpc("pay_cfg", {}).then(function (c) {
-  if (!c || !c.ck) return; CFG = c; CLIENT_KEY = c.ck;
+  if (!c || !c.ck) return; CFG = c; CLIENT_KEY = c.ck; PG = q.get("pg") === "inno" || q.get("pg") === "toss" ? q.get("pg") : (c.pg || "toss"); MID = c.mid || "";
   ["lc", "rc", "lcrc"].forEach(function (k) { PRODS[k].price = c[k + "_price"] || (k === "lc" ? 24900 : 0); PRODS[k].priceM = c[k + "_price_m"] || 0; });
   if (BANK) { PRODS.lc.price = 30000; if (PRODS.lc.priceM > 30000) PRODS.lc.priceM = 0; }   // 계좌이체 기간: LC 30일 수강권 30,000원 (교재 PDF 무료)
   if (!LC) { PRICE = c.price || PRICE; }
