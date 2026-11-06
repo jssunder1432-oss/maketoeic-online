@@ -52,7 +52,7 @@ function viewRec(i) {
     ((r.f || []).length ? `<div class="grp">📄 수업 자료 PDF</div>` + r.f.map(function (f) { return `<a class="row" href="${esc(f.u)}" target="_blank" rel="noopener" download="${esc(f.n)}.pdf" style="text-decoration:none"><span class="pill" style="background:#172844;color:#fff">PDF</span><span class="t"><b>${esc(f.n)}</b><small>눌러서 보기 · 내려받기</small></span>⬇</a>`; }).join("") : "") +
     (L.length > 1 ? `<div class="grp">다른 수업 녹화</div>` + L.map(function (x, n) { return n === +i ? "" : `<button class="row" data-go="#/rec/${n}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(x.t || "수업 녹화")}</b><small>${esc(x.d || "")}</small></span>›</button>`; }).join("") : ""));
   bindCommon();
-  if (k && window.mkRecCtl) window.mkRecCtl(document.getElementById("rec-ctl"), document.getElementById("rec-yt"), r.c);
+  if (k && window.mkRecCtl) window.mkRecCtl(document.getElementById("rec-ctl"), document.getElementById("rec-yt"), r.c, k);
 }
 function roomRow(go2, pill, title, sub, bg) {
   return `<button class="row" data-go="${go2}" style="${bg ? "background:" + bg + ";color:#fff;border:0" : ""}"><span class="pill ${bg ? "" : "o"}" style="${bg ? "background:#fff;color:#172844" : ""}">${pill}</span><span class="t"><b style="${bg ? "color:#fff" : ""}">${title}</b><small style="${bg ? "color:#fff" : ""}">${sub}</small></span>›</button>`;
