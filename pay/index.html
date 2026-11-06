@@ -109,7 +109,7 @@ function form(msg) {
       '<button class="btn" id="bank">📩 입금했어요 — 확인 요청 문자 보내기</button>' +
       '<a class="btn ghost" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">💬 카카오톡 고객 문의</a></div>'
     : '')) +
-    (FREEPDF() ? '<p class="note bk">※ 교재 PDF 10,000원 추가 비용 · 실물 교재는 택배 착불 · 문의 요망 (' : '<p class="note bk">※ 온라인 수강 교재비는 별도 · 택배 배송 시 착불 · 문의 요망 (') + '<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">카카오톡 고객 문의</a> · 010-4845-1432)</p><p class="note" style="text-align:center"><b>' + (FREEPDF() ? '교재 PDF 10,000원 추가 비용 · ' : '') + '입금 후 환불 불가.</b> 아래 환불 규정을 확인해 주세요.</p>' + '<div style="background:#E9F8EE;border:2px solid #03C75A;border-radius:14px;padding:13px 14px;margin-top:12px;text-align:left"><b style="font-size:16px;color:#0B6B33;line-height:1.5">🎁 결제 후 당일 네이버 영수증리뷰 남겨주시면 5천원 환급 받으실 수 있습니다</b><p style="font-size:14px;font-weight:600;color:#1F2937;line-height:1.6;margin:6px 0 0">네이버에서 <b>\'청주토익 메이크토익\'</b> 검색 → 영수증리뷰 작성 후 <a href="sms:01048451432" style="color:#0B6B33;font-weight:800">인증샷 문자로 남겨주세요</a> (010-4845-1432)</p></div>' + (LC ? TERMS_LC : TERMS);
+    (FREEPDF() ? '<p class="note bk">※ 교재 PDF 10,000원 추가 비용 · 실물 교재는 택배 착불 · 문의 요망 (' : '<p class="note bk">※ 온라인 수강 교재비는 별도 · 택배 배송 시 착불 · 문의 요망 (') + '<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">카카오톡 고객 문의</a> · 010-4845-1432)</p><p class="note" style="text-align:center"><b>' + (FREEPDF() ? '교재 PDF 10,000원 추가 비용 · ' : '') + '입금 후 환불 불가.</b> 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
   if (LC && !REG) { bindReg(); bindPick(); return; }
   if (BANK) bindBank();
   {
@@ -141,7 +141,6 @@ function form(msg) {
       if (o.amount !== PRICE) PRICE = o.amount;
       return loadInno().then(function () {
         b.disabled = false; b.textContent = PRICE.toLocaleString() + "원 결제하기";
-        (function(){try{var d=document.getElementById("mk-rvban");if(!d){d=document.createElement("div");d.id="mk-rvban";d.style.cssText="position:fixed;left:0;right:0;top:0;z-index:2147483647;background:#03C75A;color:#fff;font:800 15px/1.45 sans-serif;text-align:center;padding:10px 40px 10px 14px;box-shadow:0 2px 10px rgba(0,0,0,.25)";d.innerHTML='🎁 결제 후 당일 네이버 영수증리뷰 남겨주시면 5천원 환급 받으실 수 있습니다<span style="position:absolute;right:12px;top:8px;cursor:pointer;font-size:18px" onclick="this.parentNode.remove()">✕</span>';document.body.appendChild(d);}}catch(e){}})();
         innopay.goPay({ payMethod: "CARD", mid: MID, moid: o.order_id, goodsName: String(o.order_name).slice(0, 40), amt: o.amount, goodsCnt: 1,
           buyerName: nm, buyerTel: ph, buyerEmail: "js1432@naver.com", returnUrl: location.origin + "/pay/" });
       });
@@ -204,7 +203,7 @@ function doneInno() {
     if (r.status !== "ok") throw new Error(r.message || "결제를 확인하지 못했어요.");
     if (r.kind === "sp") { app.innerHTML = '<div class="card hero"><span class="kicker">결제 완료</span><h1>' + esc(r.name) + '님, 결제됐어요</h1><p>수업 결제가 완료됐어요. 확인 후 바로 처리해 드릴게요.</p></div><div style="background:#E9F8EE;border:2px solid #03C75A;border-radius:14px;padding:13px 14px;margin-top:12px;text-align:left"><b style="font-size:16px;color:#0B6B33;line-height:1.5">🎁 결제 후 당일 네이버 영수증리뷰 남겨주시면 5천원 환급 받으실 수 있습니다</b><p style="font-size:14px;font-weight:600;color:#1F2937;line-height:1.6;margin:6px 0 0">네이버에서 <b>\'청주토익 메이크토익\'</b> 검색 → 영수증리뷰 작성 후 <a href="sms:01048451432" style="color:#0B6B33;font-weight:800">인증샷 문자로 남겨주세요</a> (010-4845-1432)</p></div><a class="btn navy" href="/study/">학습실로 돌아가기</a>'; return; }
     var info = {}; try { info = JSON.parse(sessionStorage.getItem("mkpay") || "{}"); } catch (e) { }
-    app.innerHTML = '<div class="card hero"><span class="kicker">결제 완료</span><h1>' + esc(r.name) + '님, 학습실이 열렸어요</h1><p>이용 기간: ' + esc(r.end_date) + '까지</p></div><div style="background:#E9F8EE;border:2px solid #03C75A;border-radius:14px;padding:13px 14px;margin-top:12px;text-align:left"><b style="font-size:16px;color:#0B6B33;line-height:1.5">🎁 결제 후 당일 네이버 영수증리뷰 남겨주시면 5천원 환급 받으실 수 있습니다</b><p style="font-size:14px;font-weight:600;color:#1F2937;line-height:1.6;margin:6px 0 0">네이버에서 <b>\'청주토익 메이크토익\'</b> 검색 → 영수증리뷰 작성 후 <a href="sms:01048451432" style="color:#0B6B33;font-weight:800">인증샷 문자로 남겨주세요</a> (010-4845-1432)</p></div>' +
+    app.innerHTML = '<div class="card hero"><span class="kicker">결제 완료</span><h1>' + esc(r.name) + '님, 학습실이 열렸어요</h1><p>이용 기간: ' + esc(r.end_date) + '까지</p></div>' +
       '<div class="card"><p style="margin:0;font-size:15px;line-height:1.7;color:var(--ink)">학습실 입장: 이름 <b>' + esc(r.name) + '</b> + 휴대폰 뒤 4자리' + (info.last4 ? ' <b>' + esc(info.last4) + '</b>' : '') + '</p></div>' +
       '<a class="btn navy" href="/study/">학습실 입장하기</a>';
   }).catch(function (e) {
