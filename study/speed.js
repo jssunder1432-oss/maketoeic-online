@@ -4,13 +4,13 @@
    - 고른 배속은 이 기기에 기억 → 다음 문제·다른 강의도 그대로
    - 영상 다운로드 메뉴·길게 눌러 저장 막기 */
 (function () {
-var SP = [0.8, 1, 1.25, 1.5, 1.75, 2];
+var SP = [0.75, 0.8, 1, 1.25, 1.5, 1.75, 2];
 function cur() { try { var v = +localStorage.getItem("mkst:speed"); return SP.indexOf(v) >= 0 ? v : 1; } catch (e) { return 1; } }
 function save(v) { try { localStorage.setItem("mkst:speed", String(v)); } catch (e) { } }
 function apply(v, r) { v.defaultPlaybackRate = r; v.playbackRate = r; }
 function lab(r) { return (r === 1 ? "1" : String(r)) + "배속"; }
 function attach(v) {
-  if (v.dataset.spd) return; v.dataset.spd = "1";
+  if (v.dataset.spd || v.dataset.mkpv || window.mkPlayer) return; v.dataset.spd = "1";
   v.setAttribute("controlsList", "nodownload");
   v.setAttribute("disablePictureInPicture", "");
   v.addEventListener("contextmenu", function (e) { e.preventDefault(); });
