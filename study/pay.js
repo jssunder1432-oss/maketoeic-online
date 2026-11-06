@@ -87,7 +87,7 @@ function viewLockedLc() {
   var more = payPart() && !(hasCat("lcmock") && hasCat("rcbook")) ? `<a class="btn" href="/pay/?p=lcrc&name=${nm}">LC+RC 30일권으로 함께 보기</a>` : "";
   render(topbar(planName()) +
     `<div class="card hero"><span class="kicker">MAKE TOEIC · ${planName()}</span><h1>이 메뉴는 열려 있지 않아요</h1>
-      <p>${payPart() ? planName() + "에 포함되지 않은 메뉴예요." : "이 학습 메뉴는 아직 열려 있지 않아요. 필요하면 메이크토익 질문방으로 문의해 주세요."}</p></div>
+      <p>${payPart() ? planName() + "에 포함되지 않은 메뉴예요." : "이 학습 메뉴는 아직 열려 있지 않아요. 필요하면 카카오톡 고객 문의로 알려해 주세요."}</p></div>
     ${more}<button class="btn ghost" data-go="#/" style="margin-top:8px">학습실 홈으로</button>`);
   bindCommon();
 }

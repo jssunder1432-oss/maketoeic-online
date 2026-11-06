@@ -74,15 +74,15 @@ function rpc(fn, a) { return fetch(SUPA + "/rest/v1/rpc/" + fn, { method: "POST"
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 var TERMS = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
   '<h3>상품</h3>메이크토익 온라인 정규반 1개월. 결제 승인 후 메이크토익 수강생 학습실(maketoeic.kr/study)이 열리며, 결제일부터 1개월간 이용할 수 있습니다.' +
-  '<h3>이용 범위</h3>그 달 정규반 수업 당일 녹화 영상, LC 실전 모의고사(원본 음성·스크립트·해석·문제별 해설강의), RC 교재 문제·해설·단어 뜻, A급 과제 해설강의, VOCA 단어장, 메이크토익 질문방 1:1 질문. 교재는 별도 구매입니다.' +
+  '<h3>이용 범위</h3>그 달 정규반 수업 당일 녹화 영상, LC 실전 모의고사(원본 음성·스크립트·해석·문제별 해설강의), RC 교재 문제·해설·단어 뜻, A급 과제 해설강의, VOCA 단어장. 교재는 별도 구매입니다.' +
   '<h3>환불</h3>디지털 콘텐츠 특성상 결제 후 이용권이 바로 열리므로 결제 후 환불되지 않습니다(전자상거래법 제17조 제2항 제5호). 결제 오류·중복 결제는 확인 후 전액 환불해 드립니다.' +
-  '<h3>문의</h3>카카오톡 메이크토익 질문방 또는 010-4845-1432</div>';
+  '<h3>문의</h3>카카오톡 고객 문의 또는 010-4845-1432</div>';
 var TERMS_LC = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
   '<h3>상품</h3>메이크토익 비회원 학습실 30일 수강권(LC · RC · LC+RC). 결제 승인 즉시 이용 가능하며, 결제일부터 30일간 이용할 수 있습니다. 같은 상품을 이용 기간 안에 다시 결제하면 남은 기간 뒤에 30일이 더해집니다.' +
   '<h3>이용 범위</h3>LC: 결제할 때 고른 Season의 LC 실전 모의고사(회차 전체 풀기 · PART별 풀기 · 스크립트 · 해설강의). RC: 결제할 때 고른 Season의 RC 문제(해설 · 단어 뜻). LC+RC: 두 가지 모두. VOCA · A급 과제는 포함되지 않습니다.' +
   '<h3>교재</h3>교재 PDF를 무료로 제공합니다(입금 확인 후 발송).' +
   '<h3>환불</h3>디지털 콘텐츠(이용권 · 교재 PDF) 특성상 <b>입금 후 환불되지 않습니다</b>(전자상거래법 제17조 제2항 제5호). 중복 입금은 확인 후 돌려 드립니다.' +
-  '<h3>문의</h3>카카오톡 메이크토익 질문방 또는 010-4845-1432</div>';
+  '<h3>문의</h3>카카오톡 고객 문의 또는 010-4845-1432</div>';
 function form(msg) {
   app.innerHTML =
     (LC ? '<div class="card hero"><span class="kicker">MAKE TOEIC · 비회원 학습실</span><h1>30일 수강권</h1><p>원하는 Season의 메이크토익 학습실 문제로 훈련해요. 입금이 확인되면 바로 열려요.</p></div>' +
@@ -91,7 +91,7 @@ function form(msg) {
         : '<div class="card hero"><span class="kicker">MAKE TOEIC · 온라인 정규반</span><h1>메이크토익 정규반을 온라인으로</h1><p>청주 메이크토익 정규반 수업을 매일 녹화 영상과 학습실로 들어요. 결제일부터 1개월.</p></div>') +
     '<div class="card"><div class="price"><span>' + NAME + '</span><b>' + PRICE.toLocaleString() + '원</b></div>' +
     (LC ? '<ul>' + PRODS[KIND].items.map(function (t) { return '<li>' + t + '</li>'; }).join("") + '<li>결제일부터 30일</li></ul><p class="note">VOCA · A급 과제는 포함되지 않아요. <a href="/lc/">자세히 보기</a></p></div>'
-        : '<ul><li>그 달 정규반 수업 당일 녹화 영상</li><li>LC 실전 모의고사 · 문제별 해설강의</li><li>RC 교재 문제 · 해설 · 단어 뜻</li><li>A급 과제 해설강의 · VOCA 단어장</li><li>메이크토익 질문방 1:1 질문</li><li>결제일부터 1개월</li></ul>' +
+        : '<ul><li>그 달 정규반 수업 당일 녹화 영상</li><li>LC 실전 모의고사 · 문제별 해설강의</li><li>RC 교재 문제 · 해설 · 단어 뜻</li><li>A급 과제 해설강의 · VOCA 단어장</li><li>결제일부터 1개월</li></ul>' +
     '<p class="note">교재는 별도 구매예요. <a href="/class/">자세히 보기</a></p></div>') +
     (LC && REG ? '<div class="card"><b style="color:var(--ink)">① 등록 완료</b><div class="reg"><span><b>' + esc(REG.name) + '</b> · ' + esc(REG.phone.replace(/^(\d{3})(\d+)(\d{4})$/, "$1-****-$3")) + (MEM ? ' <em>수강생가 적용</em>' : '') + '</span><button type="button" id="rereg">수정</button></div><p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b></p>' + (msg || "") + '</div>' :
     '<div class="card"><b style="color:var(--ink)">' + (LC ? '① 이름 · 휴대폰 번호 등록' : '학습실 로그인 정보') + '</b>' +
@@ -108,9 +108,9 @@ function form(msg) {
       '<div style="margin:10px 0;border:1.5px solid #101828;border-radius:12px;padding:12px 14px;background:#fff"><div style="font-size:13px;font-weight:800;color:#33404F">입금 계좌</div><div style="font-size:19px;font-weight:900;color:#101828;margin-top:2px">신한은행 612-06-541251</div><div style="font-size:15px;font-weight:800;color:#101828">예금주 김정수</div><button type="button" class="btn ghost" id="bankcp" style="margin-top:8px;padding:8px">📋 계좌번호 복사</button></div>' +
       '<p class="note" style="margin:8px 0"><b>' + PRICE.toLocaleString() + '원</b>을 <b>등록한 이름(실명)</b>으로 입금한 뒤 아래 버튼을 눌러 알려 주세요. 입금이 확인되면 학습실이 열려요.</p>' +
       '<button class="btn" id="bank">📩 입금했어요 — 확인 요청 문자 보내기</button>' +
-      '<a class="btn ghost" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">💬 카카오톡 메이크토익 질문방으로 문의</a></div>'
+      '<a class="btn ghost" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">💬 카카오톡 고객 문의</a></div>'
     : '')) +
-    (FREEPDF() ? '<p class="note bk">※ 비회원 교재 PDF 무료 제공 · 실물 교재는 택배 착불 · 문의 요망 (' : '<p class="note bk">※ 온라인 수강 교재비는 별도 · 택배 배송 시 착불 · 문의 요망 (') + '<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">메이크토익 질문방</a> · 010-4845-1432)</p><p class="note" style="text-align:center"><b>' + (FREEPDF() ? '교재 PDF 무료 제공 · ' : '') + '입금 후 환불 불가.</b> 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
+    (FREEPDF() ? '<p class="note bk">※ 비회원 교재 PDF 무료 제공 · 실물 교재는 택배 착불 · 문의 요망 (' : '<p class="note bk">※ 온라인 수강 교재비는 별도 · 택배 배송 시 착불 · 문의 요망 (') + '<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">카카오톡 고객 문의</a> · 010-4845-1432)</p><p class="note" style="text-align:center"><b>' + (FREEPDF() ? '교재 PDF 무료 제공 · ' : '') + '입금 후 환불 불가.</b> 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
   var w, pmw;
   if (LC && !REG) { bindReg(); bindPick(); return; }
   if (BANK) bindBank();
@@ -202,7 +202,7 @@ function done() {
       '<a class="btn navy" href="/study/">학습실 입장하기</a>';
     history.replaceState(null, "", "/pay/?done=1");
   }).catch(function (e) {
-    app.innerHTML = '<div class="card"><div class="msg err">' + esc(e.message) + '</div><p class="note">결제 금액이 빠져나갔는데 이 화면이 나오면 메이크토익 질문방이나 010-4845-1432로 알려 주세요.</p></div><a class="btn" href="/pay/">다시 결제하기</a>';
+    app.innerHTML = '<div class="card"><div class="msg err">' + esc(e.message) + '</div><p class="note">결제 금액이 빠져나갔는데 이 화면이 나오면 카카오톡 고객 문의나 010-4845-1432로 알려 주세요.</p></div><a class="btn" href="/pay/">다시 결제하기</a>';
   });
 }
 function start() {
