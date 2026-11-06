@@ -28,7 +28,7 @@ function payCard(title) {
   return `<div class="card peach"><h2>${title}</h2>
     <p style="font-size:14.5px;margin:6px 0 4px">학습실 이용권 · 1개월 · 결제 즉시 이용</p>
     <p style="font-size:14px;margin:0 0 12px;color:#33404F">LC 그 달 Series 전체 + RC 기출문제<br>결제할 때 <b>학습실 로그인 이름·휴대폰 번호</b>를 그대로 적어 주세요. 결제 후에는 환불되지 않아요.</p>
-    <a class="btn" href="${PAY_URL}?p=lc&name=${encodeURIComponent((S.profile || {}).name || "")}">💳 이용권 결제하기</a>
+    <a class="btn" href="${PAY_URL}?p=lc&m=1&name=${encodeURIComponent((S.profile || {}).name || "")}">💳 이용권 결제하기</a>
     <button class="btn ghost" id="pay-chk" style="margin-top:8px">결제했어요 · 바로 열기</button>
     <p id="pay-msg" style="font-size:13.5px;margin:8px 0 0;color:#33404F"></p></div>`;
 }

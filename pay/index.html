@@ -50,9 +50,10 @@ var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : (q.get("
 var PRODS = { lc: { name: "LC 30일 수강권", price: 30000, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의", "📘 비회원 교재 PDF 무료 제공"] },
   rc: { name: "RC 30일 수강권", price: 0, items: ["고른 Season의 RC 문제 (Part 5 문법 · 어휘 · Part 7 독해)", "문제별 해설 · 단어 누르면 뜻 · 품사"] },
   lcrc: { name: "LC+RC 30일 수강권", price: 0, items: ["고른 Season의 LC 실전 모의고사 10회 + 해설강의", "고른 Season의 RC 문제 + 해설 · 단어 뜻"] } };
-var MEM = false, REG = null, BANK = true, BOOK = false, MID = "";   // 결제: 이노페이 신용카드 인증결제 v2 (MID·라이선스키는 서버 shop_cfg)
-function FREEPDF() { return LC && !MEM; }   // 교재 PDF 무료·30,000원은 비회원 30일권만 (수강생가·정규반은 그대로)   // 지금은 계좌이체만 (온라인 결제 열면 false)
-try { REG = JSON.parse(sessionStorage.getItem("mkreg") || "null"); } catch (e) { }
+// MM = 수강생 전용 결제(학습실에서 ?m=1 로 들어옴) — 비회원 결제 화면에는 수강생가를 아예 보여 주지 않는다
+var MM = q.get("m") === "1" && KIND !== "pass", MEM = false, REG = null, BANK = true, BOOK = false, MID = "";   // 결제: 이노페이 신용카드 인증결제 v2 (MID·라이선스키는 서버 shop_cfg)
+function FREEPDF() { return LC && !MM; }   // 교재 PDF 무료·30,000원은 비회원 30일권만 (수강생가·정규반은 그대로)   // 지금은 계좌이체만 (온라인 결제 열면 false)
+try { REG = JSON.parse(sessionStorage.getItem(MM ? "mkregm" : "mkreg") || "null"); } catch (e) { }
 function v(id) { var e = document.getElementById(id); return e ? e.value : ""; }
 // 실명만 받기: 한글 이름 2~5자(완성된 글자) 또는 영문 이름 — 자음·모음만(ㅍㄹ), 숫자·기호, 홍길동·테스트 같은 가짜 이름은 막는다
 function realName(nm) {
@@ -66,7 +67,7 @@ function realName(nm) {
 var NAME_ERR = "실명(주민등록상 이름)으로 적어 주세요. 예: 김민지 — 자음만·별명·숫자는 받지 않아요.";
 function keep(fn) { var nm = v("nm"), ph = v("ph"), ag = document.getElementById("agree"); var a = ag && ag.checked; fn(); if (document.getElementById("nm")) { document.getElementById("nm").value = nm; document.getElementById("ph").value = ph; } if (ag && document.getElementById("agree")) document.getElementById("agree").checked = a; }
 var CONSENT = '<details class="consent"><summary>개인정보 수집 · 이용 안내 (필수)</summary><p>수집 항목: 이름, 휴대폰 번호<br>이용 목적: 학습실 이용권 발급 · 결제 확인 · 이용 안내 연락<br>보유 기간: 마지막 이용일로부터 1년 (요청 시 즉시 삭제)<br>동의하지 않으면 수강권을 결제할 수 없어요.</p></details>';
-function priceOf(k) { var m = PRODS[k].priceM; return MEM && m > 0 ? m : PRODS[k].price; }
+function priceOf(k) { var m = PRODS[k].priceM; return MM && m > 0 ? m : PRODS[k].price; }
 function avail() { return ["lc", "rc", "lcrc"].filter(function (k) { return PRODS[k].price > 0; }); }
 function rpc(fn, a) { return fetch(SUPA + "/rest/v1/rpc/" + fn, { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify(a) }).then(function (r) { return r.json(); }); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -83,12 +84,12 @@ var TERMS_LC = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
   '<h3>문의</h3>카카오톡 고객 문의 또는 010-4845-1432</div>';
 function form(msg) {
   app.innerHTML =
-    (LC ? '<div class="card hero"><span class="kicker">MAKE TOEIC · 비회원 학습실</span><h1>30일 수강권</h1><p>원하는 Season의 메이크토익 학습실 문제로 훈련해요. 입금이 확인되면 바로 열려요.</p></div>' +
-        (avail().length > 1 ? '<div class="card"><b style="color:var(--ink)">상품 고르기</b><div class="pick">' + avail().map(function (k) { return '<button type="button" class="pk' + (k === KIND ? ' on' : '') + '" data-k="' + k + '"><b>' + PRODS[k].name + '</b><span>' + (PRODS[k].priceM > 0 && PRODS[k].priceM !== PRODS[k].price ? (MEM ? '<s style="font-weight:600;margin-right:6px">' + PRODS[k].price.toLocaleString() + '</s>' + PRODS[k].priceM.toLocaleString() + '원' : PRODS[k].price.toLocaleString() + '원<br><small style="font-weight:700">수강생 ' + PRODS[k].priceM.toLocaleString() + '원</small>') : PRODS[k].price.toLocaleString() + '원') + '</span></button>'; }).join("") + '</div></div>' : '') +
+    (LC ? (MM ? '<div class="card hero"><span class="kicker">MAKE TOEIC · 수강생 전용</span><h1>수강생 30일 수강권</h1><p>메이크토익에서 수업을 들은 학생 전용 결제예요. 학습실에 등록된 이름 · 휴대폰 번호로 결제해 주세요.</p></div>' : '<div class="card hero"><span class="kicker">MAKE TOEIC · 비회원 학습실</span><h1>30일 수강권</h1><p>원하는 Season의 메이크토익 학습실 문제로 훈련해요. 결제하면 바로 열려요.</p></div>') +
+        (avail().length > 1 ? '<div class="card"><b style="color:var(--ink)">상품 고르기</b><div class="pick">' + avail().map(function (k) { return '<button type="button" class="pk' + (k === KIND ? ' on' : '') + '" data-k="' + k + '"><b>' + PRODS[k].name + '</b><span>' + (PRODS[k].priceM > 0 && PRODS[k].priceM !== PRODS[k].price ? (MM ? '<s style="font-weight:600;margin-right:6px">' + PRODS[k].price.toLocaleString() + '</s>' + PRODS[k].priceM.toLocaleString() + '원' : PRODS[k].price.toLocaleString() + '원<br><small style="font-weight:700">수강생 ' + PRODS[k].priceM.toLocaleString() + '원</small>') : PRODS[k].price.toLocaleString() + '원') + '</span></button>'; }).join("") + '</div></div>' : '') +
         '<div class="card"><b style="color:var(--ink)">Season 고르기</b><p class="note" style="margin:4px 0 0">Season마다 문제가 달라요. 처음이면 이번 달 Season을 추천해요.</p><div class="pick s3">' + [1, 2, 3].map(function (n) { return '<button type="button" class="pk' + (n === SEA ? ' on' : '') + '" data-s="' + n + '"><b>Season ' + n + '</b><span>' + (n === CFG.cur ? '이번 달' : '') + '</span></button>'; }).join("") + '</div></div>'
         : '<div class="card hero"><span class="kicker">MAKE TOEIC · 온라인 정규반</span><h1>메이크토익 정규반을 온라인으로</h1><p>청주 메이크토익 정규반 수업을 매일 녹화 영상과 학습실로 들어요. 결제일부터 1개월.</p></div>') +
     '<div class="card"><div class="price"><span>' + NAME + '</span><b>' + PRICE.toLocaleString() + '원</b></div>' +
-    (LC ? '<ul>' + PRODS[KIND].items.map(function (t) { return '<li>' + t + '</li>'; }).join("") + '<li>결제일부터 30일</li></ul><p class="note">VOCA · A급 과제는 포함되지 않아요. <a href="/lc/">자세히 보기</a></p></div>'
+    (LC ? '<ul>' + PRODS[KIND].items.filter(function (t) { return !MM || t.indexOf('비회원') < 0; }).map(function (t) { return '<li>' + t + '</li>'; }).join("") + '<li>결제일부터 30일</li></ul><p class="note">VOCA · A급 과제는 포함되지 않아요. <a href="/lc/">자세히 보기</a></p></div>'
         : '<ul><li>그 달 정규반 수업 당일 녹화 영상</li><li>LC 실전 모의고사 · 문제별 해설강의</li><li>RC 교재 문제 · 해설 · 단어 뜻</li><li>A급 과제 해설강의 · VOCA 단어장</li><li>결제일부터 1개월</li></ul>' +
     '<p class="note">교재는 별도 구매예요. <a href="/class/">자세히 보기</a></p></div>') +
     (LC && REG ? '<div class="card"><b style="color:var(--ink)">① 등록 완료</b><div class="reg"><span><b>' + esc(REG.name) + '</b> · ' + esc(REG.phone.replace(/^(\d{3})(\d+)(\d{4})$/, "$1-****-$3")) + (MEM ? ' <em>수강생가 적용</em>' : '') + '</span><button type="button" id="rereg">수정</button></div><p class="note">결제 후 학습실 입장 = <b>이름 + 휴대폰 번호 뒤 4자리</b></p>' + (msg || "") + '</div>' :
@@ -118,13 +119,13 @@ function form(msg) {
     clearTimeout(qt); qt = setTimeout(function () {
       var nm = document.getElementById("nm").value.trim(), ph = document.getElementById("ph").value.replace(/\D/g, "");
       if (!LC || !nm || !/^01\d{8,9}$/.test(ph)) { if (MEM) { MEM = false; redraw(); } return; }
-      rpc("pay_quote", { p_name: nm, p_phone: ph }).then(function (r) { var m = !!(r && r.member); if (m !== MEM) { MEM = m; redraw(); } }).catch(function () { });
+      rpc("pay_quote", { p_name: nm, p_phone: ph }).then(function (r) { var m = MM && !!(r && r.member); if (m !== MEM) { MEM = m; redraw(); } }).catch(function () { });
     }, 400);
   }
   function redraw() { var nm = document.getElementById("nm").value, ph = document.getElementById("ph").value; PRICE = LC ? priceOf(KIND) : PRICE; form(); document.getElementById("nm").value = nm; document.getElementById("ph").value = ph; }
   if (document.getElementById("nm")) ["nm", "ph"].forEach(function (id) { document.getElementById(id).addEventListener("input", quote); });
   bindPick();
-  var rr = document.getElementById("rereg"); if (rr) rr.onclick = function () { var r = REG; REG = null; try { sessionStorage.removeItem("mkreg"); } catch (e) { } form(); document.getElementById("nm").value = r.name; document.getElementById("ph").value = r.phone; };
+  var rr = document.getElementById("rereg"); if (rr) rr.onclick = function () { var r = REG; REG = null; try { sessionStorage.removeItem(MM ? "mkregm" : "mkreg"); } catch (e) { } form(); document.getElementById("nm").value = r.name; document.getElementById("ph").value = r.phone; };
   var b = document.getElementById("go");
   b.onclick = function () {
     var nm = LC && REG ? REG.name : v("nm").trim(), ph = LC && REG ? REG.phone : v("ph").replace(/\D/g, "");
@@ -132,9 +133,10 @@ function form(msg) {
     if (!realName(nm)) return form('<div class="msg err">' + NAME_ERR + '</div>');
     if (!/^01\d{8,9}$/.test(ph)) return form('<div class="msg err">휴대폰 번호를 정확히 적어 주세요.</div>');
     b.disabled = true; b.textContent = "결제창 여는 중…";
-    rpc("pay_order", { p_name: nm, p_phone: ph, p_kind: KIND, p_season: LC ? SEA : null }).then(function (o) {
+    rpc("pay_order", { p_name: nm, p_phone: ph, p_kind: KIND, p_season: LC ? SEA : null, p_guest: !MM }).then(function (o) {
       if (o.status === "noprice") throw new Error("아직 판매 준비 중인 상품이에요. 다른 상품을 골라 주세요.");
       if (o.status !== "ok") throw new Error(o.status);
+      if (MM && !o.member) throw new Error("메이크토익 수강생으로 확인되지 않아요. 수강생이 아니면 비회원 30일권으로 결제해 주세요.");
       try { sessionStorage.setItem("mkpay", JSON.stringify({ name: nm, last4: ph.slice(-4) })); } catch (e) { }
       if (o.amount !== PRICE) PRICE = o.amount;
       return loadInno().then(function () {
@@ -151,7 +153,7 @@ function form(msg) {
 }
 // 계좌이체 신청: 이름·번호·상품을 담아 선생님께 문자 (입금 계좌는 문자로 안내)
 function bindBank() {
-  var rr = document.getElementById("rereg"); if (rr) rr.onclick = function () { var r = REG; REG = null; try { sessionStorage.removeItem("mkreg"); } catch (e) { } form(); document.getElementById("nm").value = r.name; document.getElementById("ph").value = r.phone; };
+  var rr = document.getElementById("rereg"); if (rr) rr.onclick = function () { var r = REG; REG = null; try { sessionStorage.removeItem(MM ? "mkregm" : "mkreg"); } catch (e) { } form(); document.getElementById("nm").value = r.name; document.getElementById("ph").value = r.phone; };
   var cp = document.getElementById("bankcp"); if (cp) cp.onclick = function () { var t = "신한은행 61206541251"; function ok() { cp.textContent = "✔ 복사했어요 (신한 612-06-541251)"; } if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, function () { prompt("계좌번호", t); }); else prompt("계좌번호", t); };
   var b = document.getElementById("bank"); if (!b) return;
   b.onclick = function () {
@@ -182,8 +184,9 @@ function bindReg() {
     b.disabled = true; b.textContent = "등록 중…";
     rpc("pay_register", { p_name: nm, p_phone: ph, p_kind: KIND, p_season: SEA, p_agree: true }).then(function (r) {
       if (!r || r.status !== "ok") throw new Error(r && r.status === "busy" ? "잠시 후 다시 시도해 주세요." : "등록하지 못했어요. 이름 · 번호를 확인해 주세요.");
-      REG = { name: nm, phone: ph }; MEM = !!r.member; PRICE = priceOf(KIND);
-      try { sessionStorage.setItem("mkreg", JSON.stringify(REG)); } catch (e) { }
+      REG = { name: nm, phone: ph }; MEM = MM && !!r.member; PRICE = priceOf(KIND);
+      if (MM && !MEM) { b.disabled = false; b.textContent = "등록하고 결제로 넘어가기"; REG = null; return err('메이크토익 수강생으로 확인되지 않아요. 학습실에 등록된 이름 · 휴대폰 번호를 적었는지 확인해 주세요. 수강생이 아니면 <a href="/lc/">비회원 30일권</a>으로 결제해 주세요.'); }
+      try { sessionStorage.setItem(MM ? "mkregm" : "mkreg", JSON.stringify(REG)); } catch (e) { }
       form(); window.scrollTo({ top: document.getElementById("pm").getBoundingClientRect().top + scrollY - 120, behavior: "smooth" });
     }).catch(function (e) { b.disabled = false; b.textContent = "등록하고 결제로 넘어가기"; err(e.message); });
   };
@@ -214,12 +217,12 @@ function start() {
 // 결제 키·가격은 서버(Supabase shop_cfg)에서 받아 온다 — 키를 바꿀 때 이 파일은 그대로
 rpc("pay_cfg", {}).then(function (c) {
   if (!c || !c.mid) return; CFG = c; MID = c.mid;
-  ["lc", "rc", "lcrc"].forEach(function (k) { PRODS[k].price = c[k + "_price"] || (k === "lc" ? 24900 : 0); PRODS[k].priceM = c[k + "_price_m"] || 0; });
-  if (BANK) { PRODS.lc.price = 30000; if (PRODS.lc.priceM > 30000) PRODS.lc.priceM = 0; }   // 계좌이체 기간: LC 30일 수강권 30,000원 (교재 PDF 무료)
+  ["lc", "rc", "lcrc"].forEach(function (k) { PRODS[k].price = c[k + "_price"] || (k === "lc" ? PRODS.lc.price : 0); PRODS[k].priceM = c[k + "_price_m"] || 0; });
+  ["lc", "rc", "lcrc"].forEach(function (k) { if (!MM) PRODS[k].priceM = 0; else if (PRODS[k].price > 0 && !(PRODS[k].priceM > 0)) PRODS[k].price = 0; });   // 비회원 화면엔 수강생가 없음 · 수강생 화면엔 수강생가 있는 상품만
   if (!LC) { PRICE = c.price || PRICE; }
 }).catch(function () { }).then(function () {
-  if (LC) { if (!(PRODS[KIND].price > 0)) KIND = "lc"; PRICE = PRODS[KIND].price; NAME = PRODS[KIND].name; if (!(SEA >= 1 && SEA <= 3)) SEA = CFG.cur || 2; }
-  if (LC && REG && !q.get("ok")) return rpc("pay_quote", { p_name: REG.name, p_phone: REG.phone }).then(function (r) { MEM = !!(r && r.member); PRICE = priceOf(KIND); }).catch(function () { }).then(start);
+  if (LC) { if (!(PRODS[KIND].price > 0)) KIND = "lc"; PRICE = priceOf(KIND); NAME = PRODS[KIND].name; if (!(SEA >= 1 && SEA <= 3)) SEA = CFG.cur || 2; }
+  if (LC && REG && !q.get("ok")) return rpc("pay_quote", { p_name: REG.name, p_phone: REG.phone }).then(function (r) { MEM = MM && !!(r && r.member); PRICE = priceOf(KIND); }).catch(function () { }).then(start);
   start();
 });
 })();
