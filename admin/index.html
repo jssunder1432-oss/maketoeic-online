@@ -69,7 +69,7 @@ th{background:var(--bg);font-size:13px;color:var(--navy)}
 <script src="/study/onote-core.js?v=6"></script>
 <script>
 /* 새 버전(ver.txt)이 올라가면 앱·브라우저에 열려 있던 관리자 화면도 자동으로 새로 받기 */
-(function () { var B = "a1104h"; function chk() { fetch("ver.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (v) { v = (v || "").trim(); if (!v || v === B) return; try { if (sessionStorage.getItem("mkad:rl") === v) return; sessionStorage.setItem("mkad:rl", v); } catch (e) { } location.replace(location.pathname + "?v=" + v + location.hash); }).catch(function () { }); }
+(function () { var B = "a1106n"; function chk() { fetch("ver.txt?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (v) { v = (v || "").trim(); if (!v || v === B) return; try { if (sessionStorage.getItem("mkad:rl") === v) return; sessionStorage.setItem("mkad:rl", v); } catch (e) { } location.replace(location.pathname + "?v=" + v + location.hash); }).catch(function () { }); }
   chk(); document.addEventListener("visibilitychange", function () { if (!document.hidden) chk(); }); window.addEventListener("pageshow", function (e) { if (e.persisted) location.reload(); }); })();
 (function () {
 "use strict";
@@ -156,12 +156,12 @@ function pwForm() {
 
 /* ---------- 상단 ---------- */
 function head() {
-  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "blog" ? "블로그 이미지" : view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : view === "ot" ? "OT 기초 진단 · 매일 공부 가이드" : "수강생 관리"}</h1></div>
-  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 기초 진단</button><button class="t ${view === "blog" ? "on" : ""}" data-v="blog">📰 블로그 이미지</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
+  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "att" ? "당일 출석 현황" : view === "notice" ? "수업 공지 게시판" : view === "blog" ? "블로그 이미지" : view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : view === "ot" ? "OT 기초 진단 · 매일 공부 가이드" : "수강생 관리"}</h1></div>
+  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "att" ? "on" : ""}" data-v="att">📅 오늘 출석</button><button class="t ${view === "notice" ? "on" : ""}" data-v="notice">📢 수업 공지</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 기초 진단</button><button class="t ${view === "blog" ? "on" : ""}" data-v="blog">📰 블로그 이미지</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
   <span style="flex:1"></span><button class="btn ghost sm" onclick="location.replace(location.pathname+'?v='+Date.now())">🔄 최신으로</button><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button><a class="btn navy sm" href="/" style="text-decoration:none">🏠 나가기</a></div>`;
 }
 function bindHead() {
-  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "hw" ? viewHw() : view === "ot" ? viewOt() : view === "blog" ? viewBlog() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
+  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "att" ? viewAtt(today()) : view === "notice" ? viewNotice() : view === "hw" ? viewHw() : view === "ot" ? viewOt() : view === "blog" ? viewBlog() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
   document.getElementById("ad-out").onclick = function () { sb.auth.signOut().then(function () { viewLogin(); }); };
   document.getElementById("ad-chpw").onclick = pwForm;
 }
@@ -781,10 +781,120 @@ function viewRecs() {
       });
       var msg = document.getElementById("r-msg");
       if (bad) { msg.innerHTML = '<div class="msg err">유튜브 주소가 아닌 칸이 ' + bad + "개 있어요.</div>"; return; }
-      var o = Object.assign({}, v, { rec: out });
-      rpc("admin_put_content", { p_key: "videos", p_data: o, p_text: null }).then(function () { v = o; msg.innerHTML = '<div class="msg ok">저장했어요. (' + out.length + "개)</div>"; })
+      var o;
+      rpc("admin_get_content", { p_key: "videos" }).then(function (cur) { o = Object.assign({}, cur || v, { rec: out }); return rpc("admin_put_content", { p_key: "videos", p_data: o, p_text: null }); }).then(function () { v = o; msg.innerHTML = '<div class="msg ok">저장했어요. (' + out.length + "개)</div>"; })
         .catch(function (e) { msg.innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
     };
+  }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
+}
+
+/* ---------- 당일 출석 현황 (2026-11-06): 학생이 학습실 첫 화면 출석 도장을 찍은 기록(progress "att:YYYY-MM-DD") ---------- */
+var AT = { live: true };
+var AT_HOURS = [1110, 1730, 1910];
+function atHr(v) { v = +v || 0; var h = v >= 100 ? Math.floor(v / 100) : v, m = v >= 100 ? v % 100 : 0; return (h < 12 ? "오전 " : "오후 ") + (h > 12 ? h - 12 : h) + ":" + String(m).padStart(2, "0"); }
+function atTarget(s) { return !ONL(s) && !(PLAN_NM[s.plan] && !s.member); }
+function atProg(s) {
+  return rpc("admin_student_progress", { p_id: s.id, p_prefix: "att:" }).catch(function () { return rpc("admin_student_progress", { p_id: s.id, p_prefix: "" }); }).catch(function () { return {}; }).then(function (p) {
+    var o = {}; Object.keys(p || {}).forEach(function (k) { var m = k.match(/^att:(\d{4}-\d{2}-\d{2})$/); if (m && p[k] && p[k][1] && +p[k][0] > 0) o[m[1]] = +p[k][0]; }); return o;
+  });
+}
+function atTick() { clearInterval(AT.t); if (AT.live) AT.t = setInterval(function () { if (view !== "att" || !document.getElementById("at-live")) { clearInterval(AT.t); return; } viewAtt(AT.day, true); }, 30000); }
+function viewAtt(day, quiet) {
+  day = day || AT.day || today(); AT.day = day;
+  if (!quiet) { render(head() + '<div class="card">불러오는 중…</div>'); bindHead(); }
+  var m0 = day.slice(0, 8) + "01", m1 = monthEnd(day);
+  (students.length ? Promise.resolve(students) : rpc("admin_list_students").then(function (x) { students = x || []; return students; })).then(function (L) {
+    // 그날이 수강 기간 안에 있는 현장 수강생 (온라인 수강생·비회원 30일권 제외) + 그 달에 도장 찍은 학생은 누구든
+    var cand = L.filter(function (s) { return (!s.start_date || String(s.start_date) <= m1) && (!s.end_date || String(s.end_date) >= m0); });
+    return Promise.all(cand.map(function (s) { return atProg(s).then(function (o) { return [s, o]; }); }));
+  }).then(function (rows) {
+    if (view !== "att") return;
+    var dt0 = new Date(day + "T00:00:00"), W = "일월화수목금토", wk = dt0.getDay(), lab = (dt0.getMonth() + 1) + "월 " + dt0.getDate() + "일 (" + W[wk] + ")";
+    rows = rows.filter(function (r) { var s = r[0], inDay = (!s.start_date || String(s.start_date) <= day) && (!s.end_date || String(s.end_date) >= day); return (atTarget(s) && inDay) || Object.keys(r[1]).some(function (d) { return d >= m0 && d <= m1; }); });
+    rows.sort(function (a, b) { return String(a[0].name).localeCompare(String(b[0].name), "ko"); });
+    var yes = rows.filter(function (r) { return r[1][day]; }), no = rows.filter(function (r) { return !r[1][day] && atTarget(r[0]); });
+    var hrs = AT_HOURS.slice(); yes.forEach(function (r) { if (hrs.indexOf(r[1][day]) < 0) hrs.push(r[1][day]); }); hrs.sort(function (a, b) { return a - b; });
+    // 이번 달 출석표: 그 달 평일 중 고른 날까지 (누군가 도장 찍은 날은 주말이어도)
+    var days = [], d = new Date(m0 + "T00:00:00"), lim = day > today() ? day : (m1 < today() ? m1 : today());
+    for (; ymd(d) <= m1; d.setDate(d.getDate() + 1)) { var k = ymd(d), w = d.getDay(); if ((w > 0 && w < 6 && k <= lim) || rows.some(function (r) { return r[1][k]; })) days.push(k); }
+    var chip = function (s, sub) { return '<span class="tag ' + (sub ? "ok" : "end") + '" style="font-size:14px;padding:6px 11px;margin:0 4px 6px 0">' + esc(s.name) + (sub ? ' <small style="font-weight:700">' + sub + "</small>" : "") + "</span>"; };
+    render(head() + `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="in" type="date" id="at-d" value="${esc(day)}" style="max-width:180px"><button class="btn ghost sm" id="at-p">◀ 전날</button><button class="btn ghost sm" id="at-n">다음날 ▶</button><button class="btn ghost sm" id="at-t">오늘</button><span style="flex:1"></span><button class="btn ${AT.live ? "" : "ghost"} sm" id="at-live">${AT.live ? "⏱ 실시간 켜짐 (30초마다)" : "⏱ 실시간 보기"}</button><button class="btn ghost sm" id="at-r">🔄 새로고침</button></div>
+      <p class="note" style="margin:6px 0 0">마지막 확인 ${new Date().toLocaleTimeString("ko-KR")} · 학생이 학습실 첫 화면에서 출석 도장을 찍으면 ${AT.live ? "30초 안에 자동으로" : "새로고침하면"} 여기에 나와요. (온라인 수강생·비회원 30일권은 대상에서 빠져요)</p></div>
+    <div class="card"><p class="sec" style="margin:0 0 8px;font-size:18px;font-weight:800;color:var(--navy)">📅 ${lab} 출석${wk === 0 || wk === 6 ? ' <span class="tag soon">주말</span>' : ""}</p>
+      <div class="stat" style="grid-template-columns:repeat(3,1fr)"><div><b style="color:var(--ok)">${yes.length}</b>출석</div><div><b style="color:var(--bad)">${no.length}</b>미출석</div><div><b>${yes.length + no.length}</b>대상</div></div>
+      ${hrs.map(function (h) { var L = yes.filter(function (r) { return r[1][day] === h; }); return `<p class="grp">🕐 ${atHr(h)} 수업 · ${L.length}명</p><div>${L.map(function (r) { return chip(r[0], "✔"); }).join("") || '<span class="note">아직 없어요</span>'}</div>`; }).join("")}
+      <p class="grp">⚠️ 미출석 · ${no.length}명</p><div>${no.map(function (r) { return chip(r[0], esc(String(r[0].phone || "").slice(-4))); }).join("") || '<span class="note">모두 출석했어요 🎉</span>'}</div>
+    </div>
+    <div class="card"><p class="grp" style="margin-top:0">${+day.slice(5, 7)}월 출석표 <small class="note" style="font-weight:700">● = 출석 (숫자는 수업 시각)</small></p>
+      <div style="overflow-x:auto"><table style="min-width:${180 + days.length * 46}px"><tr><th style="position:sticky;left:0;background:var(--bg);min-width:90px">이름</th><th>출석</th>${days.map(function (k) { var x = new Date(k + "T00:00:00"); return '<th style="text-align:center;padding:6px 2px;' + (k === day ? "background:#FFE6D6" : "") + '">' + (x.getMonth() + 1) + "/" + x.getDate() + "<br><small>" + W[x.getDay()] + "</small></th>"; }).join("")}</tr>
+      ${rows.map(function (r) { var n = days.filter(function (k) { return r[1][k]; }).length; return '<tr><td style="position:sticky;left:0;background:#fff;font-weight:800">' + esc(r[0].name) + "</td><td><b>" + n + "</b>/" + days.length + "</td>" + days.map(function (k) { var v = r[1][k]; return '<td style="text-align:center;padding:6px 2px;' + (k === day ? "background:#FFF4EC;" : "") + '">' + (v ? '<b style="color:#E0322B">●</b><br><small style="font-weight:700">' + Math.floor(v / 100) + ":" + String(v % 100).padStart(2, "0") + "</small>" : '<span style="color:#C9CFDA">·</span>') + "</td>"; }).join("") + "</tr>"; }).join("") || '<tr><td colspan="2" class="note">이 달 대상 학생이 없어요.</td></tr>'}</table></div>
+      <button class="btn ghost sm" id="at-csv" style="margin-top:10px">⬇️ 출석표 엑셀(CSV) 내려받기</button></div>`);
+    bindHead();
+    function goD(x) { viewAtt(x); }
+    function sh(n) { var x = new Date(day + "T00:00:00"); x.setDate(x.getDate() + n); goD(ymd(x)); }
+    document.getElementById("at-d").onchange = function () { if (this.value) goD(this.value); };
+    document.getElementById("at-p").onclick = function () { sh(-1); };
+    document.getElementById("at-n").onclick = function () { sh(1); };
+    document.getElementById("at-t").onclick = function () { goD(today()); };
+    document.getElementById("at-r").onclick = function () { viewAtt(day, true); };
+    document.getElementById("at-live").onclick = function () { AT.live = !AT.live; atTick(); viewAtt(day, true); };
+    document.getElementById("at-csv").onclick = function () {
+      var lines = [["이름", "전화번호", "출석"].concat(days)].concat(rows.map(function (r) { return [r[0].name, r[0].phone, days.filter(function (k) { return r[1][k]; }).length + "/" + days.length].concat(days.map(function (k) { var v = r[1][k]; return v ? Math.floor(v / 100) + ":" + String(v % 100).padStart(2, "0") : ""; })); }));
+      var csv = "﻿" + lines.map(function (l) { return l.map(function (c) { return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"'; }).join(","); }).join("\r\n");
+      var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = "메이크토익_출석표_" + day.slice(0, 7) + ".csv"; document.body.appendChild(a); a.click(); a.remove();
+    };
+    if (!AT.t) atTick();
+  }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message || e) + "</div>"); bindHead(); });
+}
+
+/* ---------- 수업 공지 게시판 (2026-11-06): 학습실 앱 첫 화면 맨 위에 보임 — videos.notice 에 저장 ---------- */
+var NT_TO = { all: "모든 학생", mem: "수강생만", nm: "비회원 30일권만" };
+function viewNotice() {
+  render(head() + '<div class="card">불러오는 중…</div>'); bindHead();
+  rpc("admin_get_content", { p_key: "videos" }).then(function (v) {
+    v = v || {};
+    var L = (v.notice || []).slice().sort(function (a, b) { return (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || String(b.d || "").localeCompare(String(a.d || "")) || (b.id || 0) - (a.id || 0); });
+    render(head() + `<div class="card"><button class="btn" id="nt-add" style="width:100%;padding:14px;font-size:17px">+ 새 공지 쓰기</button>
+      <p class="note" style="margin:8px 0 0">저장하면 학생 학습실 앱 첫 화면 맨 위 <b>📢 수업 공지</b>에 바로 나와요. <b>📌 상단 고정</b>한 공지는 늘 맨 위, 나머지는 최신순이에요.</p></div>
+      <div class="card">${L.map(function (n) {
+        return `<div class="st"><div class="top"><div><span class="nm" style="font-size:17px">${n.pin ? "📌 " : ""}${esc(n.t)}</span> <span class="tag ${n.to === "all" ? "lc" : n.to === "nm" ? "soon" : "full"}">${NT_TO[n.to || "mem"]}</span>${n.hide ? ' <span class="tag end">숨김</span>' : ""}<div class="info">${esc(n.d)}</div></div></div>
+          <div class="info" style="white-space:pre-wrap;margin-top:8px;font-size:15px">${esc(n.b)}</div>
+          <div class="acts"><button class="btn ghost sm" data-ne="${n.id}">수정</button><button class="btn ghost sm" data-nh="${n.id}">${n.hide ? "다시 보이기" : "숨기기"}</button><button class="btn red sm" data-nx="${n.id}">삭제</button></div></div>`;
+      }).join("") || '<p class="note">아직 공지가 없어요.</p>'}</div>`);
+    bindHead();
+    function find(id) { return (v.notice || []).filter(function (n) { return String(n.id) === String(id); })[0]; }
+    function save(mut, done) {
+      // 저장 직전에 최신 내용을 다시 받아(녹화 영상 등 다른 칸을 덮어쓰지 않게) 공지만 바꾼다
+      return rpc("admin_get_content", { p_key: "videos" }).then(function (cur) {
+        cur = cur || {}; var arr = (cur.notice || []).slice(); arr = mut(arr) || arr;
+        var o = Object.assign({}, cur, { notice: arr });
+        return rpc("admin_put_content", { p_key: "videos", p_data: o, p_text: null });
+      }).then(function () { if (done) done(); viewNotice(); }).catch(function (e) { alert(e.message || e); });
+    }
+    function form(n) {
+      n = n || { t: "", b: "", to: "mem", pin: false, d: today() };
+      var m = modal(`<h2>${n.id ? "공지 수정" : "새 공지"}</h2>
+        <label>제목</label><input class="in" id="n-t" value="${esc(n.t)}" placeholder="예: 11월 11일(화) 저녁반 휴강 안내">
+        <label>내용</label><textarea class="in" id="n-b" rows="7" style="resize:vertical;line-height:1.6" placeholder="학생에게 보일 내용을 적어 주세요.">${esc(n.b)}</textarea>
+        <div class="grid"><div><label>날짜</label><input class="in" type="date" id="n-d" value="${esc(n.d || today())}"></div>
+        <div><label>보이는 대상</label><select class="in" id="n-to">${Object.keys(NT_TO).map(function (k) { return `<option value="${k}" ${(n.to || "mem") === k ? "selected" : ""}>${NT_TO[k]}</option>`; }).join("")}</select></div></div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input type="checkbox" id="n-pin" ${n.pin ? "checked" : ""} style="width:20px;height:20px"> 📌 상단 고정</label>
+        <div id="n-msg"></div>
+        <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" id="n-save" style="flex:1">저장</button><button class="btn ghost" id="n-cancel">닫기</button></div>`);
+      m.querySelector("#n-cancel").onclick = function () { m.remove(); };
+      m.querySelector("#n-save").onclick = function () {
+        var t = m.querySelector("#n-t").value.trim(), b = m.querySelector("#n-b").value.trim();
+        if (!t) { m.querySelector("#n-msg").innerHTML = '<div class="msg err">제목을 적어 주세요.</div>'; return; }
+        var x = { id: n.id || Date.now(), t: t, b: b, d: m.querySelector("#n-d").value || today(), to: m.querySelector("#n-to").value, pin: m.querySelector("#n-pin").checked, hide: !!n.hide };
+        this.disabled = true; this.textContent = "저장 중…";
+        save(function (arr) { var i = arr.findIndex(function (y) { return String(y.id) === String(x.id); }); if (i >= 0) arr[i] = x; else arr.unshift(x); return arr; }, function () { m.remove(); });
+      };
+      m.querySelector("#n-t").focus();
+    }
+    document.getElementById("nt-add").onclick = function () { form(null); };
+    app.querySelectorAll("[data-ne]").forEach(function (b) { b.onclick = function () { form(find(b.dataset.ne)); }; });
+    app.querySelectorAll("[data-nh]").forEach(function (b) { b.onclick = function () { var id = b.dataset.nh; save(function (arr) { return arr.map(function (y) { return String(y.id) === id ? Object.assign({}, y, { hide: !y.hide }) : y; }); }); }; });
+    app.querySelectorAll("[data-nx]").forEach(function (b) { b.onclick = function () { var n = find(b.dataset.nx); if (!confirm("'" + n.t + "' 공지를 지울까요?")) return; save(function (arr) { return arr.filter(function (y) { return String(y.id) !== String(n.id); }); }); }; });
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
 }
 
