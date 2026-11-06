@@ -13,8 +13,8 @@ var SP_DEF = [
   { id: "book", t: "교재비", b: "교재만 따로 결제 · 택배 배송 시 착불", d: "해당 시즌 메이크토익 교재(실물)\n학원에서 받거나 택배(착불)로 받을 수 있어요", p: 28000 },
   { id: "wk", t: "주말특강", b: "주말 특강 수업 등록", d: "주말 특강 수업 등록\n일정 · 금액은 문자로 안내해 드려요", p: 0 },
   { id: "app", t: "학습실 앱 이용 연장 (1개월)", b: "쓰고 싶은 것만 골라서 결제 (수업 다시보기 제외)", d: "수업 없이 학습실만 1개월 더 이용\n필요한 것만 골라서 결제 (수업 다시보기 제외)\n고른 항목만 1개월 동안 열려요", p: 0, parts: [
-    { id: "lcmock", t: "LC 실전 모의고사 (문제 · 해설강의)", p: 0 }, { id: "lcp2", t: "LC 교재 강의 · PART 2 유형별", p: 0 },
-    { id: "rcbook", t: "RC 교재 문제 · 해설", p: 0 }, { id: "agrade", t: "A급 과제 (문제 · 해설강의 · 오답노트)", p: 0 }, { id: "voca", t: "VOCA 단어 암기장", p: 0 }] }
+    { id: "lcmock", t: "LC 실전 모의고사 (문제 · 해설강의)", p: 15000 }, { id: "lcp2", t: "LC 교재 강의 · PART 2 유형별", p: 15000 },
+    { id: "rcbook", t: "RC 교재 문제 · 해설", p: 10000 }, { id: "agrade", t: "A급 과제 (문제 · 해설강의 · 오답노트)", p: 20000 }, { id: "voca", t: "VOCA 단어 암기장", p: 5000 }] }
 ];
 function spList() { var L = (S.videos || {}).spay; return (L && L.length ? L : SP_DEF).filter(function (x) { return x && x.t && !x.hide; }); }
 function spWon(n) { return n > 0 ? Number(n).toLocaleString() + "원" : "금액 문의"; }
