@@ -945,7 +945,7 @@ function viewPrice() {
       <div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">온라인 정규반 (1개월)</b> <span style="font-size:13px;font-weight:600">· 결제되면 수강생으로 바꿔 학습실 전체 열기</span>
         <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input class="in" inputmode="numeric" data-pk="pass_price" value="${esc(c.pass_price || "")}"><b>원</b></div></div>
       <div id="pr-msg"></div><button class="btn" id="pr-save" style="width:100%;padding:14px;margin-top:12px">가격 저장</button></div>
-      <div class="card" id="sp-card"><p class="sec">💳 학습실 수업 결제 상품</p><p class="note" style="margin-top:0">수강생 학습실 앱 첫 화면 맨 아래 <b>💳 수업 결제</b>에 나와요 (비회원 30일권 학생에겐 안 보임). 가격을 비우면 '금액 문의'로 나오고, 교재비를 넣은 상품은 학생이 <b>합산 결제 / 별도 결제</b>를 골라요. 지금은 계좌이체 + 입금 확인 문자예요.</p><div id="sp-box">불러오는 중…</div></div>`);
+      <div class="card" id="sp-card"><p class="sec">💳 학습실 수업 결제 상품</p><p class="note" style="margin-top:0">수강생 학습실 앱 첫 화면 맨 아래 <b>💳 수업 결제</b>에 나와요 (비회원 30일권 학생에겐 안 보임). 가격을 비우면 '금액 문의'로 나오고, 교재비를 넣은 상품은 학생이 <b>합산 결제 / 별도 결제</b>를 골라요. 학습실 앱 이용 연장은 항목별 가격을 넣으면 학생이 골라서 결제해요. 결제는 💳 카드결제(이노페이) + 계좌이체 — 카드결제 기록은 '등록 · 결제 기록'에서 봐요.</p><div id="sp-box">불러오는 중…</div></div>`);
     bindHead(); spAdmin();
     document.getElementById("pr-save").onclick = function () {
       var jobs = [], bad = false, msg = document.getElementById("pr-msg");
@@ -964,27 +964,29 @@ function viewPrice() {
 }
 
 /* ---------- 학습실 수업 결제 상품 (2026-11-06): videos.spay — 학생 앱 첫 화면 맨 아래 💳 수업 결제 ---------- */
-var SP_DEF = [{ id: "ext", t: "다음 달 수업 연장 (1개월)", b: "다음 달 정규 수업 연장 · 학습실 전체 이용 포함", p: 240000, bk: 28000 }, { id: "on", t: "온라인 정규반 연장 (1개월)", b: "온라인 정규반 다음 달 연장 · 학습실 전체 이용 포함", p: 200000, bk: 28000 }, { id: "book", t: "교재비", b: "교재만 따로 결제 · 택배 배송 시 착불", p: 28000 }, { id: "wk", t: "주말특강", b: "주말 특강 수업 등록", p: 0 }, { id: "app", t: "학습실 앱 이용 연장 (1개월)", b: "수업 없이 학습실(LC · RC · 교재 전자책 · 해설강의)만 1개월 더", p: 0 }];
+var SP_DEF = [{ id: "ext", t: "다음 달 수업 연장 (1개월)", b: "다음 달 정규 수업 연장 · 학습실 전체 이용 포함", p: 240000, bk: 28000 }, { id: "on", t: "온라인 정규반 연장 (1개월)", b: "온라인 정규반 다음 달 연장 · 학습실 전체 이용 포함", p: 200000, bk: 28000 }, { id: "book", t: "교재비", b: "교재만 따로 결제 · 택배 배송 시 착불", p: 28000 }, { id: "wk", t: "주말특강", b: "주말 특강 수업 등록", p: 0 },
+  { id: "app", t: "학습실 앱 이용 연장 (1개월)", b: "쓰고 싶은 것만 골라서 결제 (수업 다시보기 제외)", p: 0, parts: [{ id: "lcmock", t: "LC 실전 모의고사 (문제 · 해설강의)", p: 0 }, { id: "lcp2", t: "LC 교재 강의 · PART 2 유형별", p: 0 }, { id: "rcbook", t: "RC 교재 문제 · 해설", p: 0 }, { id: "agrade", t: "A급 과제 (문제 · 해설강의 · 오답노트)", p: 0 }, { id: "voca", t: "VOCA 단어 암기장", p: 0 }] }];
 function spAdmin() {
   var box = document.getElementById("sp-box"); if (!box) return;
   rpc("admin_get_content", { p_key: "videos" }).then(function (v) {
-    var L = ((v || {}).spay && v.spay.length ? v.spay : SP_DEF).map(function (x) { return Object.assign({}, x); });
+    var L = ((v || {}).spay && v.spay.length ? v.spay : SP_DEF).map(function (x) { var y = Object.assign({}, x); if (x.parts) y.parts = x.parts.map(function (q) { return Object.assign({}, q); }); return y; });
     function draw(msg) {
       box.innerHTML = L.map(function (x, i) {
         return `<div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px">
           <label style="margin-top:0">상품 이름</label><input class="in" data-sf="t" data-si="${i}" value="${esc(x.t)}" placeholder="예: 주말특강 (11월)">
           <label>설명</label><input class="in" data-sf="b" data-si="${i}" value="${esc(x.b || "")}" placeholder="학생에게 보일 한 줄 설명">
           <div style="display:flex;gap:6px;align-items:center;margin-top:8px"><input class="in" inputmode="numeric" data-sf="p" data-si="${i}" value="${x.p > 0 ? x.p : ""}" placeholder="금액 문의"><b>원</b></div>
-          <label>교재비 (넣으면 학생이 합산 결제 / 별도 결제를 골라요)</label><div style="display:flex;gap:6px;align-items:center"><input class="in" inputmode="numeric" data-sf="bk" data-si="${i}" value="${x.bk > 0 ? x.bk : ""}" placeholder="교재 선택 없음"><b>원</b></div>
+          ${x.parts ? `<label>골라서 결제하는 항목 (가격 비우면 '금액 문의' · 카드결제 안 됨)</label>${x.parts.map(function (q, k) { return `<div style="display:flex;gap:6px;align-items:center;margin-top:6px"><span style="flex:1;font-weight:700;font-size:14px">${esc(q.t)}</span><input class="in" style="max-width:130px" inputmode="numeric" data-spp="${i}:${k}" value="${q.p > 0 ? q.p : ""}" placeholder="금액 문의"><b>원</b></div>`; }).join("")}` : `<label>교재비 (넣으면 학생이 합산 결제 / 별도 결제를 골라요)</label><div style="display:flex;gap:6px;align-items:center"><input class="in" inputmode="numeric" data-sf="bk" data-si="${i}" value="${x.bk > 0 ? x.bk : ""}" placeholder="교재 선택 없음"><b>원</b></div>`}
           <div class="acts" style="margin-top:8px"><button class="btn ghost sm" data-sh="${i}">${x.hide ? "다시 보이기" : "숨기기"}</button><button class="btn ghost sm" data-su="${i}" ${i ? "" : "disabled"}>▲ 위로</button><button class="btn red sm" data-sx="${i}">삭제</button>${x.hide ? ' <span class="tag end">숨김</span>' : ""}</div></div>`;
       }).join("") + `<button class="btn ghost" id="sp-add" style="width:100%;margin-top:10px">+ 상품 추가</button>${msg || ""}<button class="btn" id="sp-save" style="width:100%;padding:14px;margin-top:10px">수업 결제 상품 저장</button>`;
       box.querySelectorAll("[data-sf]").forEach(function (i) { i.oninput = function () { var x = L[+i.dataset.si], f = i.dataset.sf; x[f] = (f === "p" || f === "bk") ? (+i.value.replace(/[^0-9]/g, "") || 0) : i.value; }; });
+      box.querySelectorAll("[data-spp]").forEach(function (i) { i.oninput = function () { var a = i.dataset.spp.split(":"); L[+a[0]].parts[+a[1]].p = +i.value.replace(/[^0-9]/g, "") || 0; }; });
       box.querySelectorAll("[data-sh]").forEach(function (b) { b.onclick = function () { var x = L[+b.dataset.sh]; x.hide = !x.hide; draw(); }; });
       box.querySelectorAll("[data-su]").forEach(function (b) { b.onclick = function () { var i = +b.dataset.su; if (i) { var t = L[i]; L[i] = L[i - 1]; L[i - 1] = t; draw(); } }; });
       box.querySelectorAll("[data-sx]").forEach(function (b) { b.onclick = function () { if (confirm("이 상품을 지울까요?")) { L.splice(+b.dataset.sx, 1); draw(); } }; });
       document.getElementById("sp-add").onclick = function () { L.push({ id: "p" + Date.now(), t: "", b: "", p: 0 }); draw(); };
       document.getElementById("sp-save").onclick = function () {
-        var out = L.filter(function (x) { return String(x.t || "").trim(); }).map(function (x) { return { id: x.id || ("p" + Date.now()), t: String(x.t).trim(), b: String(x.b || "").trim(), p: +x.p || 0, bk: +x.bk || 0, hide: !!x.hide }; });
+        var out = L.filter(function (x) { return String(x.t || "").trim(); }).map(function (x) { return { id: x.id || ("p" + Date.now()), t: String(x.t).trim(), b: String(x.b || "").trim(), p: +x.p || 0, bk: +x.bk || 0, hide: !!x.hide, parts: x.parts ? x.parts.map(function (q) { return { id: q.id, t: q.t, p: +q.p || 0 }; }) : undefined }; });
         if (out.some(function (x) { return x.p && (x.p < 100 || x.p > 10000000); })) return draw('<div class="msg err">금액을 확인해 주세요 (100원 이상).</div>');
         rpc("admin_get_content", { p_key: "videos" }).then(function (cur) {
           return rpc("admin_put_content", { p_key: "videos", p_data: Object.assign({}, cur || {}, { spay: out }), p_text: null });

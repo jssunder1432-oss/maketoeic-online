@@ -201,6 +201,7 @@ function doneInno() {
     history.replaceState(null, "", "/pay/?done=1");
     if (r.status === "test") { app.innerHTML = '<div class="card"><div class="msg" style="background:#FFF4EC;color:#101828;font-weight:800">' + esc(r.message) + '</div></div><a class="btn" href="/pay/?p=class">결제 화면으로 돌아가기</a>'; return; }
     if (r.status !== "ok") throw new Error(r.message || "결제를 확인하지 못했어요.");
+    if (r.kind === "sp") { app.innerHTML = '<div class="card hero"><span class="kicker">결제 완료</span><h1>' + esc(r.name) + '님, 결제됐어요</h1><p>수업 결제가 완료됐어요. 확인 후 바로 처리해 드릴게요.</p></div><a class="btn navy" href="/study/">학습실로 돌아가기</a>'; return; }
     var info = {}; try { info = JSON.parse(sessionStorage.getItem("mkpay") || "{}"); } catch (e) { }
     app.innerHTML = '<div class="card hero"><span class="kicker">결제 완료</span><h1>' + esc(r.name) + '님, 학습실이 열렸어요</h1><p>이용 기간: ' + esc(r.end_date) + '까지</p></div>' +
       '<div class="card"><p style="margin:0;font-size:15px;line-height:1.7;color:var(--ink)">학습실 입장: 이름 <b>' + esc(r.name) + '</b> + 휴대폰 뒤 4자리' + (info.last4 ? ' <b>' + esc(info.last4) + '</b>' : '') + '</p></div>' +
