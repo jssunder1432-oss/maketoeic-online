@@ -858,7 +858,7 @@ function viewNotice() {
       <p class="note" style="margin:8px 0 0">저장하면 학생 학습실 앱 첫 화면 맨 위 <b>📢 수업 공지</b>에 바로 나와요. <b>📌 상단 고정</b>한 공지는 늘 맨 위, 나머지는 최신순이에요.</p></div>
       <div class="card">${L.map(function (n) {
         return `<div class="st"><div class="top"><div><span class="nm" style="font-size:17px">${n.pin ? "📌 " : ""}${esc(n.t)}</span> <span class="tag ${n.to === "all" ? "lc" : n.to === "nm" ? "soon" : "full"}">${NT_TO[n.to || "mem"]}</span>${n.hide ? ' <span class="tag end">숨김</span>' : ""}<div class="info">${esc(n.d)}</div></div></div>
-          <div class="info" style="white-space:pre-wrap;margin-top:8px;font-size:15px">${esc(n.b)}</div>
+          <div class="info" style="white-space:pre-wrap;margin-top:8px;font-size:15px">${esc(n.b)}</div>${n.sp ? `<div class="info" style="margin-top:6px;font-weight:800;color:#E8702A">💳 결제 버튼: ${esc((((v.spay && v.spay.length) ? v.spay : SP_DEF).filter(function (x) { return x.id === n.sp; })[0] || {}).t || "(지워진 상품)")}</div>` : ""}
           <div class="acts"><button class="btn ghost sm" data-ne="${n.id}">수정</button><button class="btn ghost sm" data-nh="${n.id}">${n.hide ? "다시 보이기" : "숨기기"}</button><button class="btn red sm" data-nx="${n.id}">삭제</button></div></div>`;
       }).join("") || '<p class="note">아직 공지가 없어요.</p>'}</div>`);
     bindHead();
@@ -878,6 +878,7 @@ function viewNotice() {
         <label>내용</label><textarea class="in" id="n-b" rows="7" style="resize:vertical;line-height:1.6" placeholder="학생에게 보일 내용을 적어 주세요.">${esc(n.b)}</textarea>
         <div class="grid"><div><label>날짜</label><input class="in" type="date" id="n-d" value="${esc(n.d || today())}"></div>
         <div><label>보이는 대상</label><select class="in" id="n-to">${Object.keys(NT_TO).map(function (k) { return `<option value="${k}" ${(n.to || "mem") === k ? "selected" : ""}>${NT_TO[k]}</option>`; }).join("")}</select></div></div>
+        <label>💳 결제 버튼 붙이기 (공지 아래에 결제하기 버튼 · 수강생에게만 보임)</label><select class="in" id="n-sp"><option value="">붙이지 않음</option>${((v.spay && v.spay.length) ? v.spay : SP_DEF).filter(function (x) { return x && x.t && !x.hide; }).map(function (x) { return `<option value="${esc(x.id)}" ${n.sp === x.id ? "selected" : ""}>${esc(x.t)}</option>`; }).join("")}</select>
         <label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input type="checkbox" id="n-pin" ${n.pin ? "checked" : ""} style="width:20px;height:20px"> 📌 상단 고정</label>
         <div id="n-msg"></div>
         <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" id="n-save" style="flex:1">저장</button><button class="btn ghost" id="n-cancel">닫기</button></div>`);
@@ -885,7 +886,7 @@ function viewNotice() {
       m.querySelector("#n-save").onclick = function () {
         var t = m.querySelector("#n-t").value.trim(), b = m.querySelector("#n-b").value.trim();
         if (!t) { m.querySelector("#n-msg").innerHTML = '<div class="msg err">제목을 적어 주세요.</div>'; return; }
-        var x = { id: n.id || Date.now(), t: t, b: b, d: m.querySelector("#n-d").value || today(), to: m.querySelector("#n-to").value, pin: m.querySelector("#n-pin").checked, hide: !!n.hide };
+        var x = { id: n.id || Date.now(), t: t, b: b, d: m.querySelector("#n-d").value || today(), to: m.querySelector("#n-to").value, pin: m.querySelector("#n-pin").checked, hide: !!n.hide, sp: m.querySelector("#n-sp").value || undefined };
         this.disabled = true; this.textContent = "저장 중…";
         save(function (arr) { var i = arr.findIndex(function (y) { return String(y.id) === String(x.id); }); if (i >= 0) arr[i] = x; else arr.unshift(x); return arr; }, function () { m.remove(); });
       };

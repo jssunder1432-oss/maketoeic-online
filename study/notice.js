@@ -1,6 +1,7 @@
 /* 수업 공지 게시판 (2026-11-06): 학습실 앱 첫 화면(시즌 선택 · 학습실 선택) 맨 위에 📢 수업 공지
    - 관리자 페이지 '📢 수업 공지'에서 쓴 글(videos.notice) — 상단 고정 먼저, 나머지 최신순
    - 대상: all 모든 학생 / mem 수강생만 / nm 비회원 30일권만 · hide 숨김
+   - 결제 버튼: 공지에 수업 결제 상품(n.sp)을 붙이면 본문 아래 💳 결제하기 버튼 (2026-11-07)
    - 처음 3개만 펼쳐 보이고 나머지는 '공지 더 보기' · 읽지 않은 공지는 NEW (이 기기 기준) */
 (function () {
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
@@ -19,11 +20,18 @@ function ntBox() {
       '<span style="flex:1;min-width:0"><b style="font-size:16px;color:#172844;line-height:1.4">' + (n.pin ? "📌 " : "") + esc(n.t) + "</b>" + (nw ? ' <span style="display:inline-block;background:#E0322B;color:#fff;font-size:11px;font-weight:900;border-radius:99px;padding:1px 7px;vertical-align:2px">NEW</span>' : "") +
       '<small style="display:block;color:#33404F;font-weight:700;margin-top:1px">' + dl + "</small></span>" +
       '<span data-ntar style="font-size:15px;color:#172844;font-weight:900;padding-top:2px">▾</span></button>' +
-      '<div data-ntb style="display:none;white-space:pre-wrap;font-size:15px;line-height:1.65;color:#1F2937;font-weight:600;margin-top:8px;background:#F5F7FA;border-radius:12px;padding:12px 13px">' + (esc(n.b) || "(내용 없음)").replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#2952CC;word-break:break-all">$1</a>') + "</div></div>";
+      '<div data-ntb style="display:none;white-space:pre-wrap;font-size:15px;line-height:1.65;color:#1F2937;font-weight:600;margin-top:8px;background:#F5F7FA;border-radius:12px;padding:12px 13px">' + (esc(n.b) || "(내용 없음)").replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#2952CC;word-break:break-all">$1</a>') + ntPay(n) + "</div></div>";
   };
   return '<div class="card" data-nt="1" style="border:2px solid #172844;background:#fff"><div style="display:flex;align-items:baseline;gap:8px"><b style="font-size:18px;color:#172844">📢 수업 공지</b><small style="color:#33404F;font-weight:700">' + L.length + "개</small></div>" +
     '<div style="margin-top:6px">' + (L.length ? L.map(row).join("") : '<p style="margin:8px 2px 2px;font-size:14px;font-weight:700;color:#33404F">아직 올라온 공지가 없어요.</p>') + "</div>" +
     (L.length > 3 ? '<button class="btn ghost sm" data-ntall="1" style="width:100%;margin-top:6px">공지 ' + (L.length - 3) + "개 더 보기 ▾</button>" : "") + "</div>";
+}
+// 공지에 붙인 결제 버튼 (2026-11-07): n.sp = 수업 결제 상품 id — 누르면 그 상품 결제 화면(#/spay/id) · 비회원 30일권 학생에겐 안 보임
+function ntPay(n) {
+  if (!n.sp || (typeof payPart === "function" && payPart())) return "";
+  var L = (S.videos || {}).spay || (typeof SP_DEF !== "undefined" ? SP_DEF : []), x = L.filter(function (y) { return y && y.id === n.sp && !y.hide; })[0];
+  if (!x) return "";
+  return '<button data-ntpay="' + esc(x.id) + '" style="all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;margin-top:12px;background:linear-gradient(125deg,#F28C28,#FFB25B);color:#fff;border-radius:12px;padding:13px 10px;font-size:16px;font-weight:900;white-space:normal">💳 ' + esc(x.t) + ' 결제하기 ›</button>';
 }
 function ntBind() {
   var box = app.querySelector("[data-nt]"); if (!box) return;
@@ -34,6 +42,7 @@ function ntBind() {
       if (on) { var s = ntSeen(), id = String(b.dataset.ntt); if (s.indexOf(id) < 0) { s.push(id); ls("ntseen", JSON.stringify(s.slice(-200))); } var nw = b.querySelector("span[style*='E0322B']"); if (nw) nw.remove(); }
     };
   });
+  box.querySelectorAll("[data-ntpay]").forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); (typeof go === "function" ? go : function (h) { location.hash = h; })("#/spay/" + encodeURIComponent(b.dataset.ntpay)); }; });
   var all = box.querySelector("[data-ntall]"); if (all) all.onclick = function () { box.querySelectorAll("[data-ntmore]").forEach(function (x) { x.style.display = ""; }); all.remove(); };
 }
 function ntInject(html) {
