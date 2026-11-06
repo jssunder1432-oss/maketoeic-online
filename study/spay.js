@@ -7,12 +7,12 @@
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
 var FN = T(function () {/*// 수업 결제 — study/spay.js
 var SP_DEF = [
-  { id: "ext", t: "다음 달 수업 연장 (1개월)", b: "다음 달 정규 수업 연장 · 학습실 전체 이용 포함", p: 240000, bk: 28000 },
-  { id: "on", t: "온라인 only 정규반 연장 (1개월)", b: "온라인 only 정규반 다음 달 연장 · 학습실 전체 이용 포함", p: 200000, bk: 28000 },
-  { id: "rec", t: "온라인 only 전달 수업 녹화 연장", b: "지난달 수업 녹화 영상 다시보기 기간 연장", p: 100000 },
-  { id: "book", t: "교재비", b: "교재만 따로 결제 · 택배 배송 시 착불", p: 28000 },
-  { id: "wk", t: "주말특강", b: "주말 특강 수업 등록", p: 0 },
-  { id: "app", t: "학습실 앱 이용 연장 (1개월)", b: "쓰고 싶은 것만 골라서 결제 (수업 다시보기 제외)", p: 0, parts: [
+  { id: "ext", t: "다음 달 수업 연장 (1개월)", b: "다음 달 정규 수업 연장 · 학습실 전체 이용 포함", d: "다음 달 정규 수업(현장) 1개월 등록\n학습실 전체 이용 — LC · RC 문제, 교재 전자책, 해설강의, 수업 다시보기\n매일 과제 · 출석 도장 · 오답노트 그대로 이어서\n교재비 28,000원은 합산 결제 또는 별도 결제 중 선택", p: 240000, bk: 28000 },
+  { id: "on", t: "온라인 only 정규반 연장 (1개월)", b: "온라인 only 정규반 다음 달 연장 · 학습실 전체 이용 포함", d: "수업 당일 녹화 영상으로 듣는 온라인 only 정규반 1개월\n학습실 전체 이용 — LC · RC 문제, 교재 전자책, 해설강의, 수업 다시보기\n매일 과제 · 오답노트 그대로 이어서\n교재비 28,000원은 합산 결제 또는 별도 결제 중 선택", p: 200000, bk: 28000 },
+  { id: "rec", t: "온라인 only 전달 수업 녹화 연장", b: "지난달 수업 녹화 영상 다시보기 기간 연장", d: "지난달 수업 녹화 영상 다시보기 기간 1개월 연장\n놓친 수업 · 복습할 수업을 학습실에서 계속 볼 수 있어요", p: 100000 },
+  { id: "book", t: "교재비", b: "교재만 따로 결제 · 택배 배송 시 착불", d: "해당 시즌 메이크토익 교재(실물)\n학원에서 받거나 택배(착불)로 받을 수 있어요", p: 28000 },
+  { id: "wk", t: "주말특강", b: "주말 특강 수업 등록", d: "주말 특강 수업 등록\n일정 · 금액은 문자로 안내해 드려요", p: 0 },
+  { id: "app", t: "학습실 앱 이용 연장 (1개월)", b: "쓰고 싶은 것만 골라서 결제 (수업 다시보기 제외)", d: "수업 없이 학습실만 1개월 더 이용\n필요한 것만 골라서 결제 (수업 다시보기 제외)\n고른 항목만 1개월 동안 열려요", p: 0, parts: [
     { id: "lcmock", t: "LC 실전 모의고사 (문제 · 해설강의)", p: 0 }, { id: "lcp2", t: "LC 교재 강의 · PART 2 유형별", p: 0 },
     { id: "rcbook", t: "RC 교재 문제 · 해설", p: 0 }, { id: "agrade", t: "A급 과제 (문제 · 해설강의 · 오답노트)", p: 0 }, { id: "voca", t: "VOCA 단어 암기장", p: 0 }] }
 ];
@@ -31,17 +31,29 @@ function spBox() {
       var ok = spPartsOk(x), pr = spHasParts(x) ? (ok.length ? Math.min.apply(null, ok.map(function (q) { return +q.p; })).toLocaleString() + "원~" : "금액 문의") : spWon(+x.p);
       return '<button data-spk="' + i + '" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:10px;align-items:center;width:100%;background:#fff;border:1.5px solid #E7EAF0;border-radius:14px;padding:12px 13px;margin-top:8px">' +
         '<span style="flex:1;min-width:0"><b style="font-size:16px;color:#172844">' + esc(x.t) + '</b>' + (x.b ? '<small style="display:block;color:#33404F;font-weight:600;margin-top:2px;line-height:1.45">' + esc(x.b) + '</small>' : '') + '</span>' +
-        '<b style="font-size:16px;color:#E8702A;white-space:nowrap">' + pr + '</b></button>';
+        '<b style="font-size:16px;color:#E8702A;white-space:nowrap">' + pr + '</b><span style="font-size:20px;font-weight:900;color:#172844">›</span></button>';
     }).join("") +
-    '<div data-spd style="display:none"></div>' +
-    '<div style="background:#E9F8EE;border:2px solid #03C75A;border-radius:14px;padding:13px 14px;margin-top:12px;text-align:left"><b style="font-size:16px;color:#0B6B33;line-height:1.5">🎁 결제 후 당일 네이버 영수증리뷰 남겨주시면 5천원 환급 받으실 수 있습니다</b><p style="font-size:14px;font-weight:600;color:#1F2937;line-height:1.6;margin:6px 0 0">네이버에서 <b>\'청주토익 메이크토익\'</b> 검색 → 영수증리뷰 작성 후 캡처해서 <a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener" style="color:#0B6B33;font-weight:800">카카오톡 고객 문의</a>로 보내 주세요.</p></div>' +
-    '<p style="font-size:13px;color:#33404F;font-weight:600;margin:10px 2px 0;line-height:1.55">💳 카드결제 또는 🏦 계좌이체 · 결제 후에는 환불되지 않아요 (결제 오류 · 중복 결제는 돌려 드려요)</p></div>';
+    spReview() +
+    spNote() + '</div>';
 }
-function viewSpay() {
-  render(topbar("💳 수업 결제") + spBox());
+function spReview() { return '<div style="background:#E9F8EE;border:2px solid #03C75A;border-radius:14px;padding:13px 14px;margin-top:12px;text-align:left"><b style="font-size:16px;color:#0B6B33;line-height:1.5">🎁 결제 후 당일 네이버 영수증리뷰 남겨주시면 5천원 환급 받으실 수 있습니다</b><p style="font-size:14px;font-weight:600;color:#1F2937;line-height:1.6;margin:6px 0 0">네이버에서 <b>\'청주토익 메이크토익\'</b> 검색 → 영수증리뷰 작성 후 캡처해서 <a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener" style="color:#0B6B33;font-weight:800">카카오톡 고객 문의</a>로 보내 주세요.</p></div>'; }
+function spNote() { return '<p style="font-size:13px;color:#33404F;font-weight:600;margin:10px 2px 0;line-height:1.55">💳 카드결제 또는 🏦 계좌이체 · 결제 후에는 환불되지 않아요 (결제 오류 · 중복 결제는 돌려 드려요)</p>'; }
+function spPage(id) {
+  var x = spList().filter(function (y) { return y.id === id; })[0];
+  if (!x) return topbar("💳 수업 결제") + spBox();
+  var ok = spPartsOk(x), pr = spHasParts(x) ? (ok.length ? Math.min.apply(null, ok.map(function (q) { return +q.p; })).toLocaleString() + "원~" : "금액 문의") : spWon(+x.p);
+  var lines = String(x.d || x.b || "").split(/\n+/).filter(Boolean);
+  return topbar("💳 수업 결제") + '<div class="card" data-spbox="1" data-spid="' + esc(x.id) + '">' +
+    '<button data-spback="1" style="all:unset;cursor:pointer;font-size:14px;font-weight:800;color:#33404F">‹ 결제 상품 목록</button>' +
+    '<div style="background:linear-gradient(125deg,#172844,#2A3F66);color:#fff;border-radius:16px;padding:18px 16px;margin-top:10px"><small style="display:block;font-weight:800;color:#FFB25B;font-size:13px">MAKE TOEIC · 수업 결제</small><b style="display:block;font-size:21px;line-height:1.35;margin-top:4px">' + esc(x.t) + '</b><b style="display:block;font-size:24px;color:#FFB25B;margin-top:8px">' + pr + '</b></div>' +
+    (lines.length ? '<div style="margin-top:12px"><b style="font-size:16px;color:#172844">상품 안내</b><ul style="margin:8px 0 0;padding-left:20px;font-size:15px;font-weight:600;color:#1F2937;line-height:1.7">' + lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + '</ul></div>' : '') +
+    '<div data-spd></div>' + spReview() + spNote() + '</div>';
+}
+function viewSpay(id) {
+  render(id ? spPage(decodeURIComponent(id)) : topbar("💳 수업 결제") + spBox());
   bindCommon(); spBind(); window.scrollTo(0, 0);
   // 최신 상품 · 가격 다시 받기 (관리자에서 바꾼 가격 바로 반영)
-  if (!S.spFresh) { S.spFresh = 1; api("get_content", { p_token: S.token, p_key: "videos" }).then(function (r) { if (r && r.data) { S.videos = r.data; S.cache && (S.cache.videos = r.data); if (/^#\/spay/.test(location.hash)) { render(topbar("💳 수업 결제") + spBox()); bindCommon(); spBind(); } } }).catch(function () { }).then(function () { setTimeout(function () { S.spFresh = 0; }, 30000); }); }
+  if (!S.spFresh) { S.spFresh = 1; api("get_content", { p_token: S.token, p_key: "videos" }).then(function (r) { if (r && r.data) { S.videos = r.data; S.cache && (S.cache.videos = r.data); if (/^#\/spay/.test(location.hash)) { var h2 = location.hash.split("/")[2]; render(h2 ? spPage(decodeURIComponent(h2)) : topbar("💳 수업 결제") + spBox()); bindCommon(); spBind(); } } }).catch(function () { }).then(function () { setTimeout(function () { S.spFresh = 0; }, 30000); }); }
 }
 function spAmt(x, sum, sel) {
   if (spHasParts(x)) return x.parts.reduce(function (a, q) { return a + (sel[q.id] && +q.p > 0 ? +q.p : 0); }, 0);
@@ -77,13 +89,10 @@ function spBind() {
   var box = app.querySelector("[data-spbox]"); if (!box) return;
   var L = spList(), cur = null, sum = true, sel = {}, det = box.querySelector("[data-spd]");
   box.querySelectorAll("[data-spk]").forEach(function (b) {
-    b.onclick = function () {
-      cur = L[+b.dataset.spk];
-      box.querySelectorAll("[data-spk]").forEach(function (y) { y.style.borderColor = y === b ? "#F28C28" : "#E7EAF0"; y.style.background = y === b ? "#FFF1E3" : "#fff"; });
-      sum = true; sel = {}; draw();
-      setTimeout(function () { det.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 30);
-    };
+    b.onclick = function () { var x = L[+b.dataset.spk]; if (x) go("#/spay/" + encodeURIComponent(x.id)); };
   });
+  var bk = box.querySelector("[data-spback]"); if (bk) bk.onclick = function () { go("#/spay"); };
+  if (box.dataset.spid) { cur = L.filter(function (y) { return y.id === box.dataset.spid; })[0]; if (cur && det) draw(); }
   function msg(h) { var m = det.querySelector("[data-spm]"); if (m) m.innerHTML = h; }
   function draw() {
       det.style.display = "block"; det.innerHTML = spDetail(cur, sum, sel);
@@ -129,7 +138,7 @@ function viewLectures(id) {
 */});
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["function viewLectures(id) {\n", FN + "\n"],
-['  if (h[0] === "dg") return viewDG();', '  if (h[0] === "spay") return viewSpay();\n  if (h[0] === "dg") return viewDG();'],
+['  if (h[0] === "dg") return viewDG();', '  if (h[0] === "spay") return viewSpay(h[1] || "");\n  if (h[0] === "dg") return viewDG();'],
 ["attInject(html); ntInject(html); }", "attInject(html); ntInject(html); spInject(html); }"]
 ]);
 })();
