@@ -3,6 +3,7 @@
    - 구간: 관리자가 넣은 '구간'(한 줄에 "12:30 파트5") 버튼 → 누르면 그 시점으로 이동, 지금 보는 구간 표시
            구간을 안 넣었으면 10분 단위 자동 구간
    - ⏪10초 / 10초⏩
+   - ⛶ 전체화면: 영상 상자를 전체화면으로(안 되는 폰은 화면 가득 채우기), 위쪽 막대에 닫기·배속·10초 이동
    - 내가 구간 정하기: 시작·끝을 '지금 위치'로 찍거나 시간 입력 → 그 구간만 재생(반복 가능), 내 구간으로 저장(이 기기) */
 (function () {
   var SP = [0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -19,7 +20,7 @@
     return out.sort(function (a, b) { return a.t - b.t; });
   }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  var CSS = ".rc-box{background:#fff;border:2px solid #172844;border-radius:16px;padding:12px;margin:0 0 10px}.rc-h{font-weight:800;color:#172844;font-size:15px;margin:2px 2px 8px}.rc-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.rc-b{border:2px solid #172844;background:#fff;color:#172844;border-radius:10px;padding:8px 11px;font:inherit;font-size:15px;font-weight:800;cursor:pointer}.rc-b.on{background:#172844;color:#fff}.rc-ch{display:grid;gap:6px}.rc-c{display:flex;gap:10px;align-items:center;text-align:left;border:1.5px solid #D5DBE5;background:#fff;border-radius:12px;padding:10px 12px;font:inherit;font-size:15px;color:#172844;cursor:pointer}.rc-c b{min-width:58px;color:#E95721;font-variant-numeric:tabular-nums}.rc-c.on{border-color:#E95721;background:#FFF3EB;font-weight:800}.rc-in{width:64px;border:2px solid #172844;border-radius:10px;padding:8px;font:inherit;font-size:15px;font-weight:800;text-align:center;color:#172844}.rc-now{font-size:13px;color:#33404F;margin:-2px 2px 8px;font-variant-numeric:tabular-nums}";
+  var CSS = ".rc-box{background:#fff;border:2px solid #172844;border-radius:16px;padding:12px;margin:0 0 10px}.rc-h{font-weight:800;color:#172844;font-size:15px;margin:2px 2px 8px}.rc-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.rc-b{border:2px solid #172844;background:#fff;color:#172844;border-radius:10px;padding:8px 11px;font:inherit;font-size:15px;font-weight:800;cursor:pointer}.rc-b.on{background:#172844;color:#fff}.rc-ch{display:grid;gap:6px}.rc-c{display:flex;gap:10px;align-items:center;text-align:left;border:1.5px solid #D5DBE5;background:#fff;border-radius:12px;padding:10px 12px;font:inherit;font-size:15px;color:#172844;cursor:pointer}.rc-c b{min-width:58px;color:#E95721;font-variant-numeric:tabular-nums}.rc-c.on{border-color:#E95721;background:#FFF3EB;font-weight:800}.rc-fs{position:fixed!important;left:0;top:0;width:100vw;height:100vh;height:100dvh;z-index:99999;margin:0!important;border-radius:0!important;background:#000;display:flex;flex-direction:column}.rc-fs iframe{flex:1;aspect-ratio:auto!important;height:auto!important}:fullscreen#rec-wrap,:-webkit-full-screen#rec-wrap{display:flex;flex-direction:column;background:#000;border-radius:0}:fullscreen#rec-wrap iframe{flex:1;aspect-ratio:auto!important}.rc-fbar{position:relative;z-index:5;display:none;gap:6px;padding:6px;background:#0B1424;flex-wrap:wrap}.rc-fs .rc-fbar,:fullscreen .rc-fbar,:-webkit-full-screen .rc-fbar{display:flex}.rc-fbar .rc-b{border-color:#fff;background:#14233E;color:#fff;padding:6px 10px;font-size:14px}.rc-in{width:64px;border:2px solid #172844;border-radius:10px;padding:8px;font:inherit;font-size:15px;font-weight:800;text-align:center;color:#172844}.rc-now{font-size:13px;color:#33404F;margin:-2px 2px 8px;font-variant-numeric:tabular-nums}";
   function css() { if (document.getElementById("rc-css")) return; var s = document.createElement("style"); s.id = "rc-css"; s.textContent = CSS; document.head.appendChild(s); }
   window.mkRecCtl = function (box, f, chapters, vid) {
     if (!box || !f) return; css();
@@ -28,6 +29,33 @@
     function keep(L) { try { localStorage.setItem(MK, JSON.stringify(L)); } catch (e) { } }
     function playAB() { if (A == null) return; if (B != null && B <= A) B = null; on = true; now = A; cmd("seekTo", [A, true]); cmd("playVideo"); draw(); }
     function cmd(func, args) { try { f.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), "*"); } catch (e) { } }
+    var W = f.parentNode, bar = null;
+    function isFs() { return document.fullscreenElement === W || document.webkitFullscreenElement === W || W.classList.contains("rc-fs"); }
+    function mkBar() {
+      if (bar) return; bar = document.createElement("div"); bar.className = "rc-fbar";
+      W.insertBefore(bar, W.firstChild);
+    }
+    function drawBar() {
+      if (!bar) return;
+      bar.innerHTML = '<button class="rc-b" data-x>✕ 닫기</button><button class="rc-b" data-sp>⏩ ' + rate + '배</button><button class="rc-b" data-fj="-10">⏪ 10초</button><button class="rc-b" data-fj="10">10초 ⏩</button>';
+      bar.querySelector("[data-x]").onclick = fsOff;
+      bar.querySelector("[data-sp]").onclick = function () { rate = SP[(SP.indexOf(rate) + 1) % SP.length]; save(rate); cmd("setPlaybackRate", [rate]); drawBar(); draw(); };
+      bar.querySelectorAll("[data-fj]").forEach(function (b) { b.onclick = function () { now = Math.max(0, now + +b.dataset.fj); cmd("seekTo", [now, true]); cmd("playVideo"); }; });
+    }
+    function fsOn() {
+      mkBar(); drawBar();
+      var rq = W.requestFullscreen || W.webkitRequestFullscreen;
+      var done = function () { try { screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape").catch(function () { }); } catch (e) { } };
+      if (rq) { try { var pr = rq.call(W); if (pr && pr.then) pr.then(done).catch(function () { W.classList.add("rc-fs"); document.body.style.overflow = "hidden"; }); else done(); return; } catch (e) { } }
+      W.classList.add("rc-fs"); document.body.style.overflow = "hidden";
+    }
+    function fsOff() {
+      if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+      W.classList.remove("rc-fs"); document.body.style.overflow = "";
+      try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch (e) { }
+    }
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && W.classList.contains("rc-fs")) fsOff(); });
+    window.addEventListener("hashchange", function () { if (W.classList.contains("rc-fs")) fsOff(); });
     function list() {
       if (CH.length) return CH;
       if (!dur) return [];
@@ -38,7 +66,7 @@
       L.forEach(function (c, i) { if (now >= c.t - 0.5) act = i; });
       box.innerHTML = '<div class="rc-box"><div class="rc-h">⏩ 배속</div><div class="rc-row">' +
         SP.map(function (r) { return '<button class="rc-b' + (r === rate ? " on" : "") + '" data-r="' + r + '">' + r + "배</button>"; }).join("") +
-        '</div><div class="rc-row"><button class="rc-b" data-j="-10">⏪ 10초</button><button class="rc-b" data-j="10">10초 ⏩</button></div>' +
+        '</div><div class="rc-row"><button class="rc-b" data-j="-10">⏪ 10초</button><button class="rc-b" data-j="10">10초 ⏩</button><button class="rc-b" data-fs>⛶ 전체화면</button></div>' +
         '<div class="rc-h">✂️ 내가 구간 정하기</div><div class="rc-row" style="align-items:center"><button class="rc-b" data-a>시작=지금</button><input class="rc-in" id="rc-a" inputmode="numeric" placeholder="0:00" value="' + (A != null ? fmt(A) : "") + '"><span style="font-weight:800;color:#172844">~</span><input class="rc-in" id="rc-bb" inputmode="numeric" placeholder="끝" value="' + (B != null ? fmt(B) : "") + '"><button class="rc-b" data-b>끝=지금</button></div>' +
         '<div class="rc-row"><button class="rc-b' + (on ? " on" : "") + '" data-ab>▶ 이 구간만 보기</button><button class="rc-b' + (rep ? " on" : "") + '" data-rep>🔁 반복 ' + (rep ? "켜짐" : "꺼짐") + '</button>' + (on ? '<button class="rc-b" data-off>구간 해제</button>' : "") + '</div><div class="rc-row"><input class="rc-in" id="rc-n" style="flex:1;width:auto;text-align:left" placeholder="구간 이름 (예: 관계대명사)"><button class="rc-b" data-sv>⭐ 내 구간 저장</button></div>' +
         (mine().length ? '<div class="rc-h">⭐ 내 구간</div><div class="rc-ch" style="margin-bottom:10px">' + mine().map(function (m, i) { return '<div style="display:flex;gap:6px"><button class="rc-c" style="flex:1" data-my="' + i + '"><b>' + fmt(m.a) + (m.b != null ? "~" + fmt(m.b) : "") + "</b><span>" + esc(m.n || "내 구간") + '</span></button><button class="rc-b" data-mx="' + i + '" title="지우기">✕</button></div>'; }).join("") + "</div>" : "") +
@@ -47,6 +75,7 @@
         (L.length ? '<div class="rc-ch">' + L.map(function (c, i) { return '<button class="rc-c' + (i === act ? " on" : "") + '" data-t="' + c.t + '"><b>' + fmt(c.t) + "</b><span>" + esc(c.n) + "</span></button>"; }).join("") + "</div>" : '<div class="rc-now">영상을 재생하면 구간이 나와요.</div>') + "</div>";
       box.querySelectorAll("[data-r]").forEach(function (b) { b.onclick = function () { rate = +b.dataset.r; save(rate); cmd("setPlaybackRate", [rate]); draw(); }; });
       box.querySelectorAll("[data-j]").forEach(function (b) { b.onclick = function () { now = Math.max(0, now + +b.dataset.j); cmd("seekTo", [now, true]); cmd("playVideo"); draw(); }; });
+      var fsb = box.querySelector("[data-fs]"); if (fsb) fsb.onclick = fsOn;
       function rd() { var a = sec((box.querySelector("#rc-a") || {}).value || ""), b = sec((box.querySelector("#rc-bb") || {}).value || ""); if (a != null && (box.querySelector("#rc-a").value || "").trim()) A = a; if ((box.querySelector("#rc-bb").value || "").trim()) B = b; else B = null; }
       ["#rc-a", "#rc-bb"].forEach(function (q) { var el = box.querySelector(q); if (el) el.onchange = function () { rd(); }; });
       var q1 = box.querySelector("[data-a]"); if (q1) q1.onclick = function () { A = Math.floor(now); if (B != null && B <= A) B = null; draw(); };

@@ -46,7 +46,7 @@ function viewRec(i) {
   }
   var r = L[i], k = ytKey(r.u);
   render(topbar("당일 수업 녹화") +
-    (r.u ? `<div style="border-radius:14px;overflow:hidden;background:#000;margin-bottom:10px">${k ? `<iframe id="rec-yt" src="https://www.youtube-nocookie.com/embed/${k}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}" style="display:block;width:100%;aspect-ratio:16/9;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : '<div class="empty" style="color:#fff">영상 주소를 확인해 주세요.</div>'}</div>` : "") +
+    (r.u ? `<div id="rec-wrap" style="border-radius:14px;overflow:hidden;background:#000;margin-bottom:10px">${k ? `<iframe id="rec-yt" src="https://www.youtube-nocookie.com/embed/${k}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}" style="display:block;width:100%;aspect-ratio:16/9;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : '<div class="empty" style="color:#fff">영상 주소를 확인해 주세요.</div>'}</div>` : "") +
     (k ? '<div id="rec-ctl"></div>' : "") +
     `<div class="card"><b style="font-size:17px">${esc(r.t || "수업 녹화")}</b><p style="margin:6px 0 0;color:#172844">${esc(r.d || "")}</p></div>` +
     ((r.f || []).length ? `<div class="grp">📄 수업 자료 PDF</div>` + r.f.map(function (f) { return `<a class="row" href="${esc(f.u)}" target="_blank" rel="noopener" download="${esc(f.n)}.pdf" style="text-decoration:none"><span class="pill" style="background:#172844;color:#fff">PDF</span><span class="t"><b>${esc(f.n)}</b><small>눌러서 보기 · 내려받기</small></span>⬇</a>`; }).join("") : "") +
