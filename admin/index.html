@@ -734,6 +734,7 @@ function viewRecs() {
       return `<div class="rec"><input class="in" type="date" data-k="d" value="${esc(r.d || today())}"><input class="in" data-k="t" placeholder="제목 (예: 11월 3일 LC 수업)" value="${esc(r.t || "")}">
         <input class="in" data-k="u" placeholder="유튜브 주소 붙여넣기" value="${esc(r.u || "")}"><select class="in" data-k="s"><option value="">모든 Season</option>${[1, 2, 3].map(function (n) { return `<option value="${n}" ${+r.s === n ? "selected" : ""}>Season ${n}</option>`; }).join("")}</select>
         <button class="btn red sm" data-rm>✕</button>
+        <textarea class="in" data-k="c" rows="3" style="grid-column:1/-1;font-size:14px" placeholder="구간 (선택) — 한 줄에 하나씩&#10;0:00 단어 테스트&#10;12:30 PART 5 문법&#10;1:05:10 PART 7">${esc(r.c || "")}</textarea>
         <div class="rf" data-f="${esc(JSON.stringify(r.f || []))}"></div></div>`;
     }
     // 수업 자료 PDF: 고르면 바로 저장소(study-audio/rec-pdf/)에 올리고, 저장 누르면 영상과 함께 학생에게 보임
@@ -761,7 +762,7 @@ function viewRecs() {
       };
     }
     render(head() + `<div class="card"><p class="sec">당일 수업 녹화 링크</p>
-      <p class="note" style="margin-top:0">유튜브에 <b>일부 공개</b>로 올린 수업 영상 주소를 붙여 넣고(수업 자료는 <b>📎 PDF 첨부</b>로 같이 올리고) 저장하면, 학생 학습실의 빨간 <b>🎥 당일 수업 녹화</b> 버튼에 최신순으로 나와요. Season을 고르면 그 Season 학생에게만 보여요.</p>
+      <p class="note" style="margin-top:0">유튜브에 <b>일부 공개</b>로 올린 수업 영상 주소를 붙여 넣고(수업 자료는 <b>📎 PDF 첨부</b>로 같이 올리고) 저장하면, 학생 학습실의 빨간 <b>🎥 당일 수업 녹화</b> 버튼에 최신순으로 나와요. <b>구간</b>을 적어 두면 학생이 그 구간만 골라 볼 수 있어요(안 적으면 10분 단위로 나눠 보여요). 배속은 학생 화면에서 고를 수 있어요. Season을 고르면 그 Season 학생에게만 보여요.</p>
       <div id="r-list">${list.map(row).join("")}</div>
       <button class="btn ghost" id="r-add" style="width:100%">+ 녹화 영상 추가</button>
       <div id="r-msg"></div><button class="btn" id="r-save" style="width:100%;padding:14px;margin-top:8px">저장</button></div>`);
@@ -777,7 +778,7 @@ function viewRecs() {
         var f = JSON.parse((el.querySelector(".rf") || {}).dataset ? el.querySelector(".rf").dataset.f || "[]" : "[]");
         if (!r.u && !f.length) return;
         if (r.u && !/(youtu\.be\/|youtube\.com\/)/.test(r.u)) { bad++; return; }
-        out.push({ t: r.t || (r.d + " 수업"), d: r.d, u: r.u, s: r.s ? +r.s : null, f: f.length ? f : undefined });
+        out.push({ t: r.t || (r.d + " 수업"), d: r.d, u: r.u, s: r.s ? +r.s : null, f: f.length ? f : undefined, c: r.c || undefined });
       });
       var msg = document.getElementById("r-msg");
       if (bad) { msg.innerHTML = '<div class="msg err">유튜브 주소가 아닌 칸이 ' + bad + "개 있어요.</div>"; return; }
