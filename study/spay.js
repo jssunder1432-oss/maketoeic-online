@@ -33,7 +33,7 @@ function spBox() {
         '<b style="font-size:16px;color:#E8702A;white-space:nowrap">' + pr + '</b></button>';
     }).join("") +
     '<div data-spd style="display:none"></div>' +
-    '<div style="background:#E9F8EE;border:2px solid #03C75A;border-radius:14px;padding:13px 14px;margin-top:12px;text-align:left"><b style="font-size:16px;color:#0B6B33">🎁 네이버 영수증 리뷰 쓰면 5,000원 환급</b><p style="font-size:14px;font-weight:600;color:#1F2937;line-height:1.6;margin:6px 0 0">결제한 <b>당일</b> 네이버에서 <b>\'청주토익 메이크토익\'</b> 검색 → 리뷰에 영수증 리뷰를 남기고, 리뷰 화면을 캡처해 <a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener" style="color:#0B6B33;font-weight:800">카카오톡 고객 문의</a>로 보내 주세요. 확인 후 5,000원을 돌려 드려요.</p></div>' +
+    '<div style="background:#E9F8EE;border:2px solid #03C75A;border-radius:14px;padding:13px 14px;margin-top:12px;text-align:left"><b style="font-size:16px;color:#0B6B33;line-height:1.5">🎁 결제 당일 네이버 영수증리뷰 남겨주시면 5천원 환급 받으실 수 있습니다</b><p style="font-size:14px;font-weight:600;color:#1F2937;line-height:1.6;margin:6px 0 0">네이버에서 <b>\'청주토익 메이크토익\'</b> 검색 → 영수증리뷰 작성 후 캡처해서 <a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener" style="color:#0B6B33;font-weight:800">카카오톡 고객 문의</a>로 보내 주세요.</p></div>' +
     '<p style="font-size:13px;color:#33404F;font-weight:600;margin:10px 2px 0;line-height:1.55">💳 카드결제 또는 🏦 계좌이체 · 결제 후에는 환불되지 않아요 (결제 오류 · 중복 결제는 돌려 드려요)</p></div>';
 }
 function viewSpay() {
