@@ -41,7 +41,7 @@
       '<a class="bt nv" href="https://maketoeic.kr/study/">학습실 입장</a></div></div>' +
       '<div class="c"><div class="mkonl-hd"><small>학원생이 아니어도</small><strong>비회원 30일 수강권</strong></div><div class="bd">' +
       "<p>원하는 Season의 LC 실전 모의고사 10회 · 해설강의로 30일 훈련해요. 결제하면 바로 열려요.</p>" +
-      '<div class="pr"><b data-mkp="lc">30,000원</b> / 30일 · 교재 PDF 무료</div>' +
+      '<div class="pr"><b data-mkp="lc">30,000원</b> / 30일 · 교재 PDF 10,000원 추가</div>' +
       '<a class="bt" href="https://maketoeic.kr/lc/">30일권 보기</a></div></div>' +
       '<div class="c"><div class="mkonl-hd"><small>강의로 듣기</small><strong>A급RC 기본 Season 강의</strong></div><div class="bd">' +
       "<p>해당 월 수업 당일 녹화 영상 + 과제 해설 · 30일 수강 · 교재 별매</p>" +

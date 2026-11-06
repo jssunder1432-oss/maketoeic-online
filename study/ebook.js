@@ -143,6 +143,7 @@ function ebStyle() { if (!document.getElementById("eb-css")) { var s = document.
 // 목차 보기: #/eb  (지금 학습실 LC/RC 파트만)
 function ebFreePdf() {
   // 비회원 30일 수강권: 그 Season 교재·해설지 PDF 무료 제공 (바로 내려받기)
+  return "";   // 2026-11-06: 비회원 교재 PDF는 10,000원 추가 비용 — 무료 내려받기 없앰
   if (typeof payPart !== "function" || !payPart()) return "";
   var n = curSer(), F = EB_PDF[n] || []; if (!F.length) return "";
   return `<div class="card" style="border:2px solid #1E8E5A;background:#F1FBF5"><b style="font-size:17px">📘 교재 PDF 무료 제공 <small style="font-weight:700;color:#33404F">Season ${n}</small></b><p style="margin:4px 0 10px;font-size:14px;color:#33404F">수강권에 포함된 교재예요. 눌러서 내려받으세요.</p>${F.map(function (f) { return `<a class="row" href="${EB_BASE}files/${f[0]}.pdf" download="${esc(f[2])}" target="_blank" rel="noopener"><span class="pill" style="background:${/ans/.test(f[0]) ? "#1E8E5A" : "#172844"};color:#fff">PDF</span><span class="t"><b>⬇ ${esc(f[1])}</b><small>${esc(f[2])} · ${esc(f[3])}</small></span>›</a>`; }).join("")}</div>`;

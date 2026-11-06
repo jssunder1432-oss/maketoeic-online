@@ -47,7 +47,7 @@ var PRICE = 200000, NAME = "온라인 정규반 (1개월)";
 var app = document.getElementById("app"), q = new URLSearchParams(location.search);
 var KIND = ["lc", "rc", "lcrc"].indexOf(q.get("p")) >= 0 ? q.get("p") : (q.get("p") === "class" ? "pass" : "lc"), LC = KIND !== "pass", CFG = {}, SEA = +q.get("s") || 0;
 // 비회원 30일 수강권 (가격이 정해진 상품만 보여 줌 — 가격은 관리자 페이지에서)
-var PRODS = { lc: { name: "LC 30일 수강권", price: 30000, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의", "📘 비회원 교재 PDF 무료 제공"] },
+var PRODS = { lc: { name: "LC 30일 수강권", price: 30000, items: ["고른 Season의 LC 실전 모의고사 10회 (회차 전체 · PART별)", "원본 음성 · 스크립트 · 해석 · 문제별 해설강의", "📘 교재 PDF 10,000원 (추가 비용 · 원하면 따로 신청)"] },
   rc: { name: "RC 30일 수강권", price: 0, items: ["고른 Season의 RC 문제 (Part 5 문법 · 어휘 · Part 7 독해)", "문제별 해설 · 단어 누르면 뜻 · 품사"] },
   lcrc: { name: "LC+RC 30일 수강권", price: 0, items: ["고른 Season의 LC 실전 모의고사 10회 + 해설강의", "고른 Season의 RC 문제 + 해설 · 단어 뜻"] } };
 // MM = 수강생 전용 결제(학습실에서 ?m=1 로 들어옴) — 비회원 결제 화면에는 수강생가를 아예 보여 주지 않는다
@@ -79,7 +79,7 @@ var TERMS = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
 var TERMS_LC = '<div class="card terms"><b>이용 안내 · 환불 규정</b>' +
   '<h3>상품</h3>메이크토익 비회원 학습실 30일 수강권(LC · RC · LC+RC). 결제 승인 즉시 이용 가능하며, 결제일부터 30일간 이용할 수 있습니다. 같은 상품을 이용 기간 안에 다시 결제하면 남은 기간 뒤에 30일이 더해집니다.' +
   '<h3>이용 범위</h3>LC: 결제할 때 고른 Season의 LC 실전 모의고사(회차 전체 풀기 · PART별 풀기 · 스크립트 · 해설강의). RC: 결제할 때 고른 Season의 RC 문제(해설 · 단어 뜻). LC+RC: 두 가지 모두. VOCA · A급 과제는 포함되지 않습니다.' +
-  '<h3>교재</h3>교재 PDF를 무료로 제공합니다(입금 확인 후 발송).' +
+  '<h3>교재</h3>교재 PDF는 수강권에 포함되지 않으며 10,000원 추가 비용으로 따로 신청할 수 있습니다(입금 확인 후 발송).' +
   '<h3>환불</h3>디지털 콘텐츠(이용권 · 교재 PDF) 특성상 <b>입금 후 환불되지 않습니다</b>(전자상거래법 제17조 제2항 제5호). 중복 입금은 확인 후 돌려 드립니다.' +
   '<h3>문의</h3>카카오톡 고객 문의 또는 010-4845-1432</div>';
 function form(msg) {
@@ -102,14 +102,14 @@ function form(msg) {
     '<button class="btn" id="go">' + PRICE.toLocaleString() + '원 결제하기</button>') +
     (BANK ? '<div class="card" style="border:2px solid #E95721;margin-top:12px"><b style="color:var(--ink)">또는 무통장 입금</b>' +
       '<div class="msg" style="background:#FFF4EC;color:#101828;font-weight:800;margin-top:8px">🏦 은행 계좌로 직접 입금해도 돼요.</div>' +
-      (FREEPDF() ? '<div class="msg" style="background:#E8F7EF;color:#0E7A4F;font-weight:800;margin-top:10px">📘 비회원 교재 PDF 무료 제공 — 입금 확인 후 보내 드려요</div>' : '') +
+      (FREEPDF() ? '<div class="msg" style="background:#E8F7EF;color:#0E7A4F;font-weight:800;margin-top:10px">📘 교재 PDF는 10,000원 추가 비용 — 원하면 카카오톡 고객 문의로 신청해 주세요</div>' : '') +
       '<div class="price" style="margin-top:10px"><span>입금할 금액</span><b>' + PRICE.toLocaleString() + '원</b></div>' +
       '<div style="margin:10px 0;border:1.5px solid #101828;border-radius:12px;padding:12px 14px;background:#fff"><div style="font-size:13px;font-weight:800;color:#33404F">입금 계좌</div><div style="font-size:19px;font-weight:900;color:#101828;margin-top:2px">신한은행 612-06-541251</div><div style="font-size:15px;font-weight:800;color:#101828">예금주 김정수</div><button type="button" class="btn ghost" id="bankcp" style="margin-top:8px;padding:8px">📋 계좌번호 복사</button></div>' +
       '<p class="note" style="margin:8px 0"><b>' + PRICE.toLocaleString() + '원</b>을 <b>등록한 이름(실명)</b>으로 입금한 뒤 아래 버튼을 눌러 알려 주세요. 입금이 확인되면 학습실이 열려요.</p>' +
       '<button class="btn" id="bank">📩 입금했어요 — 확인 요청 문자 보내기</button>' +
       '<a class="btn ghost" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">💬 카카오톡 고객 문의</a></div>'
     : '')) +
-    (FREEPDF() ? '<p class="note bk">※ 비회원 교재 PDF 무료 제공 · 실물 교재는 택배 착불 · 문의 요망 (' : '<p class="note bk">※ 온라인 수강 교재비는 별도 · 택배 배송 시 착불 · 문의 요망 (') + '<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">카카오톡 고객 문의</a> · 010-4845-1432)</p><p class="note" style="text-align:center"><b>' + (FREEPDF() ? '교재 PDF 무료 제공 · ' : '') + '입금 후 환불 불가.</b> 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
+    (FREEPDF() ? '<p class="note bk">※ 교재 PDF 10,000원 추가 비용 · 실물 교재는 택배 착불 · 문의 요망 (' : '<p class="note bk">※ 온라인 수강 교재비는 별도 · 택배 배송 시 착불 · 문의 요망 (') + '<a href="https://open.kakao.com/o/su9VbJTi" target="_blank" rel="noopener">카카오톡 고객 문의</a> · 010-4845-1432)</p><p class="note" style="text-align:center"><b>' + (FREEPDF() ? '교재 PDF 10,000원 추가 비용 · ' : '') + '입금 후 환불 불가.</b> 아래 환불 규정을 확인해 주세요.</p>' + (LC ? TERMS_LC : TERMS);
   if (LC && !REG) { bindReg(); bindPick(); return; }
   if (BANK) bindBank();
   {
@@ -161,7 +161,7 @@ function bindBank() {
     if (!nm) return form('<div class="msg err">이름을 적어 주세요.</div>');
     if (!realName(nm)) return form('<div class="msg err">' + NAME_ERR + '</div>');
     if (!/^01\d{8,9}$/.test(ph)) return form('<div class="msg err">휴대폰 번호를 정확히 적어 주세요.</div>');
-    var prod = (LC ? PRODS[KIND].name + (SEA ? " (Season " + SEA + ")" : "") : NAME) + (FREEPDF() ? " (교재 PDF 무료 포함)" : "");
+    var prod = (LC ? PRODS[KIND].name + (SEA ? " (Season " + SEA + ")" : "") : NAME) + "";
     var body = "[메이크토익 계좌이체 입금 확인 요청]\n이름: " + nm + "\n번호: " + ph.replace(/^(\d{3})(\d+)(\d{4})$/, "$1-$2-$3") + "\n상품: " + prod + "\n금액: " + PRICE.toLocaleString() + "원\n신한은행 612-06-541251(김정수)로 입금했어요.";
     location.href = "sms:01048451432" + (/iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?") + "body=" + encodeURIComponent(body);
     var m = document.createElement("div"); m.className = "msg ok"; m.innerHTML = "문자 앱이 열리면 그대로 <b>보내기</b>를 눌러 주세요. 입금이 확인되면 학습실을 열어 드려요.<br>문자 앱이 안 열리면 010-4845-1432로 이름·상품을 보내 주세요.";
