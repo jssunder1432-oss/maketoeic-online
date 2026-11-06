@@ -66,7 +66,7 @@
     var TAP = document.createElement("div"); TAP.className = "rc-tap"; W.appendChild(TAP);
     var hideT = null, lastTap = 0, tapT = null, playing = false;
     function isFsNow() { return W.classList.contains("rc-fs") || document.fullscreenElement === W || document.webkitFullscreenElement === W; }
-    function showCtl() { W.classList.remove("rc-hide"); clearTimeout(hideT); if (isFsNow()) hideT = setTimeout(function () { if (!drag && isFsNow()) W.classList.add("rc-hide"); }, 3000); }
+    function showCtl() { W.classList.remove("rc-hide"); clearTimeout(hideT); if (isFsNow()) hideT = setTimeout(function () { if (!drag && isFsNow()) W.classList.add("rc-hide"); }, 5000); }
     function fx(side, txt) { var e = document.createElement("div"); e.className = "rc-fx"; e.style.left = side < 0 ? "22%" : "78%"; e.textContent = txt; W.appendChild(e); setTimeout(function () { e.remove(); }, 650); }
     TAP.addEventListener("click", function (e) {
       var r = W.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, t = Date.now();
