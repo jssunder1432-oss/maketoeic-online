@@ -14,20 +14,24 @@ var SP_DEF = [
 ];
 function spList() { var L = (S.videos || {}).spay; return (L && L.length ? L : SP_DEF).filter(function (x) { return x && x.t && !x.hide; }); }
 function spWon(n) { return n > 0 ? Number(n).toLocaleString() + "원" : "금액 문의"; }
+function spRow() {
+  return '<button class="row" data-go="#/spay" data-sp="1" style="padding:22px 20px;background:linear-gradient(125deg,#F28C28,#FFB25B);color:#fff;border:0"><span class="pill" style="background:#fff;color:#E8702A;font-size:15px;padding:6px 14px">결제</span><span class="t"><b style="color:#fff;font-size:21px">💳 수업 결제</b><small style="color:#fff">수업 연장 · 온라인 연장 · 교재비 · 주말특강</small></span><span style="font-size:22px;color:#fff">›</span></button>';
+}
 function spBox() {
   var L = spList();
-  return '<div class="card" data-sp="1" style="border:2px solid #F28C28;background:#FFF8F1">' +
-    '<button data-spt="1" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%"><span style="flex:1"><b style="font-size:18px;color:#172844">💳 수업 결제</b>' +
-    '<small style="display:block;color:#33404F;font-weight:700;margin-top:2px">수업 연장 · 온라인 연장 · 교재비 · 주말특강</small></span><span data-spar style="font-size:16px;font-weight:900;color:#172844">▾</span></button>' +
-    '<div data-spl style="display:none;margin-top:10px">' +
+  return '<div class="card" data-spbox="1">' +
+    '<b style="font-size:17px;color:#172844">결제할 상품을 고르세요</b>' +
     L.map(function (x, i) {
       return '<button data-spk="' + i + '" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:10px;align-items:center;width:100%;background:#fff;border:1.5px solid #E7EAF0;border-radius:14px;padding:12px 13px;margin-top:8px">' +
         '<span style="flex:1;min-width:0"><b style="font-size:16px;color:#172844">' + esc(x.t) + '</b>' + (x.b ? '<small style="display:block;color:#33404F;font-weight:600;margin-top:2px;line-height:1.45">' + esc(x.b) + '</small>' : '') + '</span>' +
         '<b style="font-size:16px;color:#E8702A;white-space:nowrap">' + spWon(+x.p) + '</b></button>';
     }).join("") +
     '<div data-spd style="display:none"></div>' +
-    '<p style="font-size:13px;color:#33404F;font-weight:600;margin:10px 2px 0;line-height:1.55">지금은 계좌이체로만 결제돼요 · 온라인 카드결제 곧 가능<br>결제 후에는 환불되지 않아요 (결제 오류 · 중복 입금은 돌려 드려요)</p>' +
-    '</div></div>';
+    '<p style="font-size:13px;color:#33404F;font-weight:600;margin:10px 2px 0;line-height:1.55">지금은 계좌이체로만 결제돼요 · 온라인 카드결제 곧 가능<br>결제 후에는 환불되지 않아요 (결제 오류 · 중복 입금은 돌려 드려요)</p></div>';
+}
+function viewSpay() {
+  render(topbar("💳 수업 결제") + spBox());
+  bindCommon(); spBind(); window.scrollTo(0, 0);
 }
 function spAmt(x, sum) { return (+x.p || 0) + (sum && +x.bk > 0 ? +x.bk : 0); }
 function spDetail(x, sum) {
@@ -45,12 +49,8 @@ function spDetail(x, sum) {
     '<p data-spm style="font-size:13.5px;color:#33404F;font-weight:600;margin:8px 0 0"></p></div>';
 }
 function spBind() {
-  var box = app.querySelector("[data-sp]"); if (!box) return;
-  var L = spList(), cur = null, sum = true, list = box.querySelector("[data-spl]"), det = box.querySelector("[data-spd]");
-  box.querySelector("[data-spt]").onclick = function () {
-    var on = list.style.display === "none"; list.style.display = on ? "block" : "none"; box.querySelector("[data-spar]").textContent = on ? "▴" : "▾";
-    if (on) setTimeout(function () { box.scrollIntoView({ behavior: "smooth", block: "start" }); }, 30);
-  };
+  var box = app.querySelector("[data-spbox]"); if (!box) return;
+  var L = spList(), cur = null, sum = true, det = box.querySelector("[data-spd]");
   box.querySelectorAll("[data-spk]").forEach(function (b) {
     b.onclick = function () {
       cur = L[+b.dataset.spk];
@@ -79,13 +79,14 @@ function spInject(html) {
   if (typeof payPart === "function" && payPart()) return;   // 비회원 30일권 학생에겐 안 보임
   if (!/시즌을 선택하세요|어느 학습실로 들어갈까요/.test(html)) return;
   var ft = app.querySelector(".foot");
-  if (ft) ft.insertAdjacentHTML("beforebegin", spBox()); else app.insertAdjacentHTML("beforeend", spBox());
-  spBind();
+  if (ft) ft.insertAdjacentHTML("beforebegin", spRow()); else app.insertAdjacentHTML("beforeend", spRow());
+  var b = app.querySelector("[data-sp]"); if (b) b.onclick = function () { go("#/spay"); };
 }
 function viewLectures(id) {
 */});
 window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["function viewLectures(id) {\n", FN + "\n"],
+['  if (h[0] === "dg") return viewDG();', '  if (h[0] === "spay") return viewSpay();\n  if (h[0] === "dg") return viewDG();'],
 ["attInject(html); ntInject(html); }", "attInject(html); ntInject(html); spInject(html); }"]
 ]);
 })();
