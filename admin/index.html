@@ -266,7 +266,7 @@ function editForm(s, renew, tpl) {
     <label>이름</label><input class="in" id="f-name" value="${esc(s.name)}">
     <label>휴대폰 번호</label><input class="in" id="f-phone" inputmode="numeric" value="${esc(s.phone)}" placeholder="01012345678">
     <label>구분</label><select class="in" id="f-plan"><option value="">수강생 (학습실 전체: LC·RC·A급·VOCA)</option><option value="lc" ${s.plan === "lc" ? "selected" : ""}>비회원 LC 30일권 (이번 달 LC 모의고사)</option><option value="rc" ${s.plan === "rc" ? "selected" : ""}>비회원 RC 30일권 (이번 달 Season RC 문제)</option><option value="lcrc" ${s.plan === "lcrc" ? "selected" : ""}>비회원 LC+RC 30일권 (둘 다)</option></select>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px"><input type="checkbox" id="f-onl" ${ONL(s) ? "checked" : ""} style="width:20px;height:20px">온라인 수강생 (온라인 정규반 · 따로 모아 보기)</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px"><input type="checkbox" id="f-onl" ${ONL(s) ? "checked" : ""} style="width:20px;height:20px">온라인 수강생 (온라인 only 정규반 · 따로 모아 보기)</label>
     <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px"><input type="checkbox" id="f-mem" ${(isNew && !tpl) || s.member ? "checked" : ""} style="width:20px;height:20px">수업 들은 학생 (결제할 때 수강생 가격 적용)</label>
     <div class="grid"><div><label>시작일</label><input class="in" type="date" id="f-start" value="${esc(s.start_date)}"></div>
       <div><label>종료일</label><input class="in" type="date" id="f-end" value="${esc(s.end_date)}"></div></div>
@@ -908,7 +908,7 @@ function viewLog() {
     var L = d.leads || [], O = d.orders || [];
     var paid = L.filter(function (x) { return x.paid_at; }).length;
     var sum = O.filter(function (o) { return o.status === "done"; }).reduce(function (a, o) { return a + (o.amount || 0); }, 0);
-    var KN = { lc: "LC", rc: "RC", lcrc: "LC+RC", pass: "온라인 정규반" }, ST = { done: '<span class="tag ok">결제 완료</span>', ready: '<span class="tag soon">결제 안 함</span>', fail: '<span class="tag end">실패</span>' };
+    var KN = { lc: "LC", rc: "RC", lcrc: "LC+RC", pass: "온라인 only 정규반" }, ST = { done: '<span class="tag ok">결제 완료</span>', ready: '<span class="tag soon">결제 안 함</span>', fail: '<span class="tag end">실패</span>' };
     var body = logTab === "leads"
       ? (L.length ? L.map(function (x) {
           return `<div class="st"><div class="top"><div><span class="nm">${esc(x.name)}</span> ${x.member ? '<span class="tag full">수업 들은 학생</span>' : ''}<div class="info">${esc(phoneFmt(x.phone))} · ${esc(KN[x.kind] || "-")}${x.season ? " · Season " + x.season : ""}</div><div class="info">등록 ${dt(x.created_at)}${x.visits > 1 ? " · 최근 " + dt(x.updated_at) + " (" + x.visits + "번째)" : ""}</div></div>${x.paid_at ? '<span class="tag ok">결제 ' + x.pay_count + '회</span>' : '<span class="tag soon">미결제</span>'}</div>
@@ -924,7 +924,7 @@ function viewLog() {
     app.querySelectorAll("[data-lt]").forEach(function (b) { b.onclick = function () { logTab = b.dataset.lt; viewLog(); }; });
     app.querySelectorAll("[data-onl]").forEach(function (b) { b.onclick = function () {
       var a = b.dataset.onl.split("|"), st = today(), p = st.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]); d.setMonth(d.getMonth() + 1); d.setDate(d.getDate() - 1);
-      function go() { editForm(null, false, { name: a[0], phone: String(a[1] || "").replace(/\D/g, ""), level: "기초", start_date: st, end_date: ymd(d), memo: ONL_MK + " 온라인 정규반 결제", plan: null, member: false }); }
+      function go() { editForm(null, false, { name: a[0], phone: String(a[1] || "").replace(/\D/g, ""), level: "기초", start_date: st, end_date: ymd(d), memo: ONL_MK + " 온라인 only 정규반 결제", plan: null, member: false }); }
       students.length ? go() : rpc("admin_list_students").then(function (x) { students = x || []; go(); }).catch(go);
     }; });
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
@@ -942,7 +942,7 @@ function viewPrice() {
       ${rows.map(function (r) { return `<div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">${r[1]}</b> <span style="font-size:13px;font-weight:600">· ${r[2]}</span>
         <div class="grid" style="margin-top:6px"><div><label style="margin-top:0">비회원 가격</label><div style="display:flex;gap:6px;align-items:center"><input class="in" inputmode="numeric" data-pk="${r[0]}" value="${esc(c[r[0]] || "")}" placeholder="판매 안 함"><b>원</b></div></div>
         <div><label style="margin-top:0">수강생 가격</label><div style="display:flex;gap:6px;align-items:center"><input class="in" inputmode="numeric" data-pk="${r[0]}_m" value="${esc(c[r[0] + "_m"] || "")}" placeholder="비회원과 같음"><b>원</b></div></div></div></div>`; }).join("")}
-      <div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">온라인 정규반 (1개월)</b> <span style="font-size:13px;font-weight:600">· 결제되면 수강생으로 바꿔 학습실 전체 열기</span>
+      <div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px"><b style="color:var(--navy)">온라인 only 정규반 (1개월)</b> <span style="font-size:13px;font-weight:600">· 결제되면 수강생으로 바꿔 학습실 전체 열기</span>
         <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input class="in" inputmode="numeric" data-pk="pass_price" value="${esc(c.pass_price || "")}"><b>원</b></div></div>
       <div id="pr-msg"></div><button class="btn" id="pr-save" style="width:100%;padding:14px;margin-top:12px">가격 저장</button></div>
       <div class="card" id="sp-card"><p class="sec">💳 학습실 수업 결제 상품</p><p class="note" style="margin-top:0">수강생 학습실 앱 첫 화면 맨 아래 <b>💳 수업 결제</b>에 나와요 (비회원 30일권 학생에겐 안 보임). 가격을 비우면 '금액 문의'로 나오고, 교재비를 넣은 상품은 학생이 <b>합산 결제 / 별도 결제</b>를 골라요. 학습실 앱 이용 연장은 항목별 가격을 넣으면 학생이 골라서 결제해요. 결제는 💳 카드결제(이노페이) + 계좌이체 — 카드결제 기록은 '등록 · 결제 기록'에서 봐요.</p><div id="sp-box">불러오는 중…</div></div>`);
@@ -964,7 +964,7 @@ function viewPrice() {
 }
 
 /* ---------- 학습실 수업 결제 상품 (2026-11-06): videos.spay — 학생 앱 첫 화면 맨 아래 💳 수업 결제 ---------- */
-var SP_DEF = [{ id: "ext", t: "다음 달 수업 연장 (1개월)", b: "다음 달 정규 수업 연장 · 학습실 전체 이용 포함", p: 240000, bk: 28000 }, { id: "on", t: "온라인 정규반 연장 (1개월)", b: "온라인 정규반 다음 달 연장 · 학습실 전체 이용 포함", p: 200000, bk: 28000 }, { id: "book", t: "교재비", b: "교재만 따로 결제 · 택배 배송 시 착불", p: 28000 }, { id: "wk", t: "주말특강", b: "주말 특강 수업 등록", p: 0 },
+var SP_DEF = [{ id: "ext", t: "다음 달 수업 연장 (1개월)", b: "다음 달 정규 수업 연장 · 학습실 전체 이용 포함", p: 240000, bk: 28000 }, { id: "on", t: "온라인 only 정규반 연장 (1개월)", b: "온라인 only 정규반 다음 달 연장 · 학습실 전체 이용 포함", p: 200000, bk: 28000 }, { id: "rec", t: "온라인 only 전달 수업 녹화 연장", b: "지난달 수업 녹화 영상 다시보기 기간 연장", p: 100000 }, { id: "book", t: "교재비", b: "교재만 따로 결제 · 택배 배송 시 착불", p: 28000 }, { id: "wk", t: "주말특강", b: "주말 특강 수업 등록", p: 0 },
   { id: "app", t: "학습실 앱 이용 연장 (1개월)", b: "쓰고 싶은 것만 골라서 결제 (수업 다시보기 제외)", p: 0, parts: [{ id: "lcmock", t: "LC 실전 모의고사 (문제 · 해설강의)", p: 0 }, { id: "lcp2", t: "LC 교재 강의 · PART 2 유형별", p: 0 }, { id: "rcbook", t: "RC 교재 문제 · 해설", p: 0 }, { id: "agrade", t: "A급 과제 (문제 · 해설강의 · 오답노트)", p: 0 }, { id: "voca", t: "VOCA 단어 암기장", p: 0 }] }];
 function spAdmin() {
   var box = document.getElementById("sp-box"); if (!box) return;

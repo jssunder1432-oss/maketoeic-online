@@ -8,7 +8,8 @@ function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.last
 var FN = T(function () {/*// 수업 결제 — study/spay.js
 var SP_DEF = [
   { id: "ext", t: "다음 달 수업 연장 (1개월)", b: "다음 달 정규 수업 연장 · 학습실 전체 이용 포함", p: 240000, bk: 28000 },
-  { id: "on", t: "온라인 정규반 연장 (1개월)", b: "온라인 정규반 다음 달 연장 · 학습실 전체 이용 포함", p: 200000, bk: 28000 },
+  { id: "on", t: "온라인 only 정규반 연장 (1개월)", b: "온라인 only 정규반 다음 달 연장 · 학습실 전체 이용 포함", p: 200000, bk: 28000 },
+  { id: "rec", t: "온라인 only 전달 수업 녹화 연장", b: "지난달 수업 녹화 영상 다시보기 기간 연장", p: 100000 },
   { id: "book", t: "교재비", b: "교재만 따로 결제 · 택배 배송 시 착불", p: 28000 },
   { id: "wk", t: "주말특강", b: "주말 특강 수업 등록", p: 0 },
   { id: "app", t: "학습실 앱 이용 연장 (1개월)", b: "쓰고 싶은 것만 골라서 결제 (수업 다시보기 제외)", p: 0, parts: [
@@ -20,7 +21,7 @@ function spWon(n) { return n > 0 ? Number(n).toLocaleString() + "원" : "금액 
 function spHasParts(x) { return x && x.parts && x.parts.length; }
 function spPartsOk(x) { return (x.parts || []).filter(function (q) { return +q.p > 0; }); }
 function spRow() {
-  return '<button class="row" data-go="#/spay" data-sp="1" style="padding:22px 20px;background:linear-gradient(125deg,#F28C28,#FFB25B);color:#fff;border:0"><span class="pill" style="background:#fff;color:#E8702A;font-size:15px;padding:6px 14px">결제</span><span class="t"><b style="color:#fff;font-size:21px">💳 수업 결제</b><small style="color:#fff">수업 연장 · 온라인 연장 · 교재비 · 학습실 앱 연장</small></span><span style="font-size:22px;color:#fff">›</span></button>';
+  return '<button class="row" data-go="#/spay" data-sp="1" style="padding:22px 20px;background:linear-gradient(125deg,#F28C28,#FFB25B);color:#fff;border:0"><span class="pill" style="background:#fff;color:#E8702A;font-size:15px;padding:6px 14px">결제</span><span class="t"><b style="color:#fff;font-size:21px">💳 수업 결제</b><small style="color:#fff">수업 연장 · 온라인 only · 녹화 연장 · 교재비 · 앱 연장</small></span><span style="font-size:22px;color:#fff">›</span></button>';
 }
 function spBox() {
   var L = spList();
