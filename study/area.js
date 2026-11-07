@@ -48,12 +48,15 @@ function viewRec(i) {
   render(topbar("당일 수업 녹화") +
     (r.u ? `<div id="rec-wrap" style="border-radius:14px;overflow:hidden;background:#000;margin-bottom:10px">${k ? `<iframe id="rec-yt" src="https://www.youtube-nocookie.com/embed/${k}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}" style="display:block;width:100%;aspect-ratio:16/9;border:0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>` : '<div class="empty" style="color:#fff">영상 주소를 확인해 주세요.</div>'}</div>` : "") +
     (k ? '<div id="rec-ctl"></div>' : "") +
+    (k && (r.rc != null || r.lc != null) ? '<div style="display:flex;gap:8px;margin:0 0 10px">' + (r.lc != null ? '<button class="btn" data-seek="' + (+r.lc) + '" style="flex:1;background:#1F6FEB">🎧 LC 처음부터<small style="display:block;font-size:12px;opacity:.9">' + recT(r.lc) + '</small></button>' : '') + (r.rc != null ? '<button class="btn" data-seek="' + (+r.rc) + '" style="flex:1;background:#E8702A">📖 RC 처음부터<small style="display:block;font-size:12px;opacity:.9">' + recT(r.rc) + '</small></button>' : '') + '</div>' : "") +
     `<div class="card"><b style="font-size:17px">${esc(r.t || "수업 녹화")}</b><p style="margin:6px 0 0;color:#172844">${esc(r.d || "")}</p></div>` +
     ((r.f || []).length ? `<div class="grp">📄 수업 자료 PDF</div>` + r.f.map(function (f) { return `<a class="row" href="${esc(f.u)}" target="_blank" rel="noopener" download="${esc(f.n)}.pdf" style="text-decoration:none"><span class="pill" style="background:#172844;color:#fff">PDF</span><span class="t"><b>${esc(f.n)}</b><small>눌러서 보기 · 내려받기</small></span>⬇</a>`; }).join("") : "") +
     (L.length > 1 ? `<div class="grp">다른 수업 녹화</div>` + L.map(function (x, n) { return n === +i ? "" : `<button class="row" data-go="#/rec/${n}"><span class="pill" style="background:#E0313A;color:#fff">▶</span><span class="t"><b>${esc(x.t || "수업 녹화")}</b><small>${esc(x.d || "")}</small></span>›</button>`; }).join("") : ""));
   bindCommon();
   if (k && window.mkRecCtl) window.mkRecCtl(document.getElementById("rec-ctl"), document.getElementById("rec-yt"), r.c, k);
+  app.querySelectorAll("[data-seek]").forEach(function (b) { b.onclick = function () { if (window.mkRecSeek) window.mkRecSeek(+b.dataset.seek); var w = document.getElementById("rec-wrap"); if (w) w.scrollIntoView({ behavior: "smooth", block: "start" }); }; });
 }
+function recT(n) { n = Math.max(0, Math.round(+n || 0)); var h = Math.floor(n / 3600), m = Math.floor(n % 3600 / 60), x = n % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0") + "부터"; }
 function roomRow(go2, pill, title, sub, bg) {
   return `<button class="row" data-go="${go2}" style="${bg ? "background:" + bg + ";color:#fff;border:0" : ""}"><span class="pill ${bg ? "" : "o"}" style="${bg ? "background:#fff;color:#172844" : ""}">${pill}</span><span class="t"><b style="${bg ? "color:#fff" : ""}">${title}</b><small style="${bg ? "color:#fff" : ""}">${sub}</small></span>›</button>`;
 }

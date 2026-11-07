@@ -724,6 +724,61 @@ function viewHw(day, quiet) {
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message || e) + "</div>"); bindHead(); });
 }
 
+/* ---------- 수업 녹화 LC/RC 구간 자동 찾기 (2026-11-07): 유튜브 자동 자막(스크립트) 붙여넣기 → RC 시작 시간 ---------- */
+function secTxt(n) { n = Math.max(0, Math.round(+n || 0)); var h = Math.floor(n / 3600), m = Math.floor(n % 3600 / 60), x = n % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0"); }
+function txtSec(t) { t = String(t || "").trim(); if (!t) return null; var a = t.split(/[:：]/).map(function (x) { return +x || 0; }); return a.length === 3 ? a[0] * 3600 + a[1] * 60 + a[2] : a.length === 2 ? a[0] * 60 + a[1] : +t * 60; }
+function capParse(txt) {
+  var L = String(txt || "").split(/\r?\n/), C = [], re = /^\s*(\d{1,2}:\d{2}(?::\d{2})?)\s*(.*)$/;
+  for (var i = 0; i < L.length; i++) {
+    var m = L[i].match(re); if (!m) { if (C.length && L[i].trim() && !/^\d+\s*(시간|분|초)/.test(L[i].trim())) C[C.length - 1][1] += " " + L[i].trim(); continue; }
+    C.push([txtSec(m[1]), m[2] || ""]);
+  }
+  return C.filter(function (c) { return c[1].trim(); });
+}
+var CAP_LC = /파트\s*[1-4]\b|파트\s*(원|투|쓰리|포|일|이|삼|사)\b|part\s*[1-4]|\bLC\b|엘씨|리스닝|듣기|음원|들어\s*보|들려|받아\s*쓰|쉐도잉|대화문|담화/i;
+var CAP_RC = /파트\s*[5-7]|파트\s*(파이브|식스|세븐|오|육|칠)\b|part\s*[5-7]|\bRC\b|알씨|리딩|문법|독해|어휘|빈칸|지문|백\s*[일이삼]번|10[1-9]번|A급/i;
+var CAP_GO = /(\bRC\b|알씨|리딩|파트\s*(5|파이브|오)|문법|독해)[^.?!]{0,25}(넘어|펴|시작|들어가|가\s*볼|해\s*볼|하겠|할게)/i;
+function capFind(C) {
+  if (!C.length) return null;
+  var n = C.length, lc = C.map(function (c) { return CAP_LC.test(c[1]) ? 1 : 0; }), rc = C.map(function (c) { return CAP_RC.test(c[1]) ? 1 : 0; });
+  var LT = lc.reduce(function (a, b) { return a + b; }, 0), RT = rc.reduce(function (a, b) { return a + b; }, 0);
+  var best = [], lb = 0, rb = 0;
+  for (var i = 0; i < n; i++) { var sc = (lb - rb) + ((RT - rb) - (LT - lb)); best.push([sc, i]); lb += lc[i]; rb += rc[i]; }
+  best.sort(function (a, b) { return b[0] - a[0]; });
+  var cand = [], used = [];
+  best.forEach(function (b) { if (cand.length >= 3) return; var t = C[b[1]][0]; if (used.some(function (u) { return Math.abs(u - t) < 300; })) return; used.push(t); cand.push(b[1]); });
+  cand = cand.map(function (i) {
+    var t = C[i][0], j = i;   // 근처(앞뒤 4분) 'RC로 넘어가요' 같은 말이 있으면 거기로
+    for (var k = 0; k < n; k++) if (Math.abs(C[k][0] - t) <= 240 && CAP_GO.test(C[k][1])) { j = k; break; }
+    return j;
+  });
+  var firstLc = lc.indexOf(1), noLc = LT < 3;
+  return { lc: noLc ? null : C[Math.max(0, firstLc)][0], rc: noLc ? (rc.indexOf(1) >= 0 ? C[rc.indexOf(1)][0] : null) : C[cand[0]][0], noLc: noLc, cand: noLc ? [] : cand, LT: LT, RT: RT };
+}
+function recAuto(el) {
+  var ap = el.querySelector(".ap"); ap.style.display = "block";
+  var u = (el.querySelector("[data-k=u]") || {}).value || "";
+  ap.innerHTML = `<div style="border:2px solid var(--navy);border-radius:12px;padding:12px;margin-top:6px;background:#F7F9FC">
+    <b>🤖 LC / RC 구간 자동 찾기</b>
+    <ol style="margin:6px 0 0;padding-left:20px;font-size:14px;line-height:1.7"><li>유튜브에서 이 영상을 열어요 ${u ? `(<a href="${esc(u)}" target="_blank" rel="noopener">열기</a>)` : ""}</li><li>설명란 <b>…더보기</b> → 맨 아래 <b>스크립트 표시</b></li><li>오른쪽 스크립트 칸을 처음부터 끝까지 드래그해서 복사(Ctrl+C)</li><li>아래 칸에 붙여넣기(Ctrl+V) → <b>찾기</b></li></ol>
+    <textarea class="in" rows="5" placeholder="여기에 스크립트를 붙여 넣으세요" style="margin-top:8px"></textarea>
+    <div style="display:flex;gap:6px;margin-top:6px"><button class="btn sm" data-go1>찾기</button><button class="btn ghost sm" data-x1>닫기</button></div><div class="ar" style="margin-top:8px"></div></div>`;
+  ap.querySelector("[data-x1]").onclick = function () { ap.style.display = "none"; };
+  ap.querySelector("[data-go1]").onclick = function () {
+    var C = capParse(ap.querySelector("textarea").value), out = ap.querySelector(".ar");
+    if (C.length < 10) { out.innerHTML = '<div class="msg err">스크립트를 못 읽었어요. 시간(0:12)과 문장이 같이 복사됐는지 확인해 주세요.</div>'; return; }
+    var R = capFind(C);
+    function ctx(t) { return C.filter(function (c) { return c[0] >= t - 20 && c[0] <= t + 40; }).slice(0, 4).map(function (c) { return '<div style="font-size:13px"><b>' + secTxt(c[0]) + "</b> " + esc(c[1].slice(0, 70)) + "</div>"; }).join(""); }
+    function setv(lc, rc) { el.querySelector("[data-k=lc]").value = lc != null ? secTxt(lc) : ""; el.querySelector("[data-k=rc]").value = rc != null ? secTxt(rc) : ""; }
+    setv(R.lc, R.rc);
+    out.innerHTML = (R.noLc ? '<div class="msg ok">이 영상은 LC 구간이 거의 없어요 (RC 위주 수업). RC 시작 ' + (R.rc != null ? secTxt(R.rc) : "없음") + "</div>" :
+      '<div class="msg ok">찾았어요 → LC 시작 ' + secTxt(R.lc) + " · <b>RC 시작 " + secTxt(R.rc) + "</b> (위 칸에 넣었어요 · 맞으면 아래 <b>저장</b>)</div>" +
+      R.cand.map(function (i, k) { var t = C[i][0]; return '<div style="border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center"><b>' + (k ? "다른 후보 " + k : "1순위") + " · RC 시작 " + secTxt(t) + '</b><button class="btn ghost sm" data-pick="' + t + '">이 시간으로</button></div>' + ctx(t) + "</div>"; }).join("")) +
+      '<p class="note" style="margin:6px 0 0">찾은 근거: LC 관련 말 ' + R.LT + "번 · RC 관련 말 " + R.RT + "번</p>";
+    out.querySelectorAll("[data-pick]").forEach(function (b) { b.onclick = function () { el.querySelector("[data-k=rc]").value = secTxt(+b.dataset.pick); b.textContent = "✔ 넣었어요"; }; });
+  };
+}
+
 /* ---------- 당일 수업 녹화 (유튜브 링크) ---------- */
 function viewRecs() {
   render(head() + '<div class="card">불러오는 중…</div>'); bindHead();
@@ -734,7 +789,9 @@ function viewRecs() {
       return `<div class="rec"><input class="in" type="date" data-k="d" value="${esc(r.d || today())}"><input class="in" data-k="t" placeholder="제목 (예: 11월 3일 LC 수업)" value="${esc(r.t || "")}">
         <input class="in" data-k="u" placeholder="유튜브 주소 붙여넣기" value="${esc(r.u || "")}"><select class="in" data-k="s"><option value="">모든 Season</option>${[1, 2, 3].map(function (n) { return `<option value="${n}" ${+r.s === n ? "selected" : ""}>Season ${n}</option>`; }).join("")}</select>
         <button class="btn red sm" data-rm>✕</button>
-        <div class="rf" data-f="${esc(JSON.stringify(r.f || []))}"></div></div>`;
+        <div class="rf" data-f="${esc(JSON.stringify(r.f || []))}"></div>
+        <div class="lr" style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><b style="font-size:14px">🎧 LC 시작</b><input class="in" data-k="lc" style="max-width:90px" placeholder="0:00" value="${r.lc != null ? secTxt(r.lc) : ""}"><b style="font-size:14px">📖 RC 시작</b><input class="in" data-k="rc" style="max-width:90px" placeholder="없음" value="${r.rc != null ? secTxt(r.rc) : ""}"><button class="btn ghost sm" data-auto>🤖 자막으로 자동 찾기</button></div>
+        <div class="ap" style="grid-column:1/-1;display:none"></div></div>`;
     }
     // 수업 자료 PDF: 고르면 바로 저장소(study-audio/rec-pdf/)에 올리고, 저장 누르면 영상과 함께 학생에게 보임
     function drawF(rf) {
@@ -761,13 +818,13 @@ function viewRecs() {
       };
     }
     render(head() + `<div class="card"><p class="sec">당일 수업 녹화 링크</p>
-      <p class="note" style="margin-top:0">유튜브에 <b>일부 공개</b>로 올린 수업 영상 주소를 붙여 넣고(수업 자료는 <b>📎 PDF 첨부</b>로 같이 올리고) 저장하면, 학생 학습실의 빨간 <b>🎥 당일 수업 녹화</b> 버튼에 최신순으로 나와요. 학생 화면에서 배속·재생바 끌기·전체화면을 쓸 수 있어요. Season을 고르면 그 Season 학생에게만 보여요.</p>
+      <p class="note" style="margin-top:0"><b>🤖 자막으로 자동 찾기</b>를 누르면 LC가 끝나고 RC가 시작되는 시간을 찾아 줘요 → 학생 화면에 [LC 처음부터] [RC 처음부터] 버튼이 생겨요.<br>유튜브에 <b>일부 공개</b>로 올린 수업 영상 주소를 붙여 넣고(수업 자료는 <b>📎 PDF 첨부</b>로 같이 올리고) 저장하면, 학생 학습실의 빨간 <b>🎥 당일 수업 녹화</b> 버튼에 최신순으로 나와요. 학생 화면에서 배속·재생바 끌기·전체화면을 쓸 수 있어요. Season을 고르면 그 Season 학생에게만 보여요.</p>
       <div id="r-list">${list.map(row).join("")}</div>
       <button class="btn ghost" id="r-add" style="width:100%">+ 녹화 영상 추가</button>
       <div id="r-msg"></div><button class="btn" id="r-save" style="width:100%;padding:14px;margin-top:8px">저장</button></div>`);
     bindHead();
     var box = document.getElementById("r-list");
-    function bindRm() { box.querySelectorAll("[data-rm]").forEach(function (b) { b.onclick = function () { b.closest(".rec").remove(); }; }); box.querySelectorAll(".rf:not([data-ok])").forEach(function (rf) { rf.dataset.ok = 1; drawF(rf); }); }
+    function bindRm() { box.querySelectorAll("[data-rm]").forEach(function (b) { b.onclick = function () { b.closest(".rec").remove(); }; }); box.querySelectorAll("[data-auto]").forEach(function (b) { b.onclick = function () { recAuto(b.closest(".rec")); }; }); box.querySelectorAll(".rf:not([data-ok])").forEach(function (rf) { rf.dataset.ok = 1; drawF(rf); }); }
     bindRm();
     document.getElementById("r-add").onclick = function () { box.insertAdjacentHTML("afterbegin", row({ d: today(), t: "", u: "", s: "" })); bindRm(); box.querySelector("[data-k=t]").focus(); };
     document.getElementById("r-save").onclick = function () {
@@ -777,7 +834,8 @@ function viewRecs() {
         var f = JSON.parse((el.querySelector(".rf") || {}).dataset ? el.querySelector(".rf").dataset.f || "[]" : "[]");
         if (!r.u && !f.length) return;
         if (r.u && !/(youtu\.be\/|youtube\.com\/)/.test(r.u)) { bad++; return; }
-        out.push({ t: r.t || (r.d + " 수업"), d: r.d, u: r.u, s: r.s ? +r.s : null, f: f.length ? f : undefined });
+        var lc = txtSec(r.lc), rc = txtSec(r.rc);
+        out.push({ t: r.t || (r.d + " 수업"), d: r.d, u: r.u, s: r.s ? +r.s : null, f: f.length ? f : undefined, lc: lc != null ? lc : undefined, rc: rc != null ? rc : undefined });
       });
       var msg = document.getElementById("r-msg");
       if (bad) { msg.innerHTML = '<div class="msg err">유튜브 주소가 아닌 칸이 ' + bad + "개 있어요.</div>"; return; }

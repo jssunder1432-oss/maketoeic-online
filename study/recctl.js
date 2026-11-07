@@ -29,5 +29,6 @@
       gate: function () { return st.go; }, rate: function (r) { want = r; cmd("setPlaybackRate", [r]); }, on: function (fn) { fns.push(fn); }
     };
     window.mkPlayer(f.parentNode, P, box);
+    window.mkRecSeek = function (sec) { P.seek(sec); };
   };
 })();
