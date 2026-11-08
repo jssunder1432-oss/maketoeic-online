@@ -20,8 +20,11 @@ button,input,select{font:inherit;color:inherit}
 .btn{border:0;border-radius:10px;padding:11px 15px;font-weight:800;background:var(--orange);color:#fff;cursor:pointer}
 .btn.navy{background:var(--navy)}.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--navy)}.btn.red{background:#fff;border:1.5px solid var(--bad);color:var(--bad)}
 .btn.sm{padding:7px 11px;font-size:14px}
-.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
-.tabs button.t{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;color:var(--navy)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.tabs button.t{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:0 6px;height:52px;font-weight:800;font-size:14px;letter-spacing:-.2px;cursor:pointer;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:center}
+.tabs2{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.tabs2 .btn{height:42px;padding:0 4px;font-size:14px;display:flex;align-items:center;justify-content:center;white-space:nowrap;margin:0;width:100%;box-sizing:border-box}
+@media(max-width:380px){.tabs button.t{font-size:12.5px}.tabs2 .btn{font-size:12.5px}}
 .tabs button.t.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .in{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;background:#fff;font-size:16px}
 label{display:block;font-size:14px;font-weight:800;color:var(--navy);margin:10px 0 4px}
@@ -157,8 +160,8 @@ function pwForm() {
 /* ---------- 상단 ---------- */
 function head() {
   return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "att" ? "당일 출석 현황" : view === "notice" ? "수업 공지 게시판" : view === "blog" ? "블로그 이미지" : view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : view === "ot" ? "OT 기초 진단 · 매일 공부 가이드" : "수강생 관리"}</h1></div>
-  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">수강생 · 진도</button><button class="t ${view === "att" ? "on" : ""}" data-v="att">📅 오늘 출석</button><button class="t ${view === "notice" ? "on" : ""}" data-v="notice">📢 수업 공지</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 기초 진단</button><button class="t ${view === "blog" ? "on" : ""}" data-v="blog">📰 블로그 이미지</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">당일 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">등록 · 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">상품 가격</button>
-  <span style="flex:1"></span><button class="btn ghost sm" onclick="location.replace(location.pathname+'?v='+Date.now())">🔄 최신으로</button><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button><a class="btn navy sm" href="/" style="text-decoration:none">🏠 나가기</a></div>`;
+  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">👥 수강생 · 진도</button><button class="t ${view === "att" ? "on" : ""}" data-v="att">📅 오늘 출석</button><button class="t ${view === "notice" ? "on" : ""}" data-v="notice">📢 수업 공지</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 진단</button><button class="t ${view === "blog" ? "on" : ""}" data-v="blog">📰 블로그 이미지</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">🎥 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">🧾 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">💳 상품 가격</button></div>
+  <div class="tabs2"><button class="btn ghost sm" onclick="location.replace(location.pathname+'?v='+Date.now())">🔄 최신으로</button><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button><a class="btn navy sm" href="/" style="text-decoration:none">🏠 나가기</a></div>`;
 }
 function bindHead() {
   app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "att" ? viewAtt(today()) : view === "notice" ? viewNotice() : view === "hw" ? viewHw() : view === "ot" ? viewOt() : view === "blog" ? viewBlog() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
