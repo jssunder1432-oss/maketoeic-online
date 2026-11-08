@@ -2,6 +2,7 @@
    - "PART 2 문제 풀기 · 교재 강의" 폴더(#/lcf/p2) = 문제 풀기 + 교재 강의
    - "실전 모의고사" 폴더(#/lcf/mock) = 회차 전체 풀기 + 해설강의 + 실전 테스트 · 복습
    - LC 실전 테스트 · 약점 · 오답노트 · 저장 · 실력 분석은 실전 모의고사 문제만 기준 (RC는 그대로)
+   - LC 문제 풀기(#/learn) 화면의 실전 모의고사 줄·빈 Season 칸은 뺌(실전 모의고사 폴더와 중복)
    - LC 실력 분석(#/stats) = 실전 모의고사에서 틀린 문제 위주로 PART별 약점 유형 분석(lcpdf.js의 lcxType 유형 분류 사용)
    - RC 첫 화면 '실전 테스트 · 복습' 칸에 설명 문구 */
 (function () {
@@ -45,6 +46,14 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
  [
   "  if (h[0] === \"stats\") return viewStats();",
   "  if (h[0] === \"stats\") return S.area === \"LC\" ? viewLcStats() : viewStats();"
+ ],
+ [
+  "      if (hasMock) out += `",
+  "      if (hasMock && false) out += `"
+ ],
+ [
+  "      out += `<div class=\"sea\"><b>SERIES ${n}</b>Series ${n}</div>`",
+  "      if (!(S.area === \"LC\" && !sg.length)) out += `<div class=\"sea\"><b>SERIES ${n}</b>Series ${n}</div>`"
  ]
 ]);
 })();
