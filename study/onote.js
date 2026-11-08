@@ -71,6 +71,8 @@ function onPickNew(part, wrongTypes) {
     // ① 이 회차에서 틀린 문제의 변형 ② 이 회차의 같은 유형 문제 변형 ③ 다른 회차 같은 유형 변형
     list.forEach(function (x) { if (!x.ok && wrongTypes[x.type]) (vm[x.key] || []).forEach(function (v) { push(x.type, 1, v); }); });
     list.forEach(function (x) { if (x.ok && wrongTypes[x.type]) (vm[x.key] || []).forEach(function (v) { push(x.type, 2, v); }); });
+    // ②½ 수업 교재 · 기출문법 문제(교재1·2 기출문법/어휘, Part 5 문법·어휘) 중 같은 유형 (2026-11-08)
+    if (part === 5) for (var kb in rct) if (!inR[kb] && wrongTypes[rct[kb]] && /^(k\d|rc-p5)/.test(kb)) push(rct[kb], 2.5, kb);
     for (var k in vm) if (!inR[k] && wrongTypes[rct[k]] && k.indexOf("-p" + part + ":") > 0) vm[k].forEach(function (v) { push(rct[k], 3, v); });
     var pick = [], left = ON_N;
     types.forEach(function (t) {
