@@ -13,7 +13,7 @@
         var p = sec.querySelector("p"); if (p && p.nextSibling) sec.insertBefore(a, p.nextSibling); else sec.appendChild(a);
       }
     }
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
+    var tries = 0; (function loop() { go(); if (!document.getElementById("mk-guide-btn") && tries++ < 40) setTimeout(loop, 250); })();
   })();
   if (!/\/shop\/list\.php$/.test(location.pathname)) return;
   if (!/(^|[?&])ca_id=10(&|$)/.test(location.search)) return;
