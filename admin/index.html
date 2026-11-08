@@ -159,12 +159,12 @@ function pwForm() {
 
 /* ---------- 상단 ---------- */
 function head() {
-  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "att" ? "당일 출석 현황" : view === "notice" ? "수업 공지 게시판" : view === "blog" ? "블로그 이미지" : view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : view === "ot" ? "OT 기초 진단 · 매일 공부 가이드" : "수강생 관리"}</h1></div>
-  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">👥 수강생 · 진도</button><button class="t ${view === "att" ? "on" : ""}" data-v="att">📅 오늘 출석</button><button class="t ${view === "notice" ? "on" : ""}" data-v="notice">📢 수업 공지</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 진단</button><button class="t ${view === "blog" ? "on" : ""}" data-v="blog">📰 블로그 이미지</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">🎥 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">🧾 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">💳 상품 가격</button></div>
+  return `<div class="card hero"><span class="kicker">MAKE TOEIC · 학습실 관리자</span><h1>${view === "use" ? "이용 통계" : view === "att" ? "당일 출석 현황" : view === "notice" ? "수업 공지 게시판" : view === "blog" ? "블로그 이미지" : view === "rec" ? "당일 수업 녹화" : view === "price" ? "상품 가격" : view === "log" ? "등록 · 결제 기록" : view === "hw" ? "A급 과제 제출 현황" : view === "ot" ? "OT 기초 진단 · 매일 공부 가이드" : "수강생 관리"}</h1></div>
+  <div class="tabs"><button class="t ${view === "list" ? "on" : ""}" data-v="list">👥 수강생 · 진도</button><button class="t ${view === "att" ? "on" : ""}" data-v="att">📅 오늘 출석</button><button class="t ${view === "notice" ? "on" : ""}" data-v="notice">📢 수업 공지</button><button class="t ${view === "hw" ? "on" : ""}" data-v="hw">📮 과제 제출</button><button class="t ${view === "ot" ? "on" : ""}" data-v="ot">📝 OT 진단</button><button class="t ${view === "blog" ? "on" : ""}" data-v="blog">📰 블로그 이미지</button><button class="t ${view === "rec" ? "on" : ""}" data-v="rec">🎥 수업 녹화</button><button class="t ${view === "log" ? "on" : ""}" data-v="log">🧾 결제 기록</button><button class="t ${view === "price" ? "on" : ""}" data-v="price">💳 상품 가격</button><button class="t ${view === "use" ? "on" : ""}" data-v="use" style="grid-column:1/-1">📊 이용 통계</button></div>
   <div class="tabs2"><button class="btn ghost sm" onclick="location.replace(location.pathname+'?v='+Date.now())">🔄 최신으로</button><button class="btn ghost sm" id="ad-chpw">비밀번호</button><button class="btn ghost sm" id="ad-out">로그아웃</button><a class="btn navy sm" href="/" style="text-decoration:none">🏠 나가기</a></div>`;
 }
 function bindHead() {
-  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "att" ? viewAtt(today()) : view === "notice" ? viewNotice() : view === "hw" ? viewHw() : view === "ot" ? viewOt() : view === "blog" ? viewBlog() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "log" ? viewLog() : draw(); }; });
+  app.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { view = b.dataset.v; view === "att" ? viewAtt(today()) : view === "notice" ? viewNotice() : view === "hw" ? viewHw() : view === "ot" ? viewOt() : view === "blog" ? viewBlog() : view === "rec" ? viewRecs() : view === "price" ? viewPrice() : view === "use" ? viewUse() : view === "log" ? viewLog() : draw(); }; });
   document.getElementById("ad-out").onclick = function () { sb.auth.signOut().then(function () { viewLogin(); }); };
   document.getElementById("ad-chpw").onclick = pwForm;
 }
@@ -725,6 +725,41 @@ function viewHw(day, quiet) {
     hwTick();
     var hs = app.querySelector("[data-hd]"); if (hs && hs.parentNode) { var on = app.querySelector('[data-hd="' + day + '"]'); hs.parentNode.scrollLeft = on ? on.offsetLeft - 40 : 99999; }
   }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message || e) + "</div>"); bindHead(); });
+}
+
+/* ---------- 📊 이용 통계 (2026-11-08): usage_log — 날마다 어떤 강의 · 문제 · 화면을 몇 명이 썼는지 ---------- */
+var USE_Q = { "ot": "OT 오답노트", "lc-p": "LC Part 2 유형별", "lcm": "LC 실전 모의고사", "rc-p": "RC 교재 문제", "a": "A급 과제 RC", "a-r": "A급 과제 RC", "voca": "VOCA 단어", "att": "출석 도장", "dg:start": "매일 과제", "hw": "매일 과제", "hw:test": "매일 과제", "k": "교재 문제", "v": "교재 문제", "tp": "틀린 유형 맞춤 문제" };
+var USE_P = { "rec": "🎥 수업 녹화", "tbl": "교재 강의", "lcv": "LC 해설강의", "eb": "📖 교재 전자책", "dg": "매일 과제", "ot": "OT 오답노트", "full": "실전 테스트", "spay": "💳 수업 결제", "home": "첫 화면", "room": "학습실", "learn": "문제 풀기 목록", "pick": "시즌 고르기", "rank": "랭킹" };
+function useLabel(k, r) {
+  if (k === "q") return USE_Q[r] || ("문제 · " + r);
+  var h = String(r || "").split("/")[0], t = USE_P[h] || ("화면 #/" + h);
+  if (k === "vid") return (h === "rec" ? "🎥 수업 녹화" : h === "tbl" ? "교재 강의" : h === "lcv" ? "LC 해설강의" : t.replace(/^화면 /, "영상 · ")) ;
+  return t;
+}
+function viewUse(days) {
+  days = days || 14;
+  render(head() + '<div class="card">불러오는 중…</div>'); bindHead();
+  rpc("admin_usage", { p_days: days }).then(function (R) {
+    R = R || {}; var rows = R.rows || [], ppl = {}; (R.people || []).forEach(function (x) { ppl[x.d] = x.s; });
+    var byDay = {}, tot = {};
+    rows.forEach(function (x) {
+      var g = x.k === "vid" ? "vid" : x.k === "q" ? "q" : "page", lab = useLabel(x.k, x.r), key = g + "|" + lab;
+      var D = byDay[x.d] = byDay[x.d] || {}; var o = D[key] = D[key] || { g: g, lab: lab, s: 0, n: 0 }; o.s = Math.max(o.s, x.s); o.n += x.n;
+      var T = tot[key] = tot[key] || { g: g, lab: lab, n: 0, d: {} }; T.n += x.n; T.d[x.d] = Math.max(T.d[x.d] || 0, x.s);
+    });
+    var dates = Object.keys(byDay).sort().reverse(), today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+    var GN = { vid: "🎬 영상", q: "✏️ 문제", page: "📱 화면" };
+    function chips(D, g) { var L = Object.keys(D).map(function (k) { return D[k]; }).filter(function (o) { return o.g === g; }).sort(function (a, b) { return b.s - a.s || b.n - a.n; }); return L.length ? L.map(function (o) { return '<span style="display:inline-block;border:1.5px solid var(--line);border-radius:99px;padding:4px 10px;margin:3px 4px 0 0;font-size:13.5px;font-weight:700;background:#fff">' + esc(o.lab) + ' <b style="color:#E95721">' + o.s + "명</b></span>"; }).join("") : '<span style="font-size:13px;color:#33404F">없음</span>'; }
+    var totL = Object.keys(tot).map(function (k) { var T = tot[k]; T.days = Object.keys(T.d).length; T.sum = Object.keys(T.d).reduce(function (a, d) { return a + T.d[d]; }, 0); return T; }).sort(function (a, b) { return b.sum - a.sum; });
+    var stu = (R.byStudent || []).sort(function (a, b) { return b.days - a.days || String(b.last).localeCompare(String(a.last)); });
+    render(head() + `<div class="card"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><b style="font-size:17px">📊 최근 ${days}일 이용 통계</b><span style="flex:1"></span>${[7, 14, 30].map(function (n) { return '<button class="btn ' + (n === days ? "" : "ghost ") + 'sm" data-ud="' + n + '">' + n + "일</button>"; }).join("")}</div>
+      <p class="note" style="margin:6px 0 0">수강생 ${R.total || 0}명 기준 · 영상은 재생을 시작한 학생 수, 문제는 푼 학생 수, 화면은 들어간 학생 수 (하루 한 번만 셈). 영상 · 화면 기록은 2026년 11월 8일부터 쌓여요.</p></div>
+      <div class="card"><p class="sec">기간 전체 · 많이 쓴 순서</p>${totL.length ? `<table style="width:100%;border-collapse:collapse;font-size:14px"><tr style="text-align:left;border-bottom:2px solid var(--line)"><th style="padding:6px 4px">구분</th><th>항목</th><th style="text-align:right">쓴 날</th><th style="text-align:right">하루 평균</th></tr>${totL.map(function (T) { return '<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px 4px;white-space:nowrap">' + GN[T.g] + "</td><td><b>" + esc(T.lab) + '</b></td><td style="text-align:right">' + T.days + '일</td><td style="text-align:right"><b>' + (T.sum / Math.max(1, T.days)).toFixed(1) + "명</b></td></tr>"; }).join("")}</table>` : '<div class="empty">아직 기록이 없어요.</div>'}</div>
+      <div class="card"><p class="sec">날짜별</p>${dates.map(function (d) { var D = byDay[d]; return '<div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px"><div style="display:flex;justify-content:space-between"><b>' + d + (d === today ? " (오늘)" : "") + '</b><b style="color:#E95721">' + (ppl[d] || 0) + "명 이용</b></div>" + ["vid", "q", "page"].map(function (g) { return '<div style="margin-top:6px"><small style="font-weight:800;color:#172844">' + GN[g] + "</small><br>" + chips(D, g) + "</div>"; }).join("") + "</div>"; }).join("") || '<div class="empty">아직 기록이 없어요.</div>'}</div>
+      <div class="card"><p class="sec">학생별 · 이용한 날 수</p>${stu.map(function (x) { return '<div style="display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:7px 2px;font-size:14px"><b style="min-width:64px">' + esc(x.name) + '</b><span style="flex:1;color:#33404F">' + (x.top || []).map(function (t) { var a = String(t).split(":"); return esc(useLabel(a[0], a.slice(1).join(":"))); }).join(" · ") + '</span><b style="white-space:nowrap">' + x.days + '일</b><small style="white-space:nowrap">마지막 ' + esc(String(x.last).slice(5)) + "</small></div>"; }).join("") || '<div class="empty">아직 기록이 없어요.</div>'}</div>`);
+    bindHead();
+    app.querySelectorAll("[data-ud]").forEach(function (b) { b.onclick = function () { viewUse(+b.dataset.ud); }; });
+  }).catch(function (e) { render(head() + '<div class="msg err">' + esc(e.message) + "</div>"); bindHead(); });
 }
 
 /* ---------- 수업 녹화 LC/RC 구간 자동 찾기 (2026-11-07): 유튜브 자동 자막(스크립트) 붙여넣기 → RC 시작 시간 ---------- */

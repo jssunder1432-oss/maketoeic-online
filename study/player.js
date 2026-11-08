@@ -113,7 +113,8 @@
     P.rate(rate);
     function gate() { TAP.style.pointerEvents = (!P.gate || P.gate()) ? "" : "none"; }
     gate();
-    P.on(function () { gate(); if (!drag) paint(P.t()); if (isFs() && !P.playing()) { W.classList.remove("mkp-hide"); clearTimeout(hideT); } });
+    var useOnce = false;
+    P.on(function () { if (!useOnce && P.playing()) { useOnce = true; try { window.mkUseLog && window.mkUseLog("vid"); } catch (e) { } } gate(); if (!drag) paint(P.t()); if (isFs() && !P.playing()) { W.classList.remove("mkp-hide"); clearTimeout(hideT); } });
     paint(0);
     return { draw: draw, setRate: function (r) { rate = r; draw(); } };
   };
