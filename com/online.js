@@ -2,6 +2,19 @@
    - .com 관리자 '추가 스크립트'에서 <script src="https://maketoeic.kr/com/online.js" defer></script> 로 불러옴
    - 가격은 maketoeic.kr 결제 설정(pay_cfg)에서 받아 와 admin 가격과 자동으로 맞춤 */
 (function () {
+  // .com 첫 화면 (2026-11-08): '수강생 학습실 입장' 배너 숨김 + 수업 안내 아래 '학습 방법 자세히 보기' (maketoeic.kr/guide/)
+  (function home() {
+    function go() {
+      if (!document.getElementById("mk-home-css")) { var st = document.createElement("style"); st.id = "mk-home-css"; st.textContent = "a.mk-study-banner{display:none!important}#mk-guide-btn{display:block;margin:16px 0 4px;text-align:center;text-decoration:none;font-weight:800;font-size:16.5px;border-radius:14px;padding:15px 12px;background:#FF581F;color:#fff!important;box-shadow:0 6px 16px rgba(255,88,31,.25)}#mk-guide-btn small{display:block;font-size:13px;font-weight:700;opacity:.92;margin-top:2px}"; document.head.appendChild(st); }
+      var sec = document.getElementById("mk-course-video");
+      if (sec && !document.getElementById("mk-guide-btn")) {
+        var a = document.createElement("a"); a.id = "mk-guide-btn"; a.href = "https://maketoeic.kr/guide/";
+        a.innerHTML = "📱 메이크토익 학습 방법 자세히 보기 →<small>수업 · 학습실 · 매일 과제 · 오답 분석까지</small>";
+        var p = sec.querySelector("p"); if (p && p.nextSibling) sec.insertBefore(a, p.nextSibling); else sec.appendChild(a);
+      }
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
+  })();
   if (!/\/shop\/list\.php$/.test(location.pathname)) return;
   if (!/(^|[?&])ca_id=10(&|$)/.test(location.search)) return;
   function run() {
