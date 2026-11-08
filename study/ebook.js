@@ -18,12 +18,12 @@ var EB = { meta: {}, page: {} };
 function ebBooks(ser) { return EB_BOOKS[ser] || []; }
 function ebMeta(id) {
   if (EB.meta[id]) return Promise.resolve(EB.meta[id]);
-  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
+  return fetch(EB_BASE + id + "/meta.json?v=" + (window.MKST_EB_VER || 1) + "psY").then(function (r) { if (!r.ok) throw new Error("meta"); return r.json(); }).then(function (m) { EB.meta[id] = m; return m; });
 }
 function ebPage(id, n) {
   var k = id + ":" + n;
   if (EB.page[k]) return Promise.resolve(EB.page[k]);
-  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
+  return fetch(EB_BASE + id + "/p/" + n + ".json?v=" + (window.MKST_EB_VER || 1) + "psY").then(function (r) { return r.ok ? r.json() : { w: [], g: [], a: [], t: [] }; }).catch(function () { return { w: [], g: [], a: [], t: [] }; }).then(function (d) { EB.page[k] = d; return d; });
 }
 var EB_CSS = `
 .mkst .eb-tabs{display:flex;gap:6px;margin:0 0 12px}
@@ -504,7 +504,7 @@ document.addEventListener("keydown", function (e) { if (!EBI.on || (e.key !== "B
 window.addEventListener("hashchange", function () { if (EBI.on) { EBI.on = false; var b = document.querySelector(".mkst .eb-inkbar"); if (b) b.remove(); var h = document.querySelector(".mkst"); if (h) h.classList.remove("eb-inking"); } });
 // 한 단어 여러 품사: 이 문장에서 쓰인 용도를 맨 위(우선)로, 다른 쓰임은 아래에
 var EB_ALT = null;
-function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psZ").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
+function ebAlt() { if (EB_ALT) return EB_ALT; EB_ALT = fetch(EB_BASE + "alt.json?v=" + (window.MKST_EB_VER || 1) + "psY").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); return EB_ALT; }
 function ebAltShow(pop, word, g) {
   var k = String(word || "").toLowerCase().replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
   ebAlt().then(function (A) {
@@ -990,7 +990,7 @@ function ebVocPdf(share, btn) {
     }
   }).catch(function () { alert("PDF를 만들지 못했어요. 인터넷 연결을 확인해 주세요."); }).then(function () { btn.disabled = false; btn.textContent = old; });
 }
-// 이 쪽 문제 풀기 → 정답 매기기 → 정답·해설
+// 이 쪽 문제 풀기 → 제출하고 채점하기 → 정답·해설 + 오답 분석 + 유형별 강화 추가문제
 function ebQuiz(id, n, d) {
   var box = app.querySelector("#eb-qbox"), Q = d.q || []; if (!box || !Q.length) return;
   var key = "ebq:" + id + ":" + n, st; try { st = JSON.parse(ls(key) || "{}"); } catch (e) { st = {}; } st.p = st.p || {};
@@ -999,7 +999,7 @@ function ebQuiz(id, n, d) {
   function draw() {
     var ok = 0, done = 0;
     Q.forEach(function (q, i) { var p = st.p[i]; if (p != null) { done++; if (p === q.a) ok++; } });
-    box.innerHTML = `<div class="card eb-qz"><h3>📝 이 쪽 문제 풀기 · ${Q.length}문항</h3><p class="eb-tip" style="margin:0 0 6px">${st.g ? "정답을 맞춰 봤어요. 해설 버튼을 누르면 정답 해설이 나와요." : "문제를 풀고 답을 고른 뒤 맨 아래 <b>정답 매기기</b>를 누르세요."}</p>` +
+    box.innerHTML = `<div class="card eb-qz"><h3>📝 이 쪽 문제 풀기 · ${Q.length}문항</h3><p class="eb-tip" style="margin:0 0 6px">${st.g ? "정답을 맞춰 봤어요. 해설 버튼을 누르면 정답 해설이 나와요." : "문제를 풀고 답을 고른 뒤 맨 아래 <b>제출하고 채점하기</b>를 누르세요. 틀린 문제를 바로 분석해서 유형별 강화 추가문제를 드려요."}</p>` +
       Q.map(function (q, i) {
         var p = st.p[i], g = st.g;
         return `<div class="eb-qr"><div class="hd"><span class="no">${esc(q.n)}</span><span class="ch">${LT.slice(0, q.k || 4).split("").map(function (L, j) {
@@ -1008,11 +1008,12 @@ function ebQuiz(id, n, d) {
           (g ? `<span class="rs ${p === q.a ? "o" : "x"}">${p == null ? "안 풂 · 정답 " + LT[q.a] : p === q.a ? "✔ 정답" : "✘ 정답 " + LT[q.a]}</span>${q.ex || q.tr ? `<button class="exb" data-qx="${i}">해설</button>` : ""}` : "") +
           `</div><div class="ex" id="eb-x${i}" style="display:none">${esc(q.ex || "")}${q.tr ? "\n\n해석  " + esc(q.tr) : ""}</div></div>`;
       }).join("") +
-      (st.g ? `<div class="eb-score">${Q.length}문항 중 ${ok}개 정답</div><div style="display:grid;gap:8px;margin-top:10px"><button class="btn ghost" id="eb-qre">다시 풀기</button></div>`
-        : `<div style="display:grid;gap:8px;margin-top:12px"><button class="btn" id="eb-qgo">정답 매기기 (${done} / ${Q.length} 풂)</button></div>`) + `</div>`;
+      (st.g ? `<div class="eb-score">${Q.length}문항 중 ${ok}개 정답</div>${ebAnal(Q, st)}<div style="display:grid;gap:8px;margin-top:10px"><button class="btn ghost" id="eb-qre">다시 풀기</button></div>`
+        : `<div style="display:grid;gap:8px;margin-top:12px"><button class="btn" id="eb-qgo" style="padding:15px;font-size:17px">✅ 제출하고 채점하기 (${done} / ${Q.length} 풂)</button></div>`) + `</div>`;
     box.querySelectorAll("[data-qi]").forEach(function (b) { b.onclick = function () { if (st.g) return; var i = +b.dataset.qi, j = +b.dataset.qj; st.p[i] = st.p[i] === j ? null : j; save(); draw(); }; });
     box.querySelectorAll("[data-qx]").forEach(function (b) { b.onclick = function () { var x = box.querySelector("#eb-x" + b.dataset.qx); x.style.display = x.style.display === "none" ? "block" : "none"; }; });
-    var go2 = box.querySelector("#eb-qgo"); if (go2) go2.onclick = function () { if (done < Q.length && !confirm("아직 안 푼 문제가 " + (Q.length - done) + "개 있어요. 정답을 매길까요?")) return; st.g = 1; save(); draw(); };
+    var go2 = box.querySelector("#eb-qgo"); if (go2) go2.onclick = function () { if (done < Q.length && !confirm("아직 안 푼 문제가 " + (Q.length - done) + "개 있어요. 그대로 제출할까요? (안 푼 문제는 오답 처리)")) return; st.g = 1; save(); draw(); var an = box.querySelector(".eb-an"); if (an) setTimeout(function () { an.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60); };
+    box.querySelectorAll("[data-ebp]").forEach(function (b) { b.onclick = function () { ebPractice(id, n, +b.dataset.ebp, Q, st); }; });
     var re = box.querySelector("#eb-qre"); if (re) re.onclick = function () { st = { p: {} }; save(); draw(); };
     // 쪽 위 문제 옆 정답 칸 (같은 답과 연결)
     var ov = app.querySelector("#eb-ov"), QP = d.qp || [];
@@ -1046,6 +1047,38 @@ function ebQuiz(id, n, d) {
     }
   }
   draw();
+}
+// 제출 → 오답 분석 → 유형별 강화 추가문제 (2026-11-08, 수업 교재 RC · 전 시즌)
+function ebPartOf(q) { var n = +String(q.n).replace(/\D/g, "") || 0; return n >= 147 ? 7 : n >= 131 ? 6 : n >= 101 ? 5 : 0; }
+function ebWrong(Q, st) {
+  var W = {}; Q.forEach(function (q, i) { var pt = ebPartOf(q); if (!pt || !q.y) return; var p = st.p[i]; if (p === q.a) return; var w = W[pt] = W[pt] || {}; (w[q.y] = w[q.y] || []).push(q.n); }); return W;
+}
+function ebAnal(Q, st) {
+  var rc = Q.filter(function (q) { return ebPartOf(q) && q.y; }); if (!rc.length) return "";
+  var W = ebWrong(Q, st), parts = Object.keys(W).sort(), byT = {};
+  rc.forEach(function (q) { var i = Q.indexOf(q), t = byT[q.y] = byT[q.y] || { n: 0, ok: 0 }; t.n++; if (st.p[i] === q.a) t.ok++; });
+  var rows = Object.keys(byT).sort(function (a, b) { return (byT[a].ok / byT[a].n) - (byT[b].ok / byT[b].n) || byT[b].n - byT[a].n; }).map(function (t) {
+    var x = byT[t], pc = Math.round(x.ok / x.n * 100), bad = x.ok < x.n;
+    return `<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span style="flex:0 0 46%;font-size:14px;font-weight:800;color:${bad ? "#C8202B" : "#1F2937"}">${esc(t.replace(/^PART \d · /, ""))}</span><span style="flex:1;height:10px;border-radius:99px;background:#EEF0F4;overflow:hidden"><span style="display:block;height:100%;width:${pc}%;background:${bad ? "#E95721" : "#1E8E5A"}"></span></span><b style="font-size:13.5px;white-space:nowrap">${x.ok}/${x.n}</b></div>`;
+  }).join("");
+  var wl = parts.map(function (pt) { return Object.keys(W[pt]).map(function (t) { return `<div style="font-size:14px;margin-top:4px"><b style="color:#C8202B">✘ ${esc(t.replace(/^PART \d · /, "PART " + pt + " "))}</b> · ${W[pt][t].map(function (x) { return x + "번"; }).join(", ")}</div>`; }).join(""); }).join("");
+  var btns = parts.map(function (pt) {
+    var w = W[pt], cnt = 0; for (var t in w) cnt += w[t].length;
+    var N = Math.min(50, Math.max(10, cnt * 10));
+    return `<button class="btn navy" data-ebp="${pt}" style="text-align:left;line-height:1.4">🎯 PART ${pt} 유형별 강화 추가문제 ${N}문제<br><small style="font-weight:600;opacity:.9">${Object.keys(w).map(function (t) { return esc(t.replace(/^PART \d · /, "")) + " " + w[t].length; }).join(" · ")}</small></button>`;
+  }).join("");
+  return `<div class="eb-an" style="border:2px solid #172844;border-radius:14px;padding:12px;margin-top:10px;background:#fff"><b style="font-size:16px">📊 오답 분석</b>
+    <div style="margin-top:4px">${rows}</div>
+    ${wl ? `<div style="margin-top:10px;padding-top:8px;border-top:1px solid #E7EAF0">${wl}<p style="font-size:13px;color:#33404F;margin:6px 0 0">문제 옆 <b>해설</b>을 눌러 틀린 이유를 확인하세요.</p></div><div style="display:grid;gap:8px;margin-top:10px">${btns}</div>` : `<p style="margin:10px 0 0;font-size:15px;font-weight:800;color:#1E8E5A">전부 맞혔어요! 👏</p>`}</div>`;
+}
+function ebPractice(id, n, part, Q, st) {
+  var W = ebWrong(Q, st)[part]; if (!W) return;
+  var wt = {}, cnt = 0, list = []; for (var t in W) { wt[t] = W[t].length; cnt += W[t].length; }
+  Q.forEach(function (q, i) { if (ebPartOf(q) === part && q.y) list.push({ key: "eb:" + id + ":" + n + ":" + q.n, ok: st.p[i] === q.a, type: q.y }); });
+  if (typeof onPractice !== "function") { alert("추가문제를 준비 중이에요."); return; }
+  ON_N = Math.min(50, Math.max(10, cnt * 10)); ON_CTX = "eb" + id + "-" + n; ON_SID[part] = "eb" + id + "-" + n + "-" + Object.keys(wt).sort().join(",").replace(/[^가-힣A-Za-z0-9,]/g, "");
+  ON_PL[part] = list;
+  onPractice(part, wt, location.hash);
 }
 function lecturesOf(sec) {
 */});

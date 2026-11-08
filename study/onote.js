@@ -7,7 +7,7 @@ var ON_T5 = { "어휘 · 명사": "vocab-n", "어휘 · 동사": "vocab-v", "어
 var ON_BANK = { 6: [], 7: [] }; for (var _i = 1; _i <= 30; _i++) ON_BANK[6].push("tp6-" + _i); for (_i = 1; _i <= 50; _i++) ON_BANK[7].push("tp7-" + _i);
 function onIds5(slug) { var a = ["tp5-" + slug]; for (var k = 2; k <= 6; k++) a.push("tp5-" + slug + "-" + k); return a; }
 function onUsed(id) { var n = 0, p = id + ":"; for (var k in S.prog) if (k.indexOf(p) === 0) n++; return n; }
-var ON_RCT = null, ON_LAST = {};
+var ON_RCT = null, ON_LAST = {}, ON_N = 50;
 function onTypes() { if (ON_RCT) return Promise.resolve(ON_RCT); return fetch("/study/rctypes.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (j) { ON_RCT = j || {}; return ON_RCT; }); }
 function onGuess(q, set, part) { return window.MKONOTE ? window.MKONOTE.guess(q, set, part) : ""; }
 function onTitle(ser, n) { return "A급 과제 " + n + "회 (Season " + ser + ")"; }
@@ -62,7 +62,7 @@ function onPickNew(part, wrongTypes) {
   return Promise.all([onVmap(), onTypes()]).then(function (r) {
     var vm = r[0] || {}, rct = r[1] || {}, list = ON_PL[part] || [];
     var tot = types.reduce(function (a, t) { return a + wrongTypes[t]; }, 0), want = {};
-    types.forEach(function (t) { want[t] = Math.max(1, Math.round(50 * wrongTypes[t] / tot)); });
+    types.forEach(function (t) { want[t] = Math.max(1, Math.round(ON_N * wrongTypes[t] / tot)); });
     var inR = {}, cand = {}, used = {}, rank = {};
     function sr(v) { var id = v.split(":")[0]; if (rank[id] == null) rank[id] = Math.random(); return rank[id]; }
     function st(v) { var p = S.prog[v]; return !p ? 0 : !p[1] ? 1 : 2; }
@@ -72,7 +72,7 @@ function onPickNew(part, wrongTypes) {
     list.forEach(function (x) { if (!x.ok && wrongTypes[x.type]) (vm[x.key] || []).forEach(function (v) { push(x.type, 1, v); }); });
     list.forEach(function (x) { if (x.ok && wrongTypes[x.type]) (vm[x.key] || []).forEach(function (v) { push(x.type, 2, v); }); });
     for (var k in vm) if (!inR[k] && wrongTypes[rct[k]] && k.indexOf("-p" + part + ":") > 0) vm[k].forEach(function (v) { push(rct[k], 3, v); });
-    var pick = [], left = 50;
+    var pick = [], left = ON_N;
     types.forEach(function (t) {
       var c = cand[t] || []; c.sort(function (a, b) { return a.st - b.st || a.tier - b.tier || (a.tier === 3 ? a.s - b.s : 0) || a.r - b.r; }); cand[t] = c;
     });
@@ -83,8 +83,8 @@ function onPickNew(part, wrongTypes) {
     return Promise.all(ids.map(function (id) { return load("sec:" + id).catch(function () { return null; }); })).then(function (secs) {
       var M = {}; secs.forEach(function (sec) { if (sec) itemsOf(sec).forEach(function (x) { x.sec = sec; if (part === 6 && x.set) x.set = onFill(x.set, x.q.no); M[x.key] = x; }); });
       var out = keys.map(function (k) { return M[k]; }).filter(Boolean);
-      if (out.length >= 50) return out;
-      return onPickBank(part, wrongTypes).then(function (b) { return out.concat((b || []).slice(0, 50 - out.length)); });
+      if (out.length >= ON_N) return out;
+      return onPickBank(part, wrongTypes).then(function (b) { return out.concat((b || []).slice(0, ON_N - out.length)); });
     });
   }).then(function (pick) {
     if (!pick || !pick.length) return null;
@@ -96,7 +96,7 @@ function onPickNew(part, wrongTypes) {
 function onPickBank(part, wrongTypes) {
   var types = Object.keys(wrongTypes); if (!types.length) return Promise.resolve(null);
   var tot = types.reduce(function (a, t) { return a + wrongTypes[t]; }, 0), want = {};
-  types.forEach(function (t) { want[t] = Math.max(1, Math.round(50 * wrongTypes[t] / tot)); });
+  types.forEach(function (t) { want[t] = Math.max(1, Math.round(ON_N * wrongTypes[t] / tot)); });
   // 덜 푼 문제은행 파일부터 조금씩 불러온다 (안 푼 문제가 모자라면 더 불러옴)
   var ids = [];
   if (part === 5) types.forEach(function (t) { if (ON_T5[t]) ids = ids.concat(onIds5(ON_T5[t])); }); else ids = ON_BANK[part].slice();
@@ -118,7 +118,7 @@ function onPickBank(part, wrongTypes) {
   return more().then(function () {
     var have = types.filter(function (t) { return pool[t] && pool[t].length; });
     if (!have.length) return null;
-    var left = 50, pick = [];
+    var left = ON_N, pick = [];
     have.forEach(function (t) {
       var ks = pool[t], un = ks.filter(function (x) { return !S.prog[x.key]; }), wr = ks.filter(function (x) { var p = S.prog[x.key]; return p && !p[1]; }), rt = ks.filter(function (x) { var p = S.prog[x.key]; return p && p[1]; });
       pool[t] = shuffle(un).concat(shuffle(wr), shuffle(rt));
@@ -175,7 +175,7 @@ function onoteRound(secs, ser, n) {
     box.innerHTML = '<b>📄 RC 오답노트 · 🎯 유형별 강화 추가문제</b><p style="margin:6px 0 0;font-size:14px;color:#5B6573">PART를 하나 다 풀면 그 PART의 유형별 강화 추가문제와 오답노트가 열려요.</p>';
     app.appendChild(box); return;
   }
-  var back = location.hash || "#/a"; ON_CTX = "r" + ser + "-" + n; fin.forEach(function (s) { ON_SID[s.part] = s.id; });
+  var back = location.hash || "#/a"; ON_N = 50; ON_CTX = "r" + ser + "-" + n; fin.forEach(function (s) { ON_SID[s.part] = s.id; });
   var rest = secs.filter(function (s) { return fin.indexOf(s) < 0; }).map(function (s) { return s.part; });
   box.innerHTML = '<b style="font-size:16px">📄 오답노트 · 🎯 유형별 강화 추가문제</b><p style="margin:4px 0 10px;font-size:14px;color:#5B6573">다 푼 PART ' + fin.map(function (s) { return s.part; }).join("·") + '의 틀린 문제로 만들어요.' + (rest.length ? " (PART " + rest.join("·") + "도 다 풀면 추가돼요)" : "") + '</p>'
     + '<button class="btn" data-onnote="1" style="width:100%">📄 오답노트 출력 · PDF 저장</button><div class="on-prac" style="display:grid;gap:8px;margin-top:8px"><div class="empty" style="padding:8px">유형별 강화 추가문제 준비 중…</div></div>';
@@ -192,7 +192,7 @@ function onoteRound(secs, ser, n) {
 function onoteExam(sec) {
   if (!sec || sec.group !== "A급 과제" || sec.area === "LC" || !(sec.part >= 5)) return;
   var box = document.getElementById("on-ex"); if (!box) return;
-  var back = location.hash; ON_CTX = "s" + sec.id; ON_SID[sec.part] = sec.id;
+  var back = location.hash; ON_N = 50; ON_CTX = "s" + sec.id; ON_SID[sec.part] = sec.id;
   onTypes().then(function (rct) {
     var meta = S.catalog.sections.filter(function (s) { return s.id === sec.id; })[0] || sec;
     return onCollect([meta], rct);
