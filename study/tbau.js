@@ -12,7 +12,10 @@ function hook(v) {
   function stop() { if (on >= 0) { A.pause(); v.muted = userMuted; on = -1; } }
   function load() { var k = keyOf(v.currentSrc || v.src); if (k !== key) { stop(); key = k; L = (window.MKST_TBAU || {})[k] || []; } }
   function step() {
-    load(); if (!L.length) return;
+    load();
+    var SK = (window.MKST_TBSKIP || {})[key];   // 질문 → 정답 사이 긴 무음은 건너뛴다
+    if (SK && !v.paused && !v.seeking) for (var j = 0; j < SK.length; j++) if (v.currentTime >= SK[j][0] && v.currentTime < SK[j][1] - 0.05) { v.currentTime = SK[j][1]; break; }
+    if (!L.length) return;
     var t = v.currentTime, idx = -1;
     for (var i = 0; i < L.length; i++) if (t >= L[i][0] && t < L[i][1]) { idx = i; break; }
     if (idx !== on) {
