@@ -21,6 +21,7 @@ function viewTbl() {
   bindCommon();
 }
 function tblQs(l) { return l.qs || []; }
+function tbSrc(B, f) { return (window.MKST_TB2 || {})[f] ? "/tb2/" + f.replace(/\//g, "_") + ".mp4" : B + f + ".mp4"; }   // 원음으로 새로 만든 PART 2 영상(tb2)이 있으면 그걸 재생
 function viewTblPlay(ser, ci, li) {
   if (allowedSeries().indexOf(ser) < 0) { render(topbar("교재 강의") + '<div class="empty">이 Season은 수강 기간에 포함되지 않았어요.</div>'); bindCommon(); return; }
   var c = tblOf(ser)[ci], l = c && c.l[li];
@@ -46,7 +47,7 @@ function viewTblPlay(ser, ci, li) {
   function nm(i) { return Qs ? `${esc(L2[i].lab)} 문제` : `${esc(l.t)}${L2.length > 1 ? " · " + L2[i].lab : ""}`; }
   function mark() { app.querySelectorAll("[data-tq]").forEach(function (b) { var on = +b.dataset.tq === cur; b.style.borderColor = on ? "#F26B1D" : ""; b.style.background = on ? "#FFF4EC" : ""; b.querySelector(".pill").className = "pill " + (on ? "o" : "n"); }); }
   function play() { var pr = v.play(); if (pr && pr.catch) pr.catch(function () { }); }
-  function go(i, auto) { cur = i; mark(); v.src = B + L2[i].f + ".mp4"; now.innerHTML = `▶ <b>${nm(i)}</b> 재생 중`; if (auto !== false) play(); }
+  function go(i, auto) { cur = i; mark(); v.src = tbSrc(B, L2[i].f); now.innerHTML = `▶ <b>${nm(i)}</b> 재생 중`; if (auto !== false) play(); }
   function pg() { var P = L2[cur] && L2[cur].p; if (P && P.length) return P; var o = [], d = v.duration || (L2[cur] || {}).d || 0; for (var t = 30; t < d - 1; t += 30) o.push(t); return o; }
   app.querySelector("#tb-next").onclick = function () {
     if (cur < 0) { go(0); return; }
@@ -67,7 +68,7 @@ function viewTblPlay(ser, ci, li) {
   v.addEventListener("error", function () { if (cur >= 0) now.innerHTML = "영상을 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요."; });
   app.querySelectorAll("[data-tq]").forEach(function (b) { b.onclick = function () { chain = false; go(+b.dataset.tq); window.scrollTo({ top: 0, behavior: "smooth" }); }; });
   var all = app.querySelector("#tb-all"); if (all) all.onclick = function () { chain = true; go(0); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  if (!Qs) { cur = 0; mark(); v.src = B + L2[0].f + ".mp4"; now.innerHTML = `◻ <b>${nm(0)}</b> — ▶를 누르면 재생돼요`; }
+  if (!Qs) { cur = 0; mark(); v.src = tbSrc(B, L2[0].f); now.innerHTML = `◻ <b>${nm(0)}</b> — ▶를 누르면 재생돼요`; }
 }
 function lecturesOf(sec) {
 */});
