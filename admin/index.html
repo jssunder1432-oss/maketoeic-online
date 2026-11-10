@@ -39,6 +39,18 @@ label{display:block;font-size:14px;font-weight:800;color:var(--navy);margin:10px
 .st .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
 .st .nm{font-size:18px;font-weight:800;color:var(--navy)}
 .st .info{font-size:14px;color:var(--text);margin-top:3px}
+.st.st1 .h1r{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.st.st1 .bd{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.st.st1 .bd .tag{margin:0}
+.st.st1 > .info{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:8px}
+.st.st1 > .info .tag{display:inline-block;margin:0}
+.st.st1 > .info .btn{margin:0}
+.st.st1 .prog1{display:grid;gap:4px;margin-top:10px;background:var(--bg);border-radius:10px;padding:8px 12px}
+.st.st1 .prog1 div{display:flex;justify-content:space-between;font-size:14px;color:var(--navy)}
+.st.st1 .prog1 span{font-weight:600}
+.st.st1 .prog1 b{font-weight:800}
+.st.st1 .acts3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.st.st1 .acts3 .btn{width:100%;margin:0}
 .st .prog{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .st .prog span{background:var(--bg);border-radius:8px;padding:4px 8px;font-size:13px;font-weight:700;color:var(--navy)}
 .st .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
@@ -222,9 +234,11 @@ function draw() {
     ${rows.map(function (s) {
       var rate = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
       var sb = SUBM && SUBM[s.id], sbH = sb && (sb.hwN || sb.aN) ? `<div class="info" style="margin-top:4px">${sb.hwD ? `<span class="tag full" style="background:#FFE6D6;color:#B33F0B">📮 ${md(sb.hwD)} 과제 제출 (${sb.hwR}회 S${sb.hwSer}) · 총 ${sb.hwN}번</span> ` : ""}${sb.aD ? `<span class="tag full">✏️ ${md(sb.aD)} ${esc(sb.aLab)} 풀이</span> ` : ""}${sb.aN ? `<span class="tag full">📄 오답노트 ${sb.aN}문제</span> ` : ""}<button class="btn navy sm" data-subn="${s.id}" style="padding:4px 10px">📄 오답노트 열기</button></div>` : "";
-      return `<div class="st"${sbH ? ' style="border-left:4px solid #E95721"' : ""}><div class="top"><div><span class="nm">${esc(s.name)}</span> ${kindTag(s)} ${seaTag(s)}${sbH}<div class="info">${esc(s.phone)} · ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${memoTxt(s) ? `<div class="info">메모: ${esc(memoTxt(s))}</div>` : ""}</div>${stTag(s)}</div>
-        <div class="prog"><span>푼 문제 ${s.solved}</span><span>정답률 ${rate}%</span><span>최근 7일 ${s.week}문제</span><span>마지막 학습 ${ago(s.last_at)}</span><span>마지막 접속 ${ago(s.last_login)}</span></div>
-        <div class="acts"><button class="btn navy sm" data-rep="${s.id}">진도 보기</button>${s.days_left < 0 ? `<button class="btn sm" data-renew="${s.id}">재등록</button>` : `<button class="btn sm" data-ext="${s.id}">+1개월</button>`}<button class="btn ghost sm" data-edit="${s.id}">수정</button></div></div>`;
+      return `<div class="st st1"${sbH ? ' style="border-left:4px solid #E95721"' : ""}><div class="h1r"><span class="nm">${esc(s.name)}</span>${stTag(s)}</div>
+        <div class="bd">${kindTag(s)} ${seaTag(s)}</div>${sbH}
+        <div class="info">📞 ${esc(s.phone)}</div><div class="info">📅 ${esc(s.start_date)} ~ ${esc(s.end_date)}</div>${memoTxt(s) ? `<div class="info">📝 ${esc(memoTxt(s))}</div>` : ""}
+        <div class="prog1"><div><span>푼 문제</span><b>${s.solved}</b></div><div><span>정답률</span><b>${rate}%</b></div><div><span>최근 7일</span><b>${s.week}문제</b></div><div><span>마지막 학습</span><b>${ago(s.last_at)}</b></div><div><span>마지막 접속</span><b>${ago(s.last_login)}</b></div></div>
+        <div class="acts acts3"><button class="btn navy sm" data-rep="${s.id}">진도 보기</button>${s.days_left < 0 ? `<button class="btn sm" data-renew="${s.id}">재등록</button>` : `<button class="btn sm" data-ext="${s.id}">+1개월</button>`}<button class="btn ghost sm" data-edit="${s.id}">수정</button></div></div>`;
     }).join("") || '<p class="note">해당하는 수강생이 없어요.</p>'}
   </div>`);
   bindHead();
