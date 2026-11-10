@@ -4,9 +4,9 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["    if (itemsOf(sec).some(function (x) { return !S.prog[x.key]; }))\n", "    if (sec.group !== \"A급 과제\" && itemsOf(sec).some(function (x) { return !S.prog[x.key]; }))\n"],
 // 단원 화면의 해설강의 버튼 열기
 ["  if (!lecturesOf(sec).length) return \"\";\n  return allDone ?", "  if (!lecturesOf(sec).length) return \"\";\n  if (sec.group === \"A급 과제\") allDone = true;\n  return allDone ?"],
-// 회차 화면: 잠금 표시 없애고 PART마다 '해설강의 바로 보기' 버튼
-["lec = has(s) ? (t.done >= t.total ? \" · ▶ 해설강의 열림\" : \" · 🔒 해설강의\") : \"\";", "lec = has(s) ? \" · ▶ 해설강의\" : \"\";"],
-["<span class=\"pbar\"><i style=\"width:${pct(t.done, t.total)}%\"></i></span></button>`; }).join(\"\"));", "<span class=\"pbar\"><i style=\"width:${pct(t.done, t.total)}%\"></i></span></button>` + (has(s) ? `<button class=\"btn navy sm\" data-go=\"#/lec/${encodeURIComponent(s.id)}\" style=\"margin:-4px 0 12px\">▶ PART ${s.part} 해설강의 바로 보기</button>` : \"\"); }).join(\"\"));"]
+// 회차 화면: PART마다 [✏️ 문제 풀기](주황) · [▶ 해설강의 보기](흰 바탕) 두 버튼으로 구별 (2026-11-10)
+["lec = has(s) ? (t.done >= t.total ? \" · ▶ 해설강의 열림\" : \" · 🔒 해설강의\") : \"\";", "lec = \"\";"],
+["<span class=\"pbar\"><i style=\"width:${pct(t.done, t.total)}%\"></i></span></button>`; }).join(\"\"));", "<span class=\"pbar\"><i style=\"width:${pct(t.done, t.total)}%\"></i></span></button>` + `<div style=\"display:grid;grid-template-columns:${has(s) ? \"1fr 1fr\" : \"1fr\"};gap:8px;margin:-4px 0 14px\"><button class=\"btn\" data-sec=\"${esc(s.id)}\" style=\"margin:0;padding:13px 6px;font-size:16px\">✏️ PART ${s.part} 문제 풀기</button>` + (has(s) ? `<button class=\"btn ghost\" data-go=\"#/lec/${encodeURIComponent(s.id)}\" style=\"margin:0;padding:13px 6px;font-size:16px;border:2px solid #172844;color:#172844;background:#fff\">▶ 해설강의 보기</button>` : \"\") + `</div>`; }).join(\"\"));"]
 ]);
 /* A급 과제 PART 7은 기출 2개 회차(예: 29·30회) 지문을 이어 붙여서 지문 번호(168-171 등)가 겹친다.
    → 지문 번호 앞에 회차를 붙여 구분 ("29회 161-164"). 해설강의 목록·채점표·풀이 화면이 모두 구분되고,

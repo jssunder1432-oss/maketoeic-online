@@ -53,7 +53,7 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ["    var L2 = lecturesOf(sec), cur = 0;\n", "    if (aLecList(sec)) { location.replace(aLecHref(sec)); return; }\n    var L2 = lecturesOf(sec), cur = 0;\n"],
 ["  if (!lecturesOf(sec).length) return \"\";\n  if (sec.group === \"A급 과제\") allDone = true;", "  if (aLecList(sec)) return `<button class=\"btn navy\" data-go=\"${aLecHref(sec)}\">▶ 해설강의 보기 (${aLecList(sec).length}부)</button>`;\n  if (!lecturesOf(sec).length) return \"\";\n  if (sec.group === \"A급 과제\") allDone = true;"],
 ["var q = S.videos.q || {}, has = function (s) { return ", "var q = S.videos.q || {}, has = function (s) { return !!aLecList(Object.assign({ group: \"A급 과제\" }, s)) || "],
-["data-go=\"#/lec/${encodeURIComponent(s.id)}\" style=\"margin:-4px 0 12px\">", "data-go=\"${aLecList(Object.assign({ group: \"A급 과제\" }, s)) ? aLecHref(s) : \"#/lec/\" + encodeURIComponent(s.id)}\" style=\"margin:-4px 0 12px\">"],
+["data-go=\"#/lec/${encodeURIComponent(s.id)}\" style=\"margin:0;padding:13px 6px;font-size:16px;border:2px solid #172844;color:#172844;background:#fff\">", "data-go=\"${aLecList(Object.assign({ group: \"A급 과제\" }, s)) ? aLecHref(s) : \"#/lec/\" + encodeURIComponent(s.id)}\" style=\"margin:0;padding:13px 6px;font-size:16px;border:2px solid #172844;color:#172844;background:#fff\">"],
 ["${vid ? \"▶ 해설강의 · \" : \"\"}", "${vid || aLecRoundData(ser, n) ? \"▶ 해설강의 · \" : \"\"}"],
 ["  if (h[0] === \"pick\") return viewPick();\n", "  if (h[0] === \"pick\") return viewPick();\n  if (h[0] === \"alec\" && h[2]) return viewALec(+h[1], +h[2], +(h[3] || 0));\n"]
 ]);
