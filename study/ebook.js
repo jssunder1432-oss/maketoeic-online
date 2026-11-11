@@ -11,7 +11,7 @@ var EB_BASE = "/study/eb/";
 var EB_PDF = { 1: [["s1_book", "교재1 원본 PDF", "MAKETOEIC_Season1_교재1.pdf", "9MB"], ["s1_ans", "교재1 해설지 PDF", "MAKETOEIC_Season1_해설지.pdf", "6MB"]], 2: [["s2_book", "교재2 원본 PDF", "MAKETOEIC_Season2_교재2.pdf", "29MB"], ["s2_ans", "교재2 해설지 PDF", "MAKETOEIC_Season2_해설지.pdf", "20MB"]], 3: [["s3_book", "통합 교재 원본 PDF", "MAKETOEIC_Season3_통합교재.pdf", "8MB"], ["s3_ans", "통합 교재 해설지 PDF", "MAKETOEIC_Season3_해설지.pdf", "20MB"]] };
 function ebPdfFolder(ser) {
   var F = EB_PDF[ser] || []; if (!F.length) return "";
-  return `<div class="eb-fd"><b>📁 원본 PDF 받기 <small>Season ${ser}</small></b>${F.map(function (f) { return `<a class="row" href="${EB_BASE}files/${f[0]}.pdf" download="${esc(f[2])}" target="_blank" rel="noopener"><span class="pill" style="background:${/ans/.test(f[0]) ? "#1E8E5A" : "#172844"};color:#fff">${/ans/.test(f[0]) ? "해설" : "교재"}</span><span class="t"><b>${esc(f[1])}</b><small>${f[3]} · 누르면 내려받아요</small></span>⬇</a>`; }).join("")}</div>`;
+  return `<div class="eb-fd"><b>📁 원본 PDF 받기 <small>Season ${ser}</small></b>${F.map(function (f) { return `<a class="row" href="${EB_BASE}files/${f[0]}.pdf?v=1111" download="${esc(f[2])}" target="_blank" rel="noopener"><span class="pill" style="background:${/ans/.test(f[0]) ? "#1E8E5A" : "#172844"};color:#fff">${/ans/.test(f[0]) ? "해설" : "교재"}</span><span class="t"><b>${esc(f[1])}</b><small>${f[3]} · 누르면 내려받아요</small></span>⬇</a>`; }).join("")}</div>`;
 }
 var EB_BOOKS = { 1: [{ id: "b1", nm: "교재1", sub: "문제 교재" }], 2: [{ id: "b2", nm: "교재2", sub: "문제 교재" }], 3: [{ id: "b3", nm: "통합 교재", sub: "문제 교재" }] };
 var EB = { meta: {}, page: {} };
@@ -146,7 +146,7 @@ function ebFreePdf() {
   return "";   // 2026-11-06: 비회원 교재 PDF는 10,000원 추가 비용 — 무료 내려받기 없앰
   if (typeof payPart !== "function" || !payPart()) return "";
   var n = curSer(), F = EB_PDF[n] || []; if (!F.length) return "";
-  return `<div class="card" style="border:2px solid #1E8E5A;background:#F1FBF5"><b style="font-size:17px">📘 교재 PDF 무료 제공 <small style="font-weight:700;color:#33404F">Season ${n}</small></b><p style="margin:4px 0 10px;font-size:14px;color:#33404F">수강권에 포함된 교재예요. 눌러서 내려받으세요.</p>${F.map(function (f) { return `<a class="row" href="${EB_BASE}files/${f[0]}.pdf" download="${esc(f[2])}" target="_blank" rel="noopener"><span class="pill" style="background:${/ans/.test(f[0]) ? "#1E8E5A" : "#172844"};color:#fff">PDF</span><span class="t"><b>⬇ ${esc(f[1])}</b><small>${esc(f[2])} · ${esc(f[3])}</small></span>›</a>`; }).join("")}</div>`;
+  return `<div class="card" style="border:2px solid #1E8E5A;background:#F1FBF5"><b style="font-size:17px">📘 교재 PDF 무료 제공 <small style="font-weight:700;color:#33404F">Season ${n}</small></b><p style="margin:4px 0 10px;font-size:14px;color:#33404F">수강권에 포함된 교재예요. 눌러서 내려받으세요.</p>${F.map(function (f) { return `<a class="row" href="${EB_BASE}files/${f[0]}.pdf?v=1111" download="${esc(f[2])}" target="_blank" rel="noopener"><span class="pill" style="background:${/ans/.test(f[0]) ? "#1E8E5A" : "#172844"};color:#fff">PDF</span><span class="t"><b>⬇ ${esc(f[1])}</b><small>${esc(f[2])} · ${esc(f[3])}</small></span>›</a>`; }).join("")}</div>`;
 }
 function ebRoomBox() {
   var al = allowedSeries().slice().sort(), cur = curSer(), rows = [];
