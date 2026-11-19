@@ -8,7 +8,7 @@
 function T(f) { var s = f.toString(); return s.slice(s.indexOf("/*") + 2, s.lastIndexOf("*/")); }
 var FN = T(function () {/*// 교재 전자책 — study/ebook.js
 var EB_BASE = "/study/eb/";
-var EB_PDF = { 1: [["s1_book", "교재1 원본 PDF", "MAKETOEIC_Season1_교재1.pdf", "9MB"], ["s1_ans", "교재1 해설지 PDF", "MAKETOEIC_Season1_해설지.pdf", "6MB"]], 2: [["s2_book", "교재2 원본 PDF", "MAKETOEIC_Season2_교재2.pdf", "29MB"], ["s2_ans", "교재2 해설지 PDF", "MAKETOEIC_Season2_해설지.pdf", "20MB"]], 3: [["s3_book", "통합 교재 원본 PDF", "MAKETOEIC_Season3_통합교재.pdf", "8MB"], ["s3_ans", "통합 교재 해설지 PDF", "MAKETOEIC_Season3_해설지.pdf", "20MB"]] };
+var EB_PDF = { 1: [["s1_book", "교재1 원본 PDF", "MAKETOEIC_Season1_교재1.pdf", "9MB"], ["s1_ans", "교재1 해설지 PDF", "MAKETOEIC_Season1_해설지.pdf", "6MB"]], 2: [["s2_book", "교재2 원본 PDF", "MAKETOEIC_Season2_교재2.pdf", "31MB"], ["s2_ans", "교재2 해설지 PDF", "MAKETOEIC_Season2_해설지.pdf", "20MB"]], 3: [["s3_book", "통합 교재 원본 PDF", "MAKETOEIC_Season3_통합교재.pdf", "8MB"], ["s3_ans", "통합 교재 해설지 PDF", "MAKETOEIC_Season3_해설지.pdf", "20MB"]] };
 function ebPdfFolder(ser) {
   var F = EB_PDF[ser] || []; if (!F.length) return "";
   return `<div class="eb-fd"><b>📁 원본 PDF 받기 <small>Season ${ser}</small></b>${F.map(function (f) { return `<a class="row" href="${EB_BASE}files/${f[0]}.pdf?v=1125" download="${esc(f[2])}" target="_blank" rel="noopener"><span class="pill" style="background:${/ans/.test(f[0]) ? "#1E8E5A" : "#172844"};color:#fff">${/ans/.test(f[0]) ? "해설" : "교재"}</span><span class="t"><b>${esc(f[1])}</b><small>${f[3]} · 누르면 내려받아요</small></span>⬇</a>`; }).join("")}</div>`;
