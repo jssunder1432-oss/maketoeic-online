@@ -22,6 +22,8 @@
           [].forEach.call(acts.querySelectorAll(":scope>.eight.wide.column"), function (c) { c.className = c.className.replace("eight wide", "sixteen wide"); });
         }
       }
+      // 강의 설명 칸 삭제
+      [].forEach.call(document.querySelectorAll(".mk-home-course-column"), function (c) { c.remove(); });
       // 학습 방법 내용 펼치기 (버튼 대신)
       var old = document.getElementById("mk-guide-btn"); if (old) old.remove();
       if (!document.getElementById("mk-guide")) {
