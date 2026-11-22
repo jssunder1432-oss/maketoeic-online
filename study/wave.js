@@ -65,13 +65,14 @@ function build(host, getA, plBtn, cls) {
   }
   function ui() {
     var has = S.a != null;
+    if (cls === "tm") window.MKST_WHOLD = has;
     bPr.disabled = !has; bCl.disabled = !has; bLp.disabled = !has; bLp.className = "lp rp" + (S.loop ? " on" : ""); bLp.textContent = S.loop ? "■ 반복 멈추기" : "▶ 이 구간 반복 듣기";
     lab.textContent = has ? "A " + fmt(S.a) + " ~ B " + fmt(S.b) + " (" + fmt(S.b - S.a) + ")" : "안 들리는 부분을 음파에서 드래그해 A~B 구간을 고르세요";
     tip.textContent = has ? "A·B 막대를 끌어 구간 조절" : "짧게 누르면 그 위치부터 재생";
     draw();
   }
   (function loop() {
-    if (!document.contains(cv)) return;
+    if (!document.contains(cv)) { if (cls === "tm") window.MKST_WHOLD = false; return; }
     load();
     var x = au();
     if (range && x && S.a != null && !x.paused && x.currentTime >= S.b) {
@@ -84,7 +85,7 @@ function build(host, getA, plBtn, cls) {
   })();
   function setPl(t) { var p = plBtn && plBtn(); if (p) p.textContent = t; }
   function playFrom(t, asRange) {
-    var x = au(); if (!x) return; range = !!asRange; clearTimeout(wait);
+    var x = au(); if (!x) return; range = !!asRange; clearTimeout(wait); if (cls === "tm") window.MKST_WSYNC = 1;
     if (cls === "eb") { x.ontimeupdate = null; x.onended = null; x.onseeked = null; }
     try { x.currentTime = t; } catch (e) { }
     x.play().then(function () { setPl("❚❚"); }).catch(function () { });
@@ -116,7 +117,13 @@ function build(host, getA, plBtn, cls) {
     if (S.loop) { S.loop = false; range = false; clearTimeout(wait); if (x) x.pause(); setPl("▶"); ui(); return; }
     S.loop = true; ui(); playFrom(S.a, true);
   };
-  bCl.onclick = function () { S.a = S.b = null; S.loop = false; range = false; clearTimeout(wait); ui(); };
+  bCl.onclick = function () {
+    // 선택 해제: 반복하던 자리에서 그대로 이어서 재생 (다음 문제로 넘어가지 않음)
+    var x = au(), act = S.loop || range, pb = document.getElementById("lc-pause"), userPaused = pb && /계속/.test(pb.textContent || "");
+    S.a = S.b = null; S.loop = false; range = false; clearTimeout(wait); ui();
+    if (cls === "tm") window.MKST_WSYNC = 1;
+    if (act && x && x.paused && !userPaused && x.currentTime < (x.duration || 1e9) - 0.05) x.play().then(function () { setPl("❚❚"); }).catch(function () { });
+  };
   var pl = plBtn && plBtn(); if (pl) pl.addEventListener("click", function () { range = false; clearTimeout(wait); }, true);
   ui();
   return w;

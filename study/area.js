@@ -184,6 +184,8 @@ function fullPage(F) {
   function tick() {
     if (run !== PL.run || !document.contains(secEl)) { clearInterval(timer); return; }
     if (total == null || paused) return;
+    // 음파 구간 반복 중이거나 음파로 위치를 옮기면: 남은 시간을 음성 위치에 맞춤 (반복하는 동안 다음 문제로 안 넘어감)
+    var wa = PL.audio; if ((window.MKST_WHOLD || window.MKST_WSYNC) && wa && src && t0 != null) { t0 = Date.now() - wa.currentTime * 1000; window.MKST_WSYNC = 0; }
     var left = Math.max(0, Math.ceil(total - (Date.now() - t0) / 1000));
     secEl.textContent = left; timeEl.style.background = left <= 3 ? "#E95721" : "#172844";
     if (left <= 0) { clearInterval(timer); next(); }
