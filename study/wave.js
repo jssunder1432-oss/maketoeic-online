@@ -7,10 +7,10 @@ window.MKST_PATCHES = (window.MKST_PATCHES || []).concat([
 ]);
 (function () {
 if (window.MKST_WAVE) return; window.MKST_WAVE = 1;
-var PK = {}, SEL = {}, AC = null, H = 64;
+var PK = {}, SEL = {}, AC = null, H = 76;
 var css = ".mkw{flex:0 0 100%;width:100%;margin-top:10px}.mkw.tm{margin:0 0 12px;background:#fff;border-radius:14px;padding:12px;box-sizing:border-box}.mkw canvas{display:block;width:100%;height:" + H + "px;border-radius:10px;background:#F1F4F9;touch-action:none;cursor:crosshair}" +
   ".mkw .r{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}.mkw .r b{font-size:13px;color:#172844}.mkw .r small{font-size:12px;color:#5B6573}" +
-  ".mkw button{font:700 13px inherit;border:1px solid #D5DBE5;background:#fff;color:#172844;border-radius:999px;padding:6px 12px;cursor:pointer}.mkw button.on{background:#FF581F;border-color:#FF581F;color:#fff}.mkw button:disabled{opacity:.4}";
+  ".mkw button{font:700 13px inherit;border:1px solid #D5DBE5;background:#fff;color:#172844;border-radius:999px;padding:6px 12px;cursor:pointer}.mkw button.on{background:#FF581F;border-color:#FF581F;color:#fff}.mkw button.rp{background:#FF581F;border-color:#FF581F;color:#fff;font-size:14px;padding:8px 16px}.mkw button.rp.on{background:#172844;border-color:#172844}.mkw button:disabled{opacity:.4}";
 var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
 function peaks(src) {
@@ -32,7 +32,7 @@ function fmt(t) { return (Math.round(t * 10) / 10).toFixed(1) + "초"; }
 function build(host, getA, plBtn, cls) {
   var w = document.createElement("div"); w.className = "mkw" + (cls ? " " + cls : "");
   w.innerHTML = '<canvas></canvas><div class="r"><b class="lab">음파를 드래그해서 듣고 싶은 부분을 고르세요</b><small class="tip">짧게 누르면 그 위치부터 재생</small></div>' +
-    '<div class="r"><button class="pr" disabled>▶ 구간 듣기</button><button class="lp">🔁 구간 반복</button><button class="cl" disabled>✕ 선택 해제</button></div>';
+    '<div class="r"><button class="lp rp" disabled>▶ 이 구간 반복 듣기</button><button class="pr" disabled>한 번만 듣기</button><button class="cl" disabled>✕ 선택 해제</button></div>';
   host.appendChild(w);
   var cv = w.querySelector("canvas"), g = cv.getContext("2d"), lab = w.querySelector(".lab"), tip = w.querySelector(".tip");
   var bPr = w.querySelector(".pr"), bLp = w.querySelector(".lp"), bCl = w.querySelector(".cl");
@@ -57,13 +57,17 @@ function build(host, getA, plBtn, cls) {
         var h = Math.max(1.5, P[i] * (H - 10)); g.fillRect(i * bw, (H - h) / 2, Math.max(1, bw - .4), h);
       }
     } else { g.fillStyle = "#5B6573"; g.font = "13px sans-serif"; g.fillText(src ? "음파 불러오는 중…" : "음성이 시작되면 음파가 보여요", 12, H / 2 + 4); }
+    if (S.a != null && D) {
+      g.fillStyle = "#FF581F"; g.font = "bold 11px sans-serif";
+      [[S.a, "A"], [S.b, "B"]].forEach(function (m) { var X = m[0] / D * W; g.fillRect(X - 1, 0, 2.5, H); g.fillRect(X - 5, H / 2 - 9, 10, 18); g.fillText(m[1], m[1] === "A" ? X + 4 : X - 11, 12); });
+    }
     if (D && ct) { g.fillStyle = "#172844"; g.fillRect(ct / D * W - 1, 0, 2, H); }
   }
   function ui() {
     var has = S.a != null;
-    bPr.disabled = !has; bCl.disabled = !has; bLp.className = "lp" + (S.loop ? " on" : ""); bLp.textContent = S.loop ? "🔁 구간 반복 켜짐" : "🔁 구간 반복";
-    lab.textContent = has ? "선택 구간 " + fmt(S.a) + " ~ " + fmt(S.b) + " (" + fmt(S.b - S.a) + ")" : "음파를 드래그해서 듣고 싶은 부분을 고르세요";
-    tip.textContent = has ? "" : "짧게 누르면 그 위치부터 재생";
+    bPr.disabled = !has; bCl.disabled = !has; bLp.disabled = !has; bLp.className = "lp rp" + (S.loop ? " on" : ""); bLp.textContent = S.loop ? "■ 반복 멈추기" : "▶ 이 구간 반복 듣기";
+    lab.textContent = has ? "A " + fmt(S.a) + " ~ B " + fmt(S.b) + " (" + fmt(S.b - S.a) + ")" : "안 들리는 부분을 음파에서 드래그해 A~B 구간을 고르세요";
+    tip.textContent = has ? "A·B 막대를 끌어 구간 조절" : "짧게 누르면 그 위치부터 재생";
     draw();
   }
   (function loop() {
@@ -72,7 +76,7 @@ function build(host, getA, plBtn, cls) {
     var x = au();
     if (range && x && S.a != null && !x.paused && x.currentTime >= S.b) {
       x.pause(); setPl("▶");
-      if (S.loop) { clearTimeout(wait); wait = setTimeout(function () { if (range && document.contains(cv)) { x.currentTime = S.a; x.play().then(function () { setPl("❚❚"); }).catch(function () { }); } }, 600); }
+      if (S.loop) { clearTimeout(wait); wait = setTimeout(function () { if (range && S.loop && document.contains(cv)) { x.currentTime = S.a; x.play().then(function () { setPl("❚❚"); }).catch(function () { }); } }, 400); }
       else { range = false; x.currentTime = S.a; }
     }
     draw();
@@ -86,21 +90,33 @@ function build(host, getA, plBtn, cls) {
     x.play().then(function () { setPl("❚❚"); }).catch(function () { });
   }
   function tAt(ev) { var r = cv.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * dur(); }
-  cv.addEventListener("pointerdown", function (ev) { if (!dur()) return; try { cv.setPointerCapture(ev.pointerId); } catch (e) { } drag = { x: ev.clientX, t: tAt(ev) }; ev.preventDefault(); });
+  function edge(ev) {
+    if (S.a == null || !dur()) return null; var r = cv.getBoundingClientRect(), px = ev.clientX - r.left, D = dur();
+    var da = Math.abs(px - S.a / D * r.width), db = Math.abs(px - S.b / D * r.width);
+    if (Math.min(da, db) > 16) return null; return da <= db ? "a" : "b";
+  }
+  cv.addEventListener("pointerdown", function (ev) { if (!dur()) return; try { cv.setPointerCapture(ev.pointerId); } catch (e) { } drag = { x: ev.clientX, t: tAt(ev), e: edge(ev) }; ev.preventDefault(); });
   cv.addEventListener("pointermove", function (ev) {
     if (!drag || Math.abs(ev.clientX - drag.x) < 6) return;
-    var t = tAt(ev); S.a = Math.min(drag.t, t); S.b = Math.max(drag.t, t); drag.moved = true; ui();
+    var t = tAt(ev);
+    if (drag.e) { if (drag.e === "a") S.a = Math.min(t, S.b - 0.15); else S.b = Math.max(t, S.a + 0.15); }
+    else { S.a = Math.min(drag.t, t); S.b = Math.max(drag.t, t); }
+    drag.moved = true; ui();
   });
   cv.addEventListener("pointerup", function () {
     if (!drag) return; var d = drag; drag = null;
-    if (!d.moved) { S.a = S.b = null; ui(); playFrom(d.t, false); return; }
+    if (!d.moved) { if (d.e) return; S.a = S.b = null; S.loop = false; ui(); playFrom(d.t, false); return; }
     if (S.b - S.a < 0.15) S.b = Math.min(dur(), S.a + 0.15);
     ui(); playFrom(S.a, true);
   });
   cv.addEventListener("pointercancel", function () { drag = null; });
-  bPr.onclick = function () { if (S.a != null) playFrom(S.a, true); };
-  bLp.onclick = function () { S.loop = !S.loop; ui(); var x = au(); if (S.loop && S.a != null && x && x.paused) playFrom(S.a, true); };
-  bCl.onclick = function () { S.a = S.b = null; range = false; ui(); };
+  bPr.onclick = function () { if (S.a != null) { S.loop = false; ui(); playFrom(S.a, true); } };
+  bLp.onclick = function () {
+    if (S.a == null) return; var x = au();
+    if (S.loop) { S.loop = false; range = false; clearTimeout(wait); if (x) x.pause(); setPl("▶"); ui(); return; }
+    S.loop = true; ui(); playFrom(S.a, true);
+  };
+  bCl.onclick = function () { S.a = S.b = null; S.loop = false; range = false; clearTimeout(wait); ui(); };
   var pl = plBtn && plBtn(); if (pl) pl.addEventListener("click", function () { range = false; clearTimeout(wait); }, true);
   ui();
   return w;
