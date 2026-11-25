@@ -185,7 +185,10 @@ function fullPage(F) {
     if (run !== PL.run || !document.contains(secEl)) { clearInterval(timer); return; }
     if (total == null || paused) return;
     // 음파 구간 반복 중이거나 음파로 위치를 옮기면: 남은 시간을 음성 위치에 맞춤 (반복하는 동안 다음 문제로 안 넘어감)
-    var wa = PL.audio; if ((window.MKST_WHOLD || window.MKST_WSYNC) && wa && src && t0 != null) { t0 = Date.now() - wa.currentTime * 1000; window.MKST_WSYNC = 0; }
+    var wa = PL.audio, _nr = window.MKST_LCR ? MKST_LCR() : 1; if (secEl._r == null) secEl._r = _nr;
+    // 배속을 바꾸면 남은 시간도 바로 맞춤 (lcrate.js)
+    if (_nr !== secEl._r) { if (wa && src && wa.duration && !wa.ended) { total = total - Math.ceil(wa.duration / secEl._r) + Math.ceil(wa.duration / _nr); t0 = Date.now() - wa.currentTime / _nr * 1000; } secEl._r = _nr; }
+    if ((window.MKST_WHOLD || window.MKST_WSYNC) && wa && src && t0 != null) { t0 = Date.now() - wa.currentTime / _nr * 1000; window.MKST_WSYNC = 0; }
     var left = Math.max(0, Math.ceil(total - (Date.now() - t0) / 1000));
     secEl.textContent = left; timeEl.style.background = left <= 3 ? "#E95721" : "#172844";
     if (left <= 0) { clearInterval(timer); next(); }
@@ -194,8 +197,8 @@ function fullPage(F) {
     if (!src) { total = gap + 10; t0 = Date.now(); return; }
     if (!PL.audio) PL.audio = new Audio();
     var a = PL.audio; a.onended = a.onerror = null; a.src = audioUrl(src); a.currentTime = 0;
-    a.onloadedmetadata = function () { if (total == null) { total = Math.ceil(a.duration || 10) + gap; t0 = Date.now(); } };
-    a.play().then(function () { if (total == null && a.duration) { total = Math.ceil(a.duration) + gap; t0 = Date.now(); } })
+    a.onloadedmetadata = function () { if (total == null) { total = Math.ceil((a.duration || 10) / (window.MKST_LCR ? MKST_LCR() : 1)) + gap; t0 = Date.now(); } };
+    a.play().then(function () { if (total == null && a.duration) { total = Math.ceil(a.duration / (window.MKST_LCR ? MKST_LCR() : 1)) + gap; t0 = Date.now(); } })
       .catch(function () { document.getElementById("lc-tap").style.display = ""; });
   }
   function next() {
